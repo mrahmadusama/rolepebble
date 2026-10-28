@@ -5,5 +5,5 @@
 export const SOURCE_REPOSITORY = "mrahmadusama/dossier";
 /** The repository's page, for the sidebar's and Settings → About's source code links. */
 export const REPOSITORY_URL = `https://github.com/${SOURCE_REPOSITORY}`;
-/** Dossier by AienTech, which RolePebble is built on, for the credit in Settings → About. */
-export const UPSTREAM_URL = "https://github.com/AienTech/dossier";
+/** Dossier by AienTech, which RolePebble is built on, for the credit (the link AienTech asked for). */
+export const UPSTREAM_URL = "https://dossier.aien.me";

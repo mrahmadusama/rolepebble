@@ -61,7 +61,6 @@ describe("stored settings", () => {
       jsearchHost: "openwebninja",
       adzunaAppId: null,
       adzunaKeyEnc: null,
-      arbeitsagenturAcceptedAt: null,
       agentEnabled: false,
       agentQuery: { keywords: "", place: "", country: "", radiusKm: 25, remoteOnly: false, postedWithin: "any" },
       agentHour: 7,
@@ -141,6 +140,12 @@ describe("stored settings", () => {
     // Unknown, or not chosen: up to two pages.
     expect(settingsFromRows([{ key: "pageLimit", value: "3" }]).pageLimit).toBe("2");
     expect(settingsFromRows([]).pageLimit).toBe("2");
+  });
+
+  it("reads a saved choice of a job source since removed as Off", () => {
+    expect(settingsFromRows([{ key: "jobSource", value: "ARBEITSAGENTUR" }]).jobSource).toBe("OFF");
+    expect(settingsFromRows([{ key: "jobSource", value: "ADZUNA" }]).jobSource).toBe("ADZUNA");
+    expect(settingsFromRows([{ key: "jobSource", value: "MONSTER" }]).jobSource).toBeNull();
   });
 });
 

@@ -7,6 +7,7 @@ import {
   defaultSearch,
   EMPTY_QUERY,
   foundPostingSchema,
+  isJobSource,
   latestRole,
   linkKey,
   postedAgo,
@@ -19,6 +20,7 @@ import {
   viewFromParams,
   viewHref,
 } from "./search";
+import { sourceName } from "./sources";
 
 describe("search in the URL", () => {
   it("round-trips a search", () => {
@@ -89,6 +91,14 @@ describe("postings", () => {
     expect(foundPostingSchema.parse({ ...posting, url: "" }).url).toBe("");
     expect(foundPostingSchema.safeParse({ ...posting, source: "MONSTER" }).success).toBe(false);
     expect(foundPostingSchema.safeParse({ ...posting, url: "javascript:alert(1)" }).success).toBe(false);
+  });
+
+  it("still reads postings kept from a source since removed, but never searches it", () => {
+    expect(foundPostingSchema.parse({ ...posting, source: "ARBEITSAGENTUR" }).source).toBe("ARBEITSAGENTUR");
+    expect(isJobSource("ARBEITSAGENTUR")).toBe(false);
+    expect(isJobSource("ADZUNA")).toBe(true);
+    expect(sourceName("ARBEITSAGENTUR")).toBe("Bundesagentur für Arbeit");
+    expect(sourceName("JSEARCH")).toBe("JSearch");
   });
 
   it("picks the role to search for first", () => {
@@ -177,11 +187,11 @@ describe("errors", () => {
     expect(jobSearchError("no-key", "ADZUNA").message).toBe("Add your Adzuna app ID and key in Settings → Job search first.");
     expect(jobSearchError("no-key", "JSEARCH").message).toBe("Add your JSearch key in Settings → Job search first.");
     expect(jobSearchError("quota", "JSEARCH").message).toBe("You've used up your JSearch searches for this month. Try again then, or move to a bigger plan.");
-    expect(jobSearchError("quota", "ARBEITSAGENTUR").message).toBe("Bundesagentur für Arbeit is limiting searches right now. Wait a minute and try again.");
+    expect(jobSearchError("quota", "ADZUNA").message).toBe("You've used up your Adzuna searches for today. Try again then, or move to a bigger plan.");
     expect(jobSearchError("country", "ADZUNA", { country: "jp" }).message).toBe(
       "Adzuna doesn't list jobs in Japan. Choose another country, or another source in Settings → Job search.",
     );
-    expect(jobSearchError("changed", "ARBEITSAGENTUR").message).toMatch(/^The Arbeitsagentur's job search has changed/);
+    expect(jobSearchError("changed", "ADZUNA").message).toBe("Adzuna answered in a way RolePebble doesn't understand; its service may have changed. Try again later.");
     expect(jobSearchError("key", "JSEARCH", { detail: "HTTP 401" }).detail).toBe("JSEARCH: HTTP 401");
   });
 });

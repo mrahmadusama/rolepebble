@@ -3,7 +3,7 @@ import "server-only";
 import { credentialsFor, loadJobSearchConfig, requestContext } from "./config";
 import { JobSearchError } from "./errors";
 import { postingDetails, searchPostings } from "./index";
-import type { FoundPosting, JobSource, SearchPage, SearchProblem, SearchQuery } from "./search";
+import { isJobSource, type FoundPosting, type JobSource, type SearchPage, type SearchProblem, type SearchQuery } from "./search";
 
 // Asking a job source from Find jobs (E14-6): a page of postings, or what
 // went wrong in words for the screen. Kept searches are in
@@ -32,10 +32,12 @@ export async function askSource(
 
 /**
  * The whole text of a posting, from its own source (which may no longer be
- * the one chosen, for a saved posting); null when it can't be had.
+ * the one chosen, for a saved posting); null when it can't be had, as for a
+ * posting kept from a source since removed.
  */
 export async function fullText(posting: FoundPosting): Promise<string | null> {
   if (posting.complete) return posting.description;
+  if (!isJobSource(posting.source)) return null;
   try {
     return await postingDetails(posting.source, credentialsFor(await loadJobSearchConfig(), posting.source), posting, requestContext(posting.source));
   } catch (error) {

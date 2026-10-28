@@ -111,24 +111,11 @@ export const testAiConnection = action(z.object({}), async () => {
 
 const loadView = async () => jobSearchView(await loadJobSearchConfig());
 
-/**
- * Picks the source to search, or Off. The Bundesagentur für Arbeit only with
- * its note accepted, now (`accepted`) or before, and only while the server
- * offers it (#223).
- */
-export const saveJobSource = action(
-  z.object({ source: z.enum([...JOB_SOURCES, "OFF"]), accepted: z.literal(true).optional() }),
-  async ({ source, accepted }) => {
-    const accepting = source === "ARBEITSAGENTUR" && accepted === true;
-    if (source === "ARBEITSAGENTUR") {
-      const { arbeitsagentur } = await loadJobSearchConfig();
-      if (!arbeitsagentur.offered) throw new ActionError("The Bundesagentur für Arbeit isn't offered on this server.");
-      if (!accepting && !arbeitsagentur.acceptedAt) throw new ActionError("Tick “I understand” under the note about the Bundesagentur für Arbeit first.");
-    }
-    await saveSettings({ jobSource: source, ...(accepting ? { arbeitsagenturAcceptedAt: new Date().toISOString() } : {}) });
-    return loadView();
-  },
-);
+/** Picks the source to search, or Off. */
+export const saveJobSource = action(z.object({ source: z.enum([...JOB_SOURCES, "OFF"]) }), async ({ source }) => {
+  await saveSettings({ jobSource: source });
+  return loadView();
+});
 
 /** Saves where the JSearch key is from, or the Adzuna app ID, which isn't a secret. */
 export const saveJobSearchDetails = action(

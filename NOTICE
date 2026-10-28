@@ -11,6 +11,8 @@ of https://github.com/mrahmadusama/dossier. Among them:
 - 2026-10-28: renamed to RolePebble in the interface; removed the daily usage
   ping and the update check; added a link to this source code in the sidebar
   and in Settings -> About; added a deployment setup (deploy/).
+- 2026-10-28: own icon; own privacy policy (PRIVACY.md) and security contact;
+  removed the Bundesagentur fuer Arbeit job source.
 
 RolePebble is distributed under the same license, WITHOUT ANY WARRANTY; without
 even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR

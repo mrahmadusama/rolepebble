@@ -55,7 +55,7 @@ describe("DownloadPdfButton", () => {
       "fetch",
       vi.fn(async () =>
         new Response(new Blob(["{}"]), {
-          headers: { "content-disposition": "attachment; filename*=UTF-8''Jane%20%E2%80%93%20Dossier.json" },
+          headers: { "content-disposition": "attachment; filename*=UTF-8''Jane%20%E2%80%93%20RolePebble.json" },
         }),
       ),
     );

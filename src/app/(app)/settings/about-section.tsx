@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { OPERATOR_NAME, SUPPORT_EMAIL } from "@/lib/operator";
 import { REPOSITORY_URL, UPSTREAM_URL } from "@/lib/releases";
 
 import { SettingsSectionIntro } from "./settings-screen";
@@ -9,7 +10,7 @@ const LINK = "font-medium text-ink underline underline-offset-2";
 
 /**
  * Settings → About (E10-9, SET-12): facts about this install, where its
- * source code is (AGPL section 13), and the credit to Dossier.
+ * source code is (AGPL section 13), the credit to Dossier, and who runs it.
  */
 export function AboutSection({ facts }: { facts: AboutFacts }) {
   return (
@@ -26,15 +27,22 @@ export function AboutSection({ facts }: { facts: AboutFacts }) {
         </dl>
       </Card>
       <p className="text-meta text-muted">
-        RolePebble is built on{" "}
+        Built on{" "}
         <a href={UPSTREAM_URL} target="_blank" rel="noopener noreferrer" className={LINK}>
           Dossier <span className="sr-only">(opens in a new tab)</span>
         </a>{" "}
-        by AienTech. You can get, change and share its{" "}
+        by AienTech. You can get, change and share RolePebble&apos;s{" "}
         <a href={REPOSITORY_URL} target="_blank" rel="noopener noreferrer" className={LINK}>
           source code <span className="sr-only">(opens in a new tab)</span>
         </a>{" "}
         under the GNU Affero General Public License, version 3.
+      </p>
+      <p className="text-meta text-muted">
+        RolePebble is run by {OPERATOR_NAME}, not by the Dossier project. For help, privacy requests or a security problem, write to{" "}
+        <a href={`mailto:${SUPPORT_EMAIL}`} className={LINK}>
+          {SUPPORT_EMAIL}
+        </a>
+        .
       </p>
     </>
   );

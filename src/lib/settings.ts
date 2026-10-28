@@ -153,8 +153,6 @@ export const settingsSchema = z.object({
   jsearchHost: z.enum(JSEARCH_HOSTS).catch("openwebninja"),
   adzunaAppId: z.string().nullable().catch(null),
   adzunaKeyEnc: z.string().nullable().catch(null),
-  /** When "I understand" was ticked under the Bundesagentur für Arbeit's note (#223); its searches wait for it. */
-  arbeitsagenturAcceptedAt: z.iso.datetime().nullable().catch(null),
   // Job agent (E16): one search, run once a day. Off until it's turned on.
   // It asks the source in Settings → Job search, with its key.
   agentEnabled: flag(false),
@@ -244,6 +242,9 @@ export function settingsFromRows(rows: readonly { key: string; value: string }[]
   // Up to 1.7, the limit was "Keep resumes to one page" (onePage), and off meant no limit. Databases and export files may still have it.
   if (values.pageLimit === undefined && values.onePage === "false") values.pageLimit = "none";
   if (values.pageLimit === undefined && values.onePage === "true") values.pageLimit = "1";
+  // The Bundesagentur für Arbeit was a job source until RolePebble removed it. A choice of it saved
+  // before then means Off, not "not set", so DOSSIER_JOBS_SOURCE doesn't choose another one instead.
+  if (values.jobSource === "ARBEITSAGENTUR") values.jobSource = "OFF";
   return settingsSchema.parse(values);
 }
 

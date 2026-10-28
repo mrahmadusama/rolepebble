@@ -1,11 +1,11 @@
 import "server-only";
 
-import { AgentCandidateStatus, JobStatus } from "@/generated/prisma/enums";
+import { AgentCandidateStatus, JobStatus, type PostingSource } from "@/generated/prisma/enums";
 import { formatDateTime } from "@/lib/dates";
 import { loadJobSearchConfig } from "@/lib/job-search/config";
 import { countryName } from "@/lib/job-search/countries";
 import { describeSearch, postedAgo, type JobSource } from "@/lib/job-search/search";
-import { SOURCE_INFO } from "@/lib/job-search/sources";
+import { SOURCE_INFO, sourceName } from "@/lib/job-search/sources";
 import { prisma } from "@/lib/prisma";
 import { loadSettings } from "@/lib/settings-data";
 import { lastKnownTimeZone } from "@/lib/time-zone";
@@ -26,7 +26,7 @@ export type AgentCandidateView = {
   facts: string;
   /** "Posted 2 days ago · via LinkedIn on JSearch". */
   origin: string;
-  source: JobSource;
+  source: PostingSource;
   url: string;
   score: number;
   reasons: string[];
@@ -115,7 +115,7 @@ export async function loadAgentView(now = new Date()): Promise<AgentView> {
     facts: [candidate.place, candidate.remote ? "Remote" : "", candidate.salary].filter(Boolean).join(" · "),
     origin: [
       candidate.postedAt ? `Posted ${posted(postedAgo(candidate.postedAt.toISOString(), now))}` : "",
-      [candidate.via ? `via ${candidate.via}` : "", `on ${SOURCE_INFO[candidate.source].name}`].filter(Boolean).join(" "),
+      [candidate.via ? `via ${candidate.via}` : "", `on ${sourceName(candidate.source)}`].filter(Boolean).join(" "),
     ]
       .filter(Boolean)
       .join(" · "),

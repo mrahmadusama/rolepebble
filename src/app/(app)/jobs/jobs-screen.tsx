@@ -4,9 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 
-import { ArbeitsagenturNote } from "@/components/arbeitsagentur-note";
 import { PageHeader } from "@/components/page-header";
-import { toast, toastResult } from "@/components/toast";
+import { toast } from "@/components/toast";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { Country } from "@/lib/job-search/countries";
@@ -24,7 +23,7 @@ import {
 } from "@/lib/job-search/search";
 import { SOURCE_INFO } from "@/lib/job-search/sources";
 
-import { acceptArbeitsagenturNote, runJobSearch } from "./actions";
+import { runJobSearch } from "./actions";
 import { PastSearches } from "./past-searches";
 import { PostingResults } from "./posting-results";
 import { RemoteOnlyField, SearchFields, uncoveredCountry } from "./search-fields";
@@ -32,8 +31,6 @@ import { RemoteOnlyField, SearchFields, uncoveredCountry } from "./search-fields
 export type JobsScreenProps = {
   /** The source chosen in Settings; null while job search is off. */
   source: JobSource | null;
-  /** The Bundesagentur für Arbeit is chosen, but its note isn't accepted yet: it isn't searched until then (#223). */
-  arbeitsagenturNote?: boolean;
   /** Score opens a Claude chat, which scores through the connector (#221). */
   scoreInClaude?: boolean;
   /** Every country by name, named on the server. */
@@ -61,7 +58,6 @@ const SETTINGS_HREF = "/settings?section=jobs";
 /** Find jobs (E14-6, E14-7, E14-10): the search form and a kept search's postings, past searches, or the postings kept from them. */
 export function JobsScreen({
   source,
-  arbeitsagenturNote = false,
   scoreInClaude = false,
   countries,
   view,
@@ -124,19 +120,9 @@ export function JobsScreen({
       router.push(searchRunHref(result.data.id), { scroll: false });
     });
 
-  const acceptArbeitsagentur = async () => {
-    const result = toastResult(await acceptArbeitsagenturNote({}));
-    if (result.ok) {
-      setFailed(null);
-      router.refresh();
-    }
-    return result.ok;
-  };
-
   return (
     <>
       {header}
-      {arbeitsagenturNote && <ArbeitsagenturNote accepted={false} onAccept={acceptArbeitsagentur} className="mx-10 mb-5 max-w-[760px]" />}
       <SearchForm source={source} countries={countries} query={query} pending={pending} onSearch={run} />
       {/* Announces each new set of results; the list itself is replaced. */}
       <p role="status" className="sr-only">

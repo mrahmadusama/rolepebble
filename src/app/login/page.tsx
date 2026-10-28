@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
 import { getSession } from "@/lib/auth/session";
+import { OPERATOR_NAME, SUPPORT_EMAIL } from "@/lib/operator";
+import { UPSTREAM_URL } from "@/lib/releases";
 
 import { LoginForm } from "./login-form";
 
@@ -30,6 +32,17 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           Your password is set on the server, as a hash in{" "}
           <code className="font-mono text-label">DOSSIER_PASSWORD</code>. Forgot it? Make a new hash with{" "}
           <code className="font-mono text-label">hash-password</code> and restart.
+        </p>
+        <p className="text-meta leading-[1.6] text-pretty text-muted">
+          Run by {OPERATOR_NAME}, not by the Dossier project. Help:{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-ink underline underline-offset-2">
+            {SUPPORT_EMAIL}
+          </a>
+          . Built on{" "}
+          <a href={UPSTREAM_URL} className="font-medium text-ink underline underline-offset-2">
+            Dossier
+          </a>{" "}
+          by AienTech.
         </p>
       </div>
       </div>
