@@ -3,14 +3,12 @@ import Link from "next/link";
 
 import { BrandMark } from "@/components/brand-mark";
 import { signOut } from "@/lib/auth/actions";
-import type { Release } from "@/lib/releases";
 import type { ColorScheme } from "@/lib/ui-preferences";
 
 import { NavLinks } from "./nav-links";
 import { RepositoryLink } from "./repository-link";
 import { SidebarFrame } from "./sidebar-frame";
 import { ThemeToggle } from "./theme-toggle";
-import { UpdateNotice } from "./update-notice";
 
 /** Up to two initials for the avatar, e.g. "Jane Doe" → "JD". */
 function initials(name: string): string {
@@ -19,20 +17,17 @@ function initials(name: string): string {
 }
 
 /**
- * The signed-in sidebar: brand header, "+ New application", navigation, a
- * notice while a newer release is out, the theme switch and a link to the
- * repository, and the account footer.
+ * The signed-in sidebar: brand header, "+ New application", navigation, the
+ * theme switch and a link to the source code, and the account footer.
  */
 export function Sidebar({
   userName,
-  update,
   currentVersion,
   collapsed,
   colorScheme,
   counts,
 }: {
   userName: string;
-  update: Release | null;
   currentVersion: string;
   /** Collapsed to its icons, as last left. */
   collapsed: boolean;
@@ -48,8 +43,8 @@ export function Sidebar({
         <>
           <BrandMark />
           <div className="flex min-w-0 flex-col group-data-collapsed/sidebar:hidden">
-            <span className="font-serif text-2xl leading-none font-medium tracking-[-0.01em]">Dossier</span>
-            <span className="truncate text-xs text-muted">Your job search, on your server</span>
+            <span className="font-serif text-2xl leading-none font-medium tracking-[-0.01em]">RolePebble</span>
+            <span className="truncate text-xs text-muted">Every application, tailored</span>
           </div>
         </>
       }
@@ -69,12 +64,6 @@ export function Sidebar({
         <NavLinks counts={counts} />
       </div>
 
-      {update && (
-        <div className="px-2 pb-2 group-data-collapsed/sidebar:px-1">
-          <UpdateNotice release={update} currentVersion={currentVersion} />
-        </div>
-      )}
-
       <div className="flex flex-col gap-0.5 border-t border-line p-2 group-data-collapsed/sidebar:px-1">
         <ThemeToggle serverScheme={colorScheme} />
         <RepositoryLink />
@@ -90,7 +79,7 @@ export function Sidebar({
         </span>
         <span className="flex min-w-0 flex-1 flex-col group-data-collapsed/sidebar:hidden">
           <span className="truncate text-xs font-medium">{userName}</span>
-          <span className="truncate text-[11px] text-muted">Self-hosted · v{currentVersion}</span>
+          <span className="truncate text-[11px] text-muted">Beta · v{currentVersion}</span>
         </span>
         <form action={signOut}>
           <button

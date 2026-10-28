@@ -79,7 +79,7 @@ const setDate = async (iso: string | null) => {
   return syncInterviewToCalendar("nw");
 };
 
-describe("Dossier to Google", () => {
+describe("RolePebble to Google", () => {
   it("adds the interview, moves it keeping its length, and deletes it with the date", async () => {
     expect(await scheduleInterview("nw", new Date("2026-10-22T11:00:00Z"))).toEqual({ inCalendar: true, eventLink: "https://calendar.google.com/event?eid=ev1" });
     expect(await application()).toMatchObject({ interviewEventId: "ev1", interviewCalendarId: "primary" });
@@ -126,7 +126,7 @@ describe("Dossier to Google", () => {
   });
 });
 
-describe("Google to Dossier", () => {
+describe("Google to RolePebble", () => {
   it("follows an event moved in Google, and drops the date when it's deleted", async () => {
     await scheduleInterview("nw", new Date("2026-10-22T11:00:00Z"));
     expect(await pullInterviewEvents()).toBe(0);

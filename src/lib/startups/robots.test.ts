@@ -4,7 +4,7 @@ import { clearRobotsCache, robotsAllowed } from "./robots";
 
 const site = vi.hoisted(() => ({ answer: { ok: false, error: "x" } as { ok: true; html: string; url: string } | { ok: false; error: string; status?: number }, asked: 0 }));
 vi.mock("./http", () => ({
-  ROBOTS_TOKEN: "dossier",
+  ROBOTS_TOKEN: "rolepebble",
   getSitePage: async () => {
     site.asked += 1;
     return site.answer;
@@ -17,8 +17,8 @@ afterEach(() => {
 });
 
 describe("following a startup's robots.txt (#222)", () => {
-  it("follows its rules for Dossier, and asks once a day", async () => {
-    site.answer = { ok: true, html: "User-agent: Dossier\nDisallow: /team", url: "https://acme.com/robots.txt" };
+  it("follows its rules for RolePebble, and asks once a day", async () => {
+    site.answer = { ok: true, html: "User-agent: RolePebble\nDisallow: /team", url: "https://acme.com/robots.txt" };
     expect(await robotsAllowed("https://acme.com/team")).toBe(false);
     expect(await robotsAllowed("https://acme.com/careers?x=1")).toBe(true);
     expect(site.asked).toBe(1);

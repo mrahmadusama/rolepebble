@@ -123,7 +123,7 @@ describe("the dashboard's calendar (E15-6)", () => {
     expect(screen.getByText(/Connect Google Calendar in Settings → Google/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Settings → Google" })).toHaveAttribute("href", "/settings?section=google");
     rerender(<CalendarCard {...props} source={{ status: "no-permission" }} />);
-    expect(screen.getByText(/Dossier may not use your calendar yet/)).toBeInTheDocument();
+    expect(screen.getByText(/RolePebble may not use your calendar yet/)).toBeInTheDocument();
     rerender(<CalendarCard {...props} source={{ status: "failed", message: "Google had a problem with that." }} />);
     expect(screen.getByText("Your Google Calendar didn't load: Google had a problem with that.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Settings → Google" })).not.toBeInTheDocument();

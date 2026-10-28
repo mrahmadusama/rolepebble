@@ -99,7 +99,7 @@ export async function sendReply(emailId: string, body: string): Promise<{ applic
   const account = await loadGoogleAccount();
   if (!account) throw new GoogleError("not-connected", "Connect your Google account in Settings → Google first.");
   const email = await prisma.emailMessage.findUnique({ where: { id: emailId } });
-  if (!email) throw new GoogleError("unavailable", "That email is no longer in Dossier.");
+  if (!email) throw new GoogleError("unavailable", "That email is no longer in RolePebble.");
   if (!body.trim()) throw new GoogleError("unavailable", "Write the answer first.");
   if (/\[…\]|\[\.\.\.\]/.test(body)) throw new GoogleError("unavailable", "Fill in the parts marked […] first.");
 

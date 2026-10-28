@@ -41,7 +41,7 @@ export function jobSearchError(problem: JobSearchProblem, source: JobSource, { c
   const { name, quotaPeriod } = SOURCE_INFO[source];
   const message = {
     off: `${name} isn't offered on this server. Choose another source in Settings → Job search.`,
-    "not-accepted": `Read the note about ${name} and tick “I understand” before Dossier searches it.`,
+    "not-accepted": `Read the note about ${name} and tick “I understand” before RolePebble searches it.`,
     "no-key": `Add your ${name} ${source === "ADZUNA" ? "app ID and key" : "key"} in Settings → Job search first.`,
     key: `${name} didn't accept your key. Check it in Settings → Job search.`,
     quota: quotaPeriod
@@ -52,7 +52,7 @@ export function jobSearchError(problem: JobSearchProblem, source: JobSource, { c
     changed:
       source === "ARBEITSAGENTUR"
         ? "The Arbeitsagentur's job search has changed or isn't answering. Try another source in Settings → Job search."
-        : `${name} answered in a way Dossier doesn't understand; its service may have changed. Try again later.`,
+        : `${name} answered in a way RolePebble doesn't understand; its service may have changed. Try again later.`,
   }[problem];
   return new JobSearchError(problem, message, detail ? `${source}: ${detail}` : undefined);
 }

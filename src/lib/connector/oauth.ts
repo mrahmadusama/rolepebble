@@ -196,6 +196,6 @@ export function protectedResourceMetadata(origin: string) {
     authorization_servers: [origin],
     scopes_supported: [SCOPE],
     bearer_methods_supported: ["header"],
-    resource_name: "Dossier",
+    resource_name: "RolePebble",
   };
 }

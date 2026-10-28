@@ -176,7 +176,9 @@ export const settingsSchema = z.object({
   // to the install, not its data, so exports leave them out (INSTALL_SETTINGS).
   startupsViewedAt: z.iso.datetime().nullable().catch(null),
   startupsLastRefresh: json(startupsRefreshSchema).nullable().catch(null),
-  /** "Check for updates daily" in Settings → About (update-check.ts). */
+  // Dossier's update check and usage ping, which RolePebble removed. Their
+  // rows may still be in a database that ran Dossier, so the keys stay known,
+  // and exports keep leaving them out (INSTALL_SETTINGS).
   updateCheck: flag(true),
   // The newest release the update check has seen, the UTC day it last
   // asked, and the release "Not now" hid the sidebar notice for. They belong

@@ -101,7 +101,7 @@ describe("the Bundesagentur für Arbeit (#223)", () => {
     const waiting = resolveJobSearchConfig(chosen, noEnv);
     expect(waiting).toMatchObject({ source: "ARBEITSAGENTUR", arbeitsagentur: { offered: true, acceptedAt: null } });
     expect(() => credentialsFor(waiting, "ARBEITSAGENTUR")).toThrow(
-      expect.objectContaining({ problem: "not-accepted", message: "Read the note about Bundesagentur für Arbeit and tick “I understand” before Dossier searches it." }),
+      expect.objectContaining({ problem: "not-accepted", message: "Read the note about Bundesagentur für Arbeit and tick “I understand” before RolePebble searches it." }),
     );
     const accepted = resolveJobSearchConfig({ ...chosen, arbeitsagenturAcceptedAt: ACCEPTED }, noEnv);
     expect(credentialsFor(accepted, "ARBEITSAGENTUR")).toEqual({});

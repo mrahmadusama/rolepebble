@@ -36,12 +36,12 @@ function promptFor(kind: Handoff, ref: string, about: string): string {
   const what = about ? `the job posting ${ref} (${about})` : `the job posting ${ref}`;
   if (kind === "score") {
     return (
-      `Using my Dossier connector: score how well ${what} fits my profile. ` +
+      `Using my RolePebble connector: score how well ${what} fits my profile. ` +
       "Read it with get_posting and my profile with get_profile, give a score from 0 to 100 with the reasons and any red flags, and save it with save_job_scores."
     );
   }
   return (
-    `Using my Dossier connector: write a tailored resume and cover letter for ${what}. ` +
+    `Using my RolePebble connector: write a tailored resume and cover letter for ${what}. ` +
     "Read it with get_posting and my profile with get_profile. Use only facts from my profile and tell me about any gaps. " +
     "Show me a short summary and the fit, then save it with save_application."
   );

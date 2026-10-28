@@ -200,7 +200,7 @@ describe("managing themes (E5-7)", () => {
     expect(screen.getByRole("button", { name: "Shared theme, in use" })).toBeInTheDocument();
 
     await user.upload(input, new File(["{\"hello\":1}"], "other.json", { type: "application/json" }));
-    expect(toast).toHaveBeenCalledWith("That file isn't a Dossier theme.");
+    expect(toast).toHaveBeenCalledWith("That file isn't a RolePebble theme.");
     expect(importTheme).toHaveBeenCalledTimes(1);
   });
 });

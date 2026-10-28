@@ -61,7 +61,7 @@ const eventFor = (application: { id: string; company: string; role: string; titl
   return {
     applicationId: application.id,
     summary: `Interview · ${what || "application"}`,
-    description: `Added by Dossier for your application${application.company ? ` to ${application.company}` : ""}.`,
+    description: `Added by RolePebble for your application${application.company ? ` to ${application.company}` : ""}.`,
   };
 };
 

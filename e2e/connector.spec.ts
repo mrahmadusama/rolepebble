@@ -69,7 +69,7 @@ test("connects Claude through Settings and the consent page, serves its tools, a
   await page.route("https://claude.ai/**", (route) => route.fulfill({ status: 200, contentType: "text/plain", body: "Back in Claude" }));
   const query = new URLSearchParams({ response_type: "code", client_id: clientId, redirect_uri: CALLBACK, code_challenge: challenge, code_challenge_method: "S256", state: "xyz", resource: address });
   await page.goto(`/oauth/authorize?${query}`);
-  await expect(page.getByRole("heading", { name: "Connect Claude to Dossier" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Connect Claude to RolePebble" })).toBeVisible();
   await expect(page.getByText("It can never send an application or an email, or delete anything.", { exact: false })).toBeVisible();
   await expectAccessible(page);
   await page.getByRole("button", { name: "Allow" }).click();

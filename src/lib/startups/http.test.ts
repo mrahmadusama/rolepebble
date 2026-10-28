@@ -23,7 +23,7 @@ afterEach(() => {
 
 describe("Startups' requests (#222)", () => {
   it("say what they are, and link to the page explaining them", () => {
-    expect(STARTUPS_USER_AGENT).toMatch(/^Mozilla\/5\.0 \(compatible; Dossier\/[\w.-]+; \+https:\/\/github\.com\/AienTech\/dossier\/blob\/main\/PRIVACY\.md#startups\)$/);
+    expect(STARTUPS_USER_AGENT).toMatch(/^Mozilla\/5\.0 \(compatible; RolePebble\/[\w.-]+; \+https:\/\/github\.com\/mrahmadusama\/dossier\/blob\/main\/PRIVACY\.md#startups\)$/);
   });
 
   it("go to the fake server in the end-to-end tests", () => {
@@ -46,7 +46,7 @@ describe("Startups' requests (#222)", () => {
     await expect(getText("https://example.com/a", { signal: stopped.signal })).rejects.toThrow("was stopped");
   });
 
-  it("read a startup's page with Dossier's user agent, and give its real address back in the tests", async () => {
+  it("read a startup's page with RolePebble's user agent, and give its real address back in the tests", async () => {
     fetchHtml.mockResolvedValue({ ok: true, html: "<p>hi</p>", url: "https://acme.com/careers" });
     expect(await getSitePage("https://acme.com/careers")).toEqual({ ok: true, html: "<p>hi</p>", url: "https://acme.com/careers" });
     expect(fetchHtml).toHaveBeenCalledWith("https://acme.com/careers", { timeoutMs: undefined, userAgent: STARTUPS_USER_AGENT });

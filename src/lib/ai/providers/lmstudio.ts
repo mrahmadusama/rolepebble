@@ -14,7 +14,7 @@ export const LMSTUDIO_CONTEXT_TOKENS = 16_384;
 const THINKING_TOKENS = 4_096;
 
 export const LMSTUDIO_UNREACHABLE =
-  "Couldn't reach LM Studio. Check the address, that its server is running (Developer tab), and, with Dossier in Docker, that Serve on Local Network is on.";
+  "Couldn't reach LM Studio. Check the address, that its server is running (Developer tab), and, with RolePebble in Docker, that Serve on Local Network is on.";
 
 /** A model in LM Studio's own list (`GET /api/v1/models`, LM Studio 0.4 and later). */
 type LmStudioModel = {
@@ -96,7 +96,7 @@ export class LmStudioProvider extends OpenAICompatibleProvider {
       const smallest = Math.min(...instances.map((instance) => instance.config?.context_length ?? needed));
       if (smallest >= needed) return;
       throw AiError.config(
-        `LM Studio has “${model}” loaded with ${smallest.toLocaleString("en-US")} tokens of context, and Dossier needs ${needed.toLocaleString("en-US")}. Eject it in LM Studio and Dossier loads it again with enough, or load it yourself with a larger context length.`,
+        `LM Studio has “${model}” loaded with ${smallest.toLocaleString("en-US")} tokens of context, and RolePebble needs ${needed.toLocaleString("en-US")}. Eject it in LM Studio and RolePebble loads it again with enough, or load it yourself with a larger context length.`,
       );
     }
 

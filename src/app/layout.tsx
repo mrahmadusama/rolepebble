@@ -9,8 +9,8 @@ import { COLOR_SCHEME_COOKIE, parseColorScheme } from "@/lib/ui-preferences";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Dossier", template: "%s · Dossier" },
-  description: "Your job search, on your server.",
+  title: { default: "RolePebble", template: "%s · RolePebble" },
+  description: "Every application, tailored: one profile, a resume and cover letter for each job, and every application tracked.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

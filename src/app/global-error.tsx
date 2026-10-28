@@ -10,9 +10,9 @@ export default function GlobalError(props: ErrorPageProps) {
   return (
     <html lang="en" className={`${fontVariables} h-full antialiased`}>
       <body className="min-h-full">
-        <title>Dossier didn&apos;t load</title>
+        <title>RolePebble didn&apos;t load</title>
         <main className="flex min-h-screen justify-center">
-          <ScreenError {...props} standalone title="Dossier didn't load" />
+          <ScreenError {...props} standalone title="RolePebble didn't load" />
         </main>
       </body>
     </html>

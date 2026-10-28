@@ -20,7 +20,7 @@ const handler = createMcpHandler(({ authInfo }) => createDossierServer(typeof au
 /** "Sign in first", with where Claude finds out how (RFC 9728). */
 function unauthorized(origin: string): Response {
   return Response.json(
-    { error: "invalid_token", error_description: "Connect Claude to Dossier first." },
+    { error: "invalid_token", error_description: "Connect Claude to RolePebble first." },
     { status: 401, headers: { "www-authenticate": `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource/api/mcp", scope="${SCOPE}"` } },
   );
 }
@@ -35,7 +35,7 @@ async function handle(request: Request): Promise<Response> {
     return await handler.fetch(request, { authInfo: { token: token!, clientId: access.clientId, scopes: [SCOPE], extra: { origin } } });
   } catch (error) {
     logServerError(`Claude connector ${mcpUrl(origin)}`, error);
-    return Response.json({ jsonrpc: "2.0", error: { code: -32603, message: "Dossier couldn't answer that." }, id: null }, { status: 500 });
+    return Response.json({ jsonrpc: "2.0", error: { code: -32603, message: "RolePebble couldn't answer that." }, id: null }, { status: 500 });
   }
 }
 

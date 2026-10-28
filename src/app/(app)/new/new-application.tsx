@@ -357,9 +357,9 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
             <>
               {writeInClaude ? (
                 <p role="note" className="rounded-card border border-line-card bg-card px-4 py-3 text-meta text-muted">
-                  Dossier has no AI model of its own, so Claude writes this one: <strong className="text-ink">Write it with Claude</strong> opens a
-                  chat in Claude that uses your Claude plan and the Dossier connector, and saves the resume and cover letter here as a Draft. To
-                  have Dossier write it instead,{" "}
+                  RolePebble has no AI model of its own, so Claude writes this one: <strong className="text-ink">Write it with Claude</strong> opens a
+                  chat in Claude that uses your Claude plan and the RolePebble connector, and saves the resume and cover letter here as a Draft. To
+                  have RolePebble write it instead,{" "}
                   <Link href="/settings?section=ai" className="font-medium text-ink underline underline-offset-2">
                     choose a model in Settings → AI provider
                   </Link>

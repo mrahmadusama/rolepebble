@@ -72,15 +72,6 @@ const schema = z.object({
         error: "DOSSIER_BACKUP_RETENTION_DAYS must be at least 1.",
       }),
     ),
-  // The daily usage ping (usage-ping.ts): unset, Dossier asks after
-  // sign-in and sends nothing before a yes; on or off answers for good.
-  DOSSIER_TELEMETRY: optional(
-    z
-      .string()
-      .trim()
-      .toLowerCase()
-      .pipe(z.enum(["on", "off"], { error: (issue) => `DOSSIER_TELEMETRY must be on or off (got "${String(issue.input)}").` })),
-  ),
   DOSSIER_AI_PROVIDER: optional(
     z.enum(AI_PROVIDERS, {
       error: (issue) =>
@@ -152,16 +143,6 @@ const schema = z.object({
   DOSSIER_GOOGLE_TEST_BASE_URL: optional(
     z.url({ protocol: /^https?$/, error: "DOSSIER_GOOGLE_TEST_BASE_URL must be an http:// or https:// URL." }),
   ),
-  // For the end-to-end tests only: sends the usage ping to <url> instead of
-  // the project's receiver (e2e/fake-jobs.mts answers).
-  DOSSIER_USAGE_PING_TEST_URL: optional(
-    z.url({ protocol: /^https?$/, error: "DOSSIER_USAGE_PING_TEST_URL must be an http:// or https:// URL." }),
-  ),
-  // For the end-to-end tests only: asks <url> for the latest release instead
-  // of GitHub's API (e2e/fake-jobs.mts answers).
-  DOSSIER_UPDATES_TEST_BASE_URL: optional(
-    z.url({ protocol: /^https?$/, error: "DOSSIER_UPDATES_TEST_BASE_URL must be an http:// or https:// URL." }),
-  ),
 }).check((context) => {
   if (context.value.DOSSIER_JOBS_SOURCE === "arbeitsagentur" && context.value.DOSSIER_JOBS_ARBEITSAGENTUR === "off") {
     context.issues.push({
@@ -214,7 +195,7 @@ export function checkEnvOnStartup(): void {
   } catch (error) {
     if (!(error instanceof EnvError)) throw error;
     for (const problem of error.problems) {
-      console.error(`Dossier can't start: ${problem}`);
+      console.error(`RolePebble can't start: ${problem}`);
     }
     process.exit(1);
   }

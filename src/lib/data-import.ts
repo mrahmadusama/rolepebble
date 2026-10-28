@@ -17,18 +17,18 @@ export function parseExport(text: string): { ok: true; data: DossierExport } | {
   try {
     json = JSON.parse(text);
   } catch {
-    return { ok: false, error: "That file isn't a Dossier export: it isn't JSON." };
+    return { ok: false, error: "That file isn't a RolePebble export: it isn't JSON." };
   }
   const header = json as { format?: unknown; schemaVersion?: unknown };
   if (typeof json !== "object" || json === null || header.format !== EXPORT_FORMAT) {
-    return { ok: false, error: "That file isn't a Dossier export." };
+    return { ok: false, error: "That file isn't a RolePebble export." };
   }
   if (typeof header.schemaVersion !== "number") return { ok: false, error: "That export has no schema version, so it can't be read." };
   if (header.schemaVersion > EXPORT_SCHEMA_VERSION) {
-    return { ok: false, error: `That export comes from a newer version of Dossier (schema ${header.schemaVersion}). Update this server first.` };
+    return { ok: false, error: `That export comes from a newer version of RolePebble (schema ${header.schemaVersion}). Update this server first.` };
   }
   if (!EXPORT_SCHEMA_VERSIONS.includes(header.schemaVersion)) {
-    return { ok: false, error: `That export's schema version (${header.schemaVersion}) isn't one this version of Dossier can read.` };
+    return { ok: false, error: `That export's schema version (${header.schemaVersion}) isn't one this version of RolePebble can read.` };
   }
   const parsed = exportSchema.safeParse(json);
   if (!parsed.success) {

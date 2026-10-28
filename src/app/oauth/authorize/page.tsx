@@ -23,7 +23,7 @@ export default async function AuthorizePage({ searchParams }: PageProps<"/oauth/
       <div className="flex w-full max-w-[460px] flex-col gap-6">
         <div className="flex items-center gap-3">
           <BrandMark className="size-10" />
-          <h1 className="font-serif text-[26px] font-medium tracking-[-0.01em]">Connect Claude to Dossier</h1>
+          <h1 className="font-serif text-[26px] font-medium tracking-[-0.01em]">Connect Claude to RolePebble</h1>
         </div>
         {"error" in checked ? (
           <p role="alert" className="rounded-control bg-danger-surface px-3 py-2 text-sm text-error">
@@ -33,7 +33,7 @@ export default async function AuthorizePage({ searchParams }: PageProps<"/oauth/
           <>
             <div className="flex flex-col gap-3 text-sm leading-[1.6] text-pretty">
               <p>
-                <strong>{checked.clientName}</strong> wants to use your Dossier. Once you allow it, Claude can:
+                <strong>{checked.clientName}</strong> wants to use your RolePebble. Once you allow it, Claude can:
               </p>
               <ul className="list-disc pl-5 text-muted">
                 <li>search for jobs with your job source, and score postings against your profile</li>
@@ -41,7 +41,7 @@ export default async function AuthorizePage({ searchParams }: PageProps<"/oauth/
                 <li>save applications it writes for you as drafts, and change their status</li>
               </ul>
               <p className="text-muted">
-                It can never send an application or an email, or delete anything. Allow it only if you&apos;ve just added Dossier as a
+                It can never send an application or an email, or delete anything. Allow it only if you&apos;ve just added RolePebble as a
                 connector in Claude yourself: it sends you back to{" "}
                 <strong className="text-ink">{new URL(checked.redirectUri).host}</strong>. Disconnect Claude in Settings → Claude connector at
                 any time.

@@ -18,7 +18,7 @@ const all = [northwind, ledgerly, draft];
 const mail = (extra: Partial<Parameters<typeof matchMail>[0]>) => ({ threadId: "t-new", fromName: "", fromAddress: "", subject: "", ...extra });
 
 describe("matchMail", () => {
-  it("matches a thread Dossier sent first", () => {
+  it("matches a thread RolePebble sent first", () => {
     expect(matchMail(mail({ threadId: "t1", fromAddress: "someone@gmail.com" }), all, new Map([["t1", "lg"]]))).toEqual({ applicationId: "lg", by: "thread" });
   });
 

@@ -1,3 +1,5 @@
+> **RolePebble** is a modified version of [Dossier](https://github.com/AienTech/dossier) by AienTech, under the same [AGPL-3.0](LICENSE) license. See [NOTICE](NOTICE) for what's changed. The rest of this README is Dossier's own and still describes it.
+
 <p align="center">
   <img src="src/app/icon.svg" alt="" width="80" height="80">
 </p>

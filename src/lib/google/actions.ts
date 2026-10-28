@@ -141,7 +141,7 @@ export const startDraftingReply = action(
   z.object({ emailId: z.string().min(1), note: z.string().max(2000).default(""), slots: z.array(z.iso.datetime({ offset: true })).max(8).nullable().default(null) }),
   async ({ emailId, note, slots }) => {
     const email = await prisma.emailMessage.findUnique({ where: { id: emailId }, select: { applicationId: true } });
-    if (!email) throw new ActionError("That email is no longer in Dossier.");
+    if (!email) throw new ActionError("That email is no longer in RolePebble.");
     if (!(await isAiConfigured())) throw new ActionError("That needs an AI provider. Choose one in Settings → AI provider.");
     const [running] = await findUnfinishedJobs(replyJobKey(emailId));
     // Linked to its application, so deleting that deletes the job too.
@@ -152,7 +152,7 @@ export const startDraftingReply = action(
 /** Saves the answer as edited by hand. */
 export const saveReplyDraft = action(z.object({ emailId: z.string().min(1), body: z.string().max(20_000) }), async ({ emailId, body }) => {
   const { count } = await prisma.emailMessage.updateMany({ where: { id: emailId }, data: { replyDraft: body } });
-  if (count === 0) throw new ActionError("That email is no longer in Dossier.");
+  if (count === 0) throw new ActionError("That email is no longer in RolePebble.");
   return null;
 });
 
@@ -174,7 +174,7 @@ export const markHandled = action(z.object({ emailId: z.string().min(1), handled
 /** Links a mail to an application ("Needs a look"), with the rest of its thread. Null unlinks. */
 export const linkEmail = action(z.object({ emailId: z.string().min(1), applicationId: z.string().min(1).nullable() }), async ({ emailId, applicationId }, { toast }) => {
   const email = await prisma.emailMessage.findUnique({ where: { id: emailId }, select: { threadId: true } });
-  if (!email) throw new ActionError("That email is no longer in Dossier.");
+  if (!email) throw new ActionError("That email is no longer in RolePebble.");
   if (applicationId && !(await prisma.application.count({ where: { id: applicationId } }))) throw new ActionError("That application no longer exists.");
   // Mail dismissed before has nothing left to show, so it stays dismissed.
   await prisma.emailMessage.updateMany({ where: { threadId: email.threadId, dismissedAt: null }, data: { applicationId } });
@@ -227,7 +227,7 @@ export const rereadEmail = action(z.object({ emailId: z.string().min(1) }), asyn
 /** Takes up a reply's suggested status (or turns it down), through the status module. */
 export const applySuggestedStatus = action(z.object({ emailId: z.string().min(1), accept: z.boolean() }), async ({ emailId, accept }, { toast }) => {
   const email = await prisma.emailMessage.findUnique({ where: { id: emailId }, select: { applicationId: true, suggestedStatus: true } });
-  if (!email) throw new ActionError("That email is no longer in Dossier.");
+  if (!email) throw new ActionError("That email is no longer in RolePebble.");
   await prisma.emailMessage.update({ where: { id: emailId }, data: { suggestedStatus: null } });
   if (!accept || !email.applicationId || !email.suggestedStatus) return { eventId: null };
   const result = await applyStatusChange(prisma, email.applicationId, email.suggestedStatus);

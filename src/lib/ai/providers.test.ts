@@ -371,7 +371,7 @@ describe("LmStudioProvider", () => {
     ]);
     await make("roomy/model").complete(ask);
     const error = await failure(make("tight/model").complete(ask));
-    expect(error).toMatchObject({ kind: "config", message: expect.stringContaining("loaded with 4,096 tokens of context, and Dossier needs 16,384") });
+    expect(error).toMatchObject({ kind: "config", message: expect.stringContaining("loaded with 4,096 tokens of context, and RolePebble needs 16,384") });
     expect(requests.some((request) => request.url.pathname === "/api/v1/models/load")).toBe(false);
     expect(requests.filter((request) => request.url.pathname === "/v1/chat/completions")).toHaveLength(1);
   });

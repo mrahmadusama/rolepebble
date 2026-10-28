@@ -95,7 +95,7 @@ describe("JobSearchSection", () => {
     render(<JobSearchSection initial={off} />);
     await userEvent.click(screen.getByRole("radio", { name: "Bundesagentur für Arbeit" }));
     expect(saveJobSource).not.toHaveBeenCalled();
-    expect(screen.getByText(/has no official API\. Dossier searches it through the access its own job search uses, without its permission/)).toBeInTheDocument();
+    expect(screen.getByText(/has no official API\. RolePebble searches it through the access its own job search uses, without its permission/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /The BA's terms of use/ })).toHaveAttribute("href", "https://www.arbeitsagentur.de/datei/nutzungsbedingungen_ba036575.pdf");
     expect(screen.queryByRole("button", { name: "Test connection" })).not.toBeInTheDocument();
 

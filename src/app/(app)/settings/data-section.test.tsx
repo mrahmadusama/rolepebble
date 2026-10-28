@@ -113,11 +113,11 @@ describe("Import (E10-6)", () => {
 
   it("shows why a file can't be imported", async () => {
     const user = userEvent.setup();
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ error: "That file isn't a Dossier export." }, { status: 400 })));
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ error: "That file isn't a RolePebble export." }, { status: 400 })));
     try {
       const { container } = render(<DataSection jobRetentionHours={24} hasApiKey={false} exportName="x.json" backups={backups} />);
       await user.upload(container.querySelector("input[type=file]")!, file);
-      expect(toast).toHaveBeenLastCalledWith("That file isn't a Dossier export.");
+      expect(toast).toHaveBeenLastCalledWith("That file isn't a RolePebble export.");
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     } finally {
       vi.unstubAllGlobals();

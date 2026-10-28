@@ -17,7 +17,6 @@ import { JobSearchError, testSource } from "@/lib/job-search";
 import { credentialsFor, jobSearchView, loadJobSearchConfig, requestContext } from "@/lib/job-search/config";
 import { JOB_SOURCES, JSEARCH_HOSTS } from "@/lib/job-search/search";
 import { cancelJob, startJob } from "@/lib/jobs/runner";
-import { checkForUpdate } from "@/lib/update-check";
 import { countTailoredDocuments, deleteAllDownloads, zipPdfsJob } from "@/lib/jobs/zip-pdfs";
 import { disconnectGoogle } from "@/lib/google/account";
 import { prisma } from "@/lib/prisma";
@@ -196,7 +195,6 @@ export const updateSettings = action(
     pageLimit: z.enum(["1", "2", "none"]).optional(),
     nightlyBackup: z.boolean().optional(),
     jobRetentionHours: z.number().refine(isJobRetention).optional(),
-    updateCheck: z.boolean().optional(),
   }),
   async (changes) => {
     await saveSettings(changes);
@@ -275,13 +273,6 @@ export const deleteEverything = action(z.object({ confirm: z.literal("DELETE") }
   redirect("/");
 });
 
-/** "Check for updates" (E10-9): the latest release, asked for now, and kept for the sidebar's notice. */
-export const checkUpdates = action(z.object({}), async () => {
-  const result = await checkForUpdate();
-  revalidatePath("/", "layout");
-  return result.status === "newer" ? result : { status: result.status };
-});
-
 // Settings → Claude connector (#221). Every connector token carries
 // connectorEnabledAt, so a new value signs Claude out.
 
@@ -295,6 +286,6 @@ export const setConnector = action(z.object({ on: z.boolean() }), async ({ on })
 export const disconnectClaude = action(z.object({}), async (_input, { toast }) => {
   if (!(await loadSettings()).connectorEnabledAt) throw new ActionError("The Claude connector is off already.");
   await saveSettings({ connectorEnabledAt: new Date().toISOString() });
-  toast("Claude is disconnected. Connect it again from Claude to use Dossier there.");
+  toast("Claude is disconnected. Connect it again from Claude to use RolePebble there.");
   return null;
 });
