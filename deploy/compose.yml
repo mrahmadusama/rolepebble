@@ -1,0 +1,99 @@
+# Dossier on job.mrahmadusama.com: PostgreSQL, the app, and Caddy in front for
+# HTTPS (see deploy/README.md). The app runs dossier:local: the published
+# image tagged under that name, or one built from this repository with
+# `docker compose build app` (the published image is x86 only).
+#
+# From the deploy folder, with a .env next to this file (copy env.example):
+#
+#   docker compose up -d
+#
+# COMPOSE_PROFILES=tunnel in .env runs a Cloudflare Tunnel instead of Caddy,
+# for a server with no public ports (a home machine).
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dossier
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: dossier
+    volumes:
+      # Postgres 18+ keeps data in a versioned subdirectory, so mount the parent.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dossier -d dossier"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: ..
+      target: production
+    image: dossier:local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://dossier:${POSTGRES_PASSWORD}@db:5432/dossier
+      DOSSIER_PASSWORD: ${DOSSIER_PASSWORD:?Set DOSSIER_PASSWORD in .env to a hash from hash-password}
+      DOSSIER_SECRET: ${DOSSIER_SECRET:?Set DOSSIER_SECRET in .env}
+      DOSSIER_PUBLIC_URL: https://${DOSSIER_DOMAIN:?Set DOSSIER_DOMAIN in .env}
+      DOSSIER_BACKUP_RETENTION_DAYS: ${DOSSIER_BACKUP_RETENTION_DAYS:-}
+      TZ: ${TZ:-}
+      DOSSIER_AI_PROVIDER: ${DOSSIER_AI_PROVIDER:-}
+      DOSSIER_AI_URL: ${DOSSIER_AI_URL:-}
+      DOSSIER_AI_MODEL: ${DOSSIER_AI_MODEL:-}
+      DOSSIER_AI_KEY: ${DOSSIER_AI_KEY:-}
+      DOSSIER_AI_TIMEOUT_SECONDS: ${DOSSIER_AI_TIMEOUT_SECONDS:-}
+      DOSSIER_TELEMETRY: ${DOSSIER_TELEMETRY:-}
+      DOSSIER_JOBS_SOURCE: ${DOSSIER_JOBS_SOURCE:-}
+      DOSSIER_JSEARCH_KEY: ${DOSSIER_JSEARCH_KEY:-}
+      DOSSIER_JSEARCH_HOST: ${DOSSIER_JSEARCH_HOST:-}
+      DOSSIER_ADZUNA_APP_ID: ${DOSSIER_ADZUNA_APP_ID:-}
+      DOSSIER_ADZUNA_KEY: ${DOSSIER_ADZUNA_KEY:-}
+      DOSSIER_GOOGLE_CLIENT_ID: ${DOSSIER_GOOGLE_CLIENT_ID:-}
+      DOSSIER_GOOGLE_CLIENT_SECRET: ${DOSSIER_GOOGLE_CLIENT_SECRET:-}
+    # Not published: only Caddy (or the tunnel) reaches it, over the compose network.
+    expose:
+      - "3000"
+    volumes:
+      - data:/data
+    # Room for Chromium, which prints the PDFs.
+    mem_limit: 1g
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOSSIER_DOMAIN: ${DOSSIER_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    profiles: [caddy]
+
+  # Instead of Caddy: Cloudflare terminates HTTPS and forwards to the app, so
+  # no port is opened on the server. Point the tunnel's public hostname at
+  # http://app:3000 in the Cloudflare dashboard.
+  tunnel:
+    image: cloudflare/cloudflared:2025.10.0
+    restart: unless-stopped
+    depends_on:
+      - app
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    profiles: [tunnel]
+
+volumes:
+  pgdata:
+  data:
+  caddy_data:
+  caddy_config:
