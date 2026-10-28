@@ -67,11 +67,14 @@ async function send(file: File, preview: boolean): Promise<{ ok: true; data: Rec
  * out, bring it back, keep backups, or delete it all.
  */
 export function DataSection({
+  gmail = false,
   hasApiKey,
   exportName,
   backups,
   jobRetentionHours,
 }: {
+  /** Gmail is available (DOSSIER_GOOGLE). */
+  gmail?: boolean;
   hasApiKey: boolean;
   exportName: string;
   backups: BackupStatus;
@@ -156,7 +159,7 @@ export function DataSection({
     <>
       <SettingsSectionIntro title="Your data">
         Everything you enter lives in one database on your server, and nothing is sold: there&apos;s no one to sell it to. What leaves it goes to
-        the AI provider and job source you choose, and Google if you connect Gmail.
+        the AI provider and job source you choose{gmail ? ", and Google if you connect Gmail" : ""}.
       </SettingsSectionIntro>
       <Card padding="none" className="flex flex-col px-7 pt-1.5 pb-2.5">
         <DataRow

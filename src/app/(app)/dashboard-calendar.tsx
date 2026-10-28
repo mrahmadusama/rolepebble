@@ -6,8 +6,9 @@ import { CalendarCard } from "./calendar-card";
 
 /**
  * The calendar beside the dashboard's cards (E15-6): the month of `?date=`,
- * else this one, with the events in Google Calendar next to your interviews.
- * Google is asked on every visit, so the dashboard shows without waiting.
+ * else this one, with the events in Google Calendar next to your interviews
+ * (only the interviews while Google is off). Google is asked on every visit,
+ * so the dashboard shows without waiting.
  */
 export async function DashboardCalendar({ date, now }: { date: unknown; now: Date }) {
   const { timeZone } = await workingHours();

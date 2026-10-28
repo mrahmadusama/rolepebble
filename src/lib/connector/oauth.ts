@@ -5,6 +5,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { jwtVerify, SignJWT } from "jose";
 
 import { passwordFingerprint } from "@/lib/auth/session";
+import { connectorEnabled } from "@/lib/features";
 import { deriveKey } from "@/lib/keys";
 import { loadSettings } from "@/lib/settings-data";
 
@@ -31,8 +32,14 @@ const AUDIENCE = { client: "dossier-connector-client", code: "dossier-connector-
 type TokenKind = keyof typeof AUDIENCE;
 const key = (kind: TokenKind) => deriveKey(`connector-${kind}`);
 
-/** When the connector was turned on, or Claude last disconnected; null while it's off. */
+/**
+ * When the connector was turned on, or Claude last disconnected; null while
+ * it's off. Also null while the server leaves the connector out
+ * (DOSSIER_CONNECTOR): its addresses answer 404, no token holds, and nothing
+ * hands work to Claude chat, whatever Settings saved before.
+ */
 export async function connectorSince(): Promise<string | null> {
+  if (!connectorEnabled()) return null;
   return (await loadSettings()).connectorEnabledAt;
 }
 

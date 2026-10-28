@@ -17,7 +17,7 @@ vi.mock("@/lib/auth/session", () => ({
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 vi.mock("@/lib/env", () => ({
-  env: { DOSSIER_SECRET: "s".repeat(40), DOSSIER_GOOGLE_CLIENT_ID: "client", DOSSIER_GOOGLE_CLIENT_SECRET: "secret", DOSSIER_DATA_DIR: "/tmp" },
+  env: { DOSSIER_SECRET: "s".repeat(40), DOSSIER_GOOGLE: "on", DOSSIER_GOOGLE_CLIENT_ID: "client", DOSSIER_GOOGLE_CLIENT_SECRET: "secret", DOSSIER_DATA_DIR: "/tmp" },
 }));
 const ai = vi.hoisted(() => ({ provider: undefined as unknown, ready: true }));
 vi.mock("@/lib/ai", () => ({ getAiProvider: async () => ai.provider }));

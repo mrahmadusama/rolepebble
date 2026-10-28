@@ -18,9 +18,12 @@ export async function register() {
     const { startBackupSchedule } = await import("@/lib/backup-schedule");
     startBackupSchedule();
 
-    // The inbox check, while a Google account is connected (E15-3).
-    const { startInboxSchedule } = await import("@/lib/google/sync");
-    startInboxSchedule();
+    // The inbox check, while a Google account is connected (E15-3) and Gmail is on.
+    const { googleEnabled } = await import("@/lib/features");
+    if (googleEnabled()) {
+      const { startInboxSchedule } = await import("@/lib/google/sync");
+      startInboxSchedule();
+    }
 
     // The job agent's daily run, while it's on (E16-4).
     const { startAgentSchedule } = await import("@/lib/agent/schedule");

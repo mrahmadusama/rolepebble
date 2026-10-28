@@ -29,6 +29,8 @@ describe("parseEnv", () => {
       ...valid,
       DOSSIER_DATA_DIR: "/data",
       DOSSIER_BACKUP_RETENTION_DAYS: 14,
+      DOSSIER_GOOGLE: "off",
+      DOSSIER_CONNECTOR: "off",
     });
   });
 
@@ -120,6 +122,25 @@ describe("parseEnv", () => {
     ]);
     expect(problems({ ...valid, DOSSIER_BACKUP_RETENTION_DAYS: "0" })).toEqual([
       "DOSSIER_BACKUP_RETENTION_DAYS must be at least 1.",
+    ]);
+  });
+});
+
+describe("feature switches", () => {
+  it("leaves Google and the Claude connector off until they're switched on", () => {
+    expect(parseEnv(valid)).toMatchObject({ DOSSIER_GOOGLE: "off", DOSSIER_CONNECTOR: "off" });
+    expect(parseEnv({ ...valid, DOSSIER_GOOGLE: "", DOSSIER_CONNECTOR: "  " })).toMatchObject({ DOSSIER_GOOGLE: "off", DOSSIER_CONNECTOR: "off" });
+    expect(parseEnv({ ...valid, DOSSIER_GOOGLE: "on", DOSSIER_CONNECTOR: "off" })).toMatchObject({ DOSSIER_GOOGLE: "on", DOSSIER_CONNECTOR: "off" });
+  });
+
+  it("ignores case and spaces", () => {
+    expect(parseEnv({ ...valid, DOSSIER_GOOGLE: " ON ", DOSSIER_CONNECTOR: "On" })).toMatchObject({ DOSSIER_GOOGLE: "on", DOSSIER_CONNECTOR: "on" });
+  });
+
+  it("takes on or off only", () => {
+    expect(problems({ ...valid, DOSSIER_GOOGLE: "yes", DOSSIER_CONNECTOR: "1" })).toEqual([
+      'DOSSIER_GOOGLE must be on or off (got "yes").',
+      'DOSSIER_CONNECTOR must be on or off (got "1").',
     ]);
   });
 });

@@ -12,7 +12,7 @@ vi.mock("@/lib/prisma", async () => {
   return { prisma: db.client };
 });
 vi.mock("@/lib/env", () => ({
-  env: { DOSSIER_SECRET: "s".repeat(40), DOSSIER_GOOGLE_CLIENT_ID: "client", DOSSIER_GOOGLE_CLIENT_SECRET: "secret", DOSSIER_DATA_DIR: "/tmp" },
+  env: { DOSSIER_SECRET: "s".repeat(40), DOSSIER_GOOGLE: "on", DOSSIER_GOOGLE_CLIENT_ID: "client", DOSSIER_GOOGLE_CLIENT_SECRET: "secret", DOSSIER_DATA_DIR: "/tmp" },
 }));
 vi.mock("@/lib/time-zone", () => ({ userTimeZone: async () => "Europe/Berlin", lastKnownTimeZone: async () => "Europe/Berlin" }));
 

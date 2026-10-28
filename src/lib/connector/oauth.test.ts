@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const env = vi.hoisted(() => ({ DOSSIER_SECRET: "s".repeat(40), DOSSIER_PASSWORD: "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA" }));
+const env = vi.hoisted(() => ({ DOSSIER_SECRET: "s".repeat(40), DOSSIER_PASSWORD: "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA", DOSSIER_CONNECTOR: "on" }));
 vi.mock("@/lib/env", () => ({ env }));
 const settings = vi.hoisted(() => ({ connectorEnabledAt: "2026-10-23T09:00:00.000Z" as string | null }));
 vi.mock("@/lib/settings-data", () => ({ loadSettings: async () => settings }));
@@ -31,6 +31,7 @@ async function signIn(redirectUri = CLAUDE) {
 beforeEach(() => {
   settings.connectorEnabledAt = "2026-10-23T09:00:00.000Z";
   env.DOSSIER_PASSWORD = "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA";
+  env.DOSSIER_CONNECTOR = "on";
 });
 
 describe("the Claude connector's sign-in (#221)", () => {
@@ -101,6 +102,15 @@ describe("the Claude connector's sign-in (#221)", () => {
     const againTokens = await exchangeCode({ code: again.code, clientId: again.clientId, redirectUri: CLAUDE, verifier: VERIFIER });
     env.DOSSIER_PASSWORD = "argon2id:m=19456,t=2,p=1:c2FsdA:bmV3";
     expect(await verifyAccessToken(againTokens.access_token)).toBeNull();
+  });
+
+  it("issues and accepts nothing while the server leaves the connector out, whatever Settings saved", async () => {
+    const { clientId, code } = await signIn();
+    const tokens = await exchangeCode({ code, clientId, redirectUri: CLAUDE, verifier: VERIFIER });
+    env.DOSSIER_CONNECTOR = "off";
+    expect(await verifyAccessToken(tokens.access_token)).toBeNull();
+    await expect(refresh({ refreshToken: tokens.refresh_token, clientId })).rejects.toThrow("invalid or has expired");
+    await expect(signIn()).rejects.toThrow("The Claude connector is off.");
   });
 
   it("describes itself at the addresses Claude looks for", () => {

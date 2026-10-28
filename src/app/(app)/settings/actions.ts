@@ -13,6 +13,7 @@ import type { KeyState } from "@/lib/ai/provider-options";
 import { DOCUMENT_LANGUAGES } from "@/lib/document-language";
 import { deleteAllBackups } from "@/lib/backups";
 import { env } from "@/lib/env";
+import { requireConnector } from "@/lib/features";
 import { JobSearchError, testSource } from "@/lib/job-search";
 import { credentialsFor, jobSearchView, loadJobSearchConfig, requestContext } from "@/lib/job-search/config";
 import { JOB_SOURCES, JSEARCH_HOSTS } from "@/lib/job-search/search";
@@ -261,16 +262,19 @@ export const deleteEverything = action(z.object({ confirm: z.literal("DELETE") }
 });
 
 // Settings → Claude connector (#221). Every connector token carries
-// connectorEnabledAt, so a new value signs Claude out.
+// connectorEnabledAt, so a new value signs Claude out. Both refuse while the
+// server leaves the connector out (DOSSIER_CONNECTOR).
 
 /** Turns the Claude connector on, or off, which closes its addresses and signs Claude out. */
 export const setConnector = action(z.object({ on: z.boolean() }), async ({ on }) => {
+  requireConnector();
   await saveSettings({ connectorEnabledAt: on ? new Date().toISOString() : null });
   return { on };
 });
 
 /** "Disconnect Claude": the connector stays on, but Claude has to connect again. */
 export const disconnectClaude = action(z.object({}), async (_input, { toast }) => {
+  requireConnector();
   if (!(await loadSettings()).connectorEnabledAt) throw new ActionError("The Claude connector is off already.");
   await saveSettings({ connectorEnabledAt: new Date().toISOString() });
   toast("Claude is disconnected. Connect it again from Claude to use RolePebble there.");

@@ -190,9 +190,9 @@ function agendaDay(day: Day, today: Day) {
   return label;
 }
 
-/** Why only interviews show, when Google Calendar isn't there. */
+/** Why only interviews show, when Google Calendar isn't there; nothing while Google is off. */
 function SourceNotice({ source }: { source: CalendarSource }) {
-  if (source.status === "google") return null;
+  if (source.status === "google" || source.status === "off") return null;
   const text =
     source.status === "failed"
       ? `Your Google Calendar didn't load: ${source.message}`

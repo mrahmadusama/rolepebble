@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { decodeSession, SESSION_COOKIE, sessionTokenOptions } from "@/lib/auth/session";
 import { contentSecurityPolicy, createNonce } from "@/lib/csp";
+import { connectorEnabled } from "@/lib/features";
 import { messages } from "@/lib/messages";
 import { PRINT_TOKEN_HEADER, verifyPrintToken } from "@/lib/pdf/print-token";
 
@@ -19,8 +20,9 @@ export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   if (pathname === "/login") return pass(request);
   // The Claude connector (#221) brings its own credentials, an OAuth token,
-  // which its routes check; they answer 404 while it's off.
-  if (CONNECTOR_PATHS.test(pathname)) return NextResponse.next();
+  // which its routes check; they answer 404 while it's off. While the server
+  // leaves it out (DOSSIER_CONNECTOR), its paths need a session like any other.
+  if (connectorEnabled() && CONNECTOR_PATHS.test(pathname)) return NextResponse.next();
 
   const session = await decodeSession(
     request.cookies.get(SESSION_COOKIE)?.value,

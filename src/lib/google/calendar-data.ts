@@ -1,6 +1,7 @@
 import "server-only";
 
 import { addDays, startOfDay, type CalendarItem, type Day } from "@/lib/calendar-view";
+import { googleEnabled } from "@/lib/features";
 import { prisma } from "@/lib/prisma";
 import { loadSettings } from "@/lib/settings-data";
 
@@ -12,9 +13,11 @@ import { GoogleError } from "./errors";
 // What the dashboard's calendar shows (E15-6): the events in the calendar
 // chosen in Settings → Google, with the interviews Dossier added linked to
 // their application, and the interviews that aren't in Google. Events are
-// read for the days on screen and never kept.
+// read for the days on screen and never kept. While Google is off
+// (DOSSIER_GOOGLE), it's the interviews alone, with nothing said about Google.
 
 export type CalendarSource =
+  | { status: "off" }
   | { status: "google" }
   | { status: "not-connected" }
   | { status: "no-permission" }
@@ -37,7 +40,8 @@ export async function loadCalendar(days: readonly Day[]): Promise<CalendarData> 
 
   let source: CalendarSource;
   let events: CalendarEvent[] = [];
-  if (connection.status !== "connected") source = { status: "not-connected" };
+  if (!googleEnabled()) source = { status: "off" };
+  else if (connection.status !== "connected") source = { status: "not-connected" };
   else if (!connection.canUseCalendar) source = { status: "no-permission" };
   else {
     try {

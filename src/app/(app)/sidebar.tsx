@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { BrandMark } from "@/components/brand-mark";
 import { signOut } from "@/lib/auth/actions";
+import type { Features } from "@/lib/features";
 import type { ColorScheme } from "@/lib/ui-preferences";
 
 import { NavLinks } from "./nav-links";
@@ -25,6 +26,7 @@ export function Sidebar({
   currentVersion,
   collapsed,
   colorScheme,
+  features,
   counts,
 }: {
   userName: string;
@@ -33,6 +35,8 @@ export function Sidebar({
   collapsed: boolean;
   /** The scheme the switch chose last, if any. */
   colorScheme?: ColorScheme;
+  /** The integrations switched on, whose sections show. */
+  features: Features;
   /** Badges by nav item, e.g. replies waiting in the inbox. */
   counts?: Record<string, number>;
 }) {
@@ -61,7 +65,7 @@ export function Sidebar({
           <span className="group-data-collapsed/sidebar:sr-only">New application</span>
         </Link>
 
-        <NavLinks counts={counts} />
+        <NavLinks features={features} counts={counts} />
       </div>
 
       <div className="flex flex-col gap-0.5 border-t border-line p-2 group-data-collapsed/sidebar:px-1">

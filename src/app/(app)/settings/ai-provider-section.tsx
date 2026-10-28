@@ -31,16 +31,25 @@ const toModelList = (result: Awaited<ReturnType<typeof listAiModels>>): ModelLis
 const OTHER_MODEL = "__other";
 const looksLikeUrl = (value: string) => /^https?:\/\/\S+$/i.test(value.trim());
 
-/** What a hosted model is sent (profileForPrompt and the tasks in src/lib/ai/tasks; PRIVACY.md). */
-const SENT_TO_HOSTED =
-  "your profile without contact details, your facts about you, the postings you add and the facts you give for each one, and, when you refine, the drafts and your chat messages. Importing a resume sends its whole text, contact details included. With Gmail connected, it also gets each reply it reads or answers, with earlier mail in the thread. The notes you keep on an application are never sent.";
+/** What a hosted model is sent (profileForPrompt and the tasks in src/lib/ai/tasks; PRIVACY.md); replies only while there's Gmail. */
+const sentToHosted = (gmail: boolean) =>
+  "your profile without contact details, your facts about you, the postings you add and the facts you give for each one, and, when you refine, the drafts and your chat messages. Importing a resume sends its whole text, contact details included. " +
+  (gmail ? "With Gmail connected, it also gets each reply it reads or answers, with earlier mail in the thread. " : "") +
+  "The notes you keep on an application are never sent.";
 
 /**
  * Settings → AI provider (E6-3, SET-1, SET-2). Each field saves on its own:
  * picking a card or a model right away, typing once you pause. The key is
  * saved when you leave its field and never shown again.
  */
-export function AiProviderSection({ initial }: { initial: AiSettingsView }) {
+export function AiProviderSection({
+  initial,
+  gmail = false,
+}: {
+  initial: AiSettingsView;
+  /** Gmail is available (DOSSIER_GOOGLE), so a hosted model may read replies too. */
+  gmail?: boolean;
+}) {
   const track = useTrackSave();
   const [provider, setProvider] = useState(initial.provider);
   const [baseUrl, setBaseUrl] = useState(initial.baseUrl);
@@ -169,8 +178,8 @@ export function AiProviderSection({ initial }: { initial: AiSettingsView }) {
       {!option.local && (
         <p role="note" className="rounded-card bg-warning-surface px-4 py-3 text-meta text-warning">
           {option.vendor
-            ? `${option.vendor} receives what each task needs: ${SENT_TO_HOSTED} How long it's kept and where it's processed depend on your account with ${option.vendor}.`
-            : `This server receives what each task needs: ${SENT_TO_HOSTED} If it isn't on your own network, all this leaves your server, and how long it's kept is up to whoever runs it.`}
+            ? `${option.vendor} receives what each task needs: ${sentToHosted(gmail)} How long it's kept and where it's processed depend on your account with ${option.vendor}.`
+            : `This server receives what each task needs: ${sentToHosted(gmail)} If it isn't on your own network, all this leaves your server, and how long it's kept is up to whoever runs it.`}
         </p>
       )}
 

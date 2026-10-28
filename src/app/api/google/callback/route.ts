@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { getSession } from "@/lib/auth/session";
+import { googleEnabled } from "@/lib/features";
 import { saveGoogleAccount } from "@/lib/google/account";
 import { GoogleError } from "@/lib/google/errors";
 import { emailFromIdToken, exchangeCode, redirectUri, verifyState } from "@/lib/google/oauth";
@@ -13,6 +14,7 @@ import { logServerError } from "@/lib/log";
  * state proves Dossier started it, and the session that it's the user.
  */
 export async function GET(request: NextRequest): Promise<Response> {
+  if (!googleEnabled()) return new Response(null, { status: 404 });
   const origin = publicOrigin(request);
   const back = (outcome: string) => {
     const url = new URL("/settings?section=google", origin);

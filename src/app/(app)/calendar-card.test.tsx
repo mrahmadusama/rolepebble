@@ -128,4 +128,10 @@ describe("the dashboard's calendar (E15-6)", () => {
     expect(screen.getByText("Your Google Calendar didn't load: Google had a problem with that.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Settings → Google" })).not.toBeInTheDocument();
   });
+
+  it("says nothing about Google while it's off (DOSSIER_GOOGLE)", () => {
+    render(<CalendarCard {...props} items={[]} source={{ status: "off" }} />);
+    expect(screen.queryByText(/Google/)).not.toBeInTheDocument();
+    expect(screen.getByText(/In your time zone/)).toBeInTheDocument();
+  });
 });

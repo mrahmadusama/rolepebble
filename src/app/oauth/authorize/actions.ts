@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { action, ActionError } from "@/lib/action";
 import { issueCode } from "@/lib/connector/oauth";
+import { requireConnector } from "@/lib/features";
 
 import { checkAuthorizeRequest } from "./request";
 
@@ -23,6 +24,7 @@ const request = z.object({
  * itself, since the page's form-action policy keeps forms on this site.
  */
 export const answerConnector = action(request, async (input) => {
+  requireConnector();
   const { allow, ...params } = input;
   const checked = await checkAuthorizeRequest({ ...params, response_type: "code" });
   if ("error" in checked) throw new ActionError(checked.error);

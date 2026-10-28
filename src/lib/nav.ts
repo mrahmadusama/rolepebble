@@ -1,5 +1,7 @@
 import { Bot, BriefcaseBusiness, FileText, House, Inbox, Rocket, Search, Settings, UserRound, type LucideIcon } from "lucide-react";
 
+import type { Feature, Features } from "@/lib/features";
+
 // The app's sections, shared by the sidebar and the page bar so they always agree.
 
 export type NavItem = {
@@ -8,6 +10,8 @@ export type NavItem = {
   icon: LucideIcon;
   /** Whether the item is the current section; defaults to its own path and below. */
   isActive?: (pathname: string) => boolean;
+  /** The switch it needs (src/lib/features.ts); hidden while that's off. */
+  feature?: Feature;
 };
 
 const within = (pathname: string, base: string) =>
@@ -36,11 +40,16 @@ export const NAV: { label?: string; items: NavItem[] }[] = [
         // A new application becomes one, so the flow belongs to Applications.
         isActive: (pathname) => within(pathname, "/applications") || within(pathname, "/new"),
       },
-      { href: "/inbox", label: "Inbox", icon: Inbox },
+      { href: "/inbox", label: "Inbox", icon: Inbox, feature: "google" },
     ],
   },
   { items: [{ href: "/settings", label: "Settings", icon: Settings }] },
 ];
+
+/** The sections, without those of the features switched off. */
+export function visibleNav(features: Features): typeof NAV {
+  return NAV.map((group) => ({ ...group, items: group.items.filter((item) => !item.feature || features[item.feature]) }));
+}
 
 export const isCurrent = ({ href, isActive = (path) => within(path, href) }: NavItem, pathname: string) => isActive(pathname);
 

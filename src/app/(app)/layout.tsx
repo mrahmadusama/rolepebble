@@ -3,6 +3,7 @@ import { after } from "next/server";
 
 import { countAgentQueue } from "@/lib/agent/view";
 import { verifySession } from "@/lib/auth/session";
+import { features } from "@/lib/features";
 import { inboxCount } from "@/lib/google/inbox-data";
 import { loadProfileName } from "@/lib/profile-data";
 import { COLOR_SCHEME_COOKIE, parseColorScheme, parseSidebarCollapsed, SIDEBAR_COOKIE } from "@/lib/ui-preferences";
@@ -26,7 +27,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const [name, jar] = await Promise.all([loadProfileName(), cookies()]);
   const userName = name.trim() || "New user";
   // Replies waiting for an answer or a link, on the Inbox item; the job agent's finds and drafts on its own (E16-6).
-  const [waiting, agent] = await Promise.all([inboxCount().catch(() => 0), countAgentQueue().catch(() => 0)]);
+  const on = features();
+  const [waiting, agent] = await Promise.all([on.google ? inboxCount().catch(() => 0) : 0, countAgentQueue().catch(() => 0)]);
 
   return (
     <div className="flex min-h-screen">
@@ -40,6 +42,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         userName={userName}
         currentVersion={appVersion}
         collapsed={parseSidebarCollapsed(jar.get(SIDEBAR_COOKIE)?.value)}
+        features={on}
         counts={{ ...(waiting > 0 ? { "/inbox": waiting } : {}), ...(agent > 0 ? { "/agent": agent } : {}) }}
         colorScheme={parseColorScheme(jar.get(COLOR_SCHEME_COOKIE)?.value)}
       />

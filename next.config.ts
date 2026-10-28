@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
   },
   // The Claude connector's sign-in metadata (#221, src/lib/connector/oauth.ts),
   // at the addresses OAuth clients look for it, with or without the resource's path.
+  // They're fixed when the app is built, so they stay while DOSSIER_CONNECTOR
+  // is off: what they point to answers 404 then.
   async rewrites() {
     return [
       { source: "/.well-known/oauth-authorization-server", destination: "/api/oauth/metadata" },

@@ -10,9 +10,8 @@ import { PRINT_TOKEN_HEADER, signPrintToken } from "@/lib/pdf/print-token";
 
 import { config, proxy } from "./proxy";
 
-vi.mock("@/lib/env", () => ({
-  env: { DOSSIER_SECRET: "a".repeat(32), DOSSIER_PASSWORD: "correct horse" },
-}));
+const env = vi.hoisted(() => ({ DOSSIER_SECRET: "a".repeat(32), DOSSIER_PASSWORD: "correct horse", DOSSIER_CONNECTOR: "on" }));
+vi.mock("@/lib/env", () => ({ env }));
 
 const key = deriveKey("session", "a".repeat(32));
 const fingerprint = passwordFingerprint("correct horse", deriveKey("password-fingerprint", "a".repeat(32)));
@@ -107,6 +106,17 @@ describe("proxy", () => {
     // The consent page is an ordinary page: sign in first.
     expect(getRedirectUrl(await proxy(request("/oauth/authorize?client_id=x")))).toBe("http://localhost:3000/login?next=%2Foauth%2Fauthorize%3Fclient_id%3Dx");
     expect((await proxy(request("/api/mcpx"))).status).toBe(401);
+  });
+
+  it("wants a session on the connector's paths too while the server leaves it out", async () => {
+    env.DOSSIER_CONNECTOR = "off";
+    try {
+      expect((await proxy(request("/api/mcp"))).status).toBe(401);
+      expect((await proxy(request("/api/oauth/token"))).status).toBe(401);
+      expect(getRedirectUrl(await proxy(request("/.well-known/oauth-authorization-server")))).toContain("/login");
+    } finally {
+      env.DOSSIER_CONNECTOR = "on";
+    }
   });
 
   it("answers API requests with 401 JSON instead of a redirect", async () => {

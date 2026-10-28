@@ -6,6 +6,8 @@ import { createTestClient, resetDatabase } from "@/test/db";
 
 import { handOffFoundPosting, handOffPastedPosting, handsOffToClaude, PASTE_DAYS, readPastedPosting } from "./handoff";
 
+const env = vi.hoisted(() => ({ DOSSIER_CONNECTOR: "on" }));
+vi.mock("@/lib/env", () => ({ env }));
 const db = vi.hoisted(() => ({ client: undefined as ReturnType<typeof createTestClient> | undefined }));
 vi.mock("@/lib/prisma", async () => {
   const { createTestClient } = await import("@/test/db");
@@ -19,7 +21,10 @@ const prisma = () => db.client!;
 const promptOf = (url: string) => new URL(url).searchParams.get("q")!;
 const DAY = 24 * 60 * 60 * 1000;
 
-beforeEach(() => resetDatabase(prisma()));
+beforeEach(async () => {
+  env.DOSSIER_CONNECTOR = "on";
+  await resetDatabase(prisma());
+});
 afterAll(() => prisma().$disconnect());
 
 describe("handing work to Claude chat (#221)", () => {
@@ -28,6 +33,9 @@ describe("handing work to Claude chat (#221)", () => {
     await saveSettings({ connectorEnabledAt: "2026-10-23T09:00:00.000Z" });
     expect(await handsOffToClaude(false)).toBe(true);
     expect(await handsOffToClaude(true)).toBe(false);
+    // Not while the server leaves the connector out, whatever Settings saved.
+    env.DOSSIER_CONNECTOR = "off";
+    expect(await handsOffToClaude(false)).toBe(false);
   });
 
   it("names a Find jobs posting by its id, kept with its whole text, for the connector's tools", async () => {

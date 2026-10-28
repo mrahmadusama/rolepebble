@@ -31,7 +31,7 @@ afterEach(() => {
 function renderSidebar(initialCollapsed = false) {
   return render(
     <SidebarFrame initialCollapsed={initialCollapsed} brand={<span>RolePebble</span>}>
-      <NavLinks />
+      <NavLinks features={{ google: true, connector: true }} />
       <ThemeToggle />
     </SidebarFrame>,
   );
