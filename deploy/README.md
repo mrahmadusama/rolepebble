@@ -65,15 +65,15 @@ Log back in (so the `docker` group applies). Then fetch the app's image, make th
 
 ```bash
 cd dossier/deploy
-docker pull ghcr.io/aientech/dossier:latest
-docker tag ghcr.io/aientech/dossier:latest dossier:local
+docker pull ghcr.io/mrahmadusama/dossier:main
+docker tag ghcr.io/mrahmadusama/dossier:main dossier:local
 cp env.example .env
 sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
 sed -i "s|^DOSSIER_SECRET=.*|DOSSIER_SECRET=$(openssl rand -base64 32)|" .env
 docker run --rm -it dossier:local hash-password
 ```
 
-The image is the published one for this release: building it on a 2 GB server is slow, and your fork has no changes of its own. If you change the code, build instead with `docker compose build app` (expect 15–20 minutes on a `t3.small`).
+The image is RolePebble's own, which CI builds and publishes each time a change lands on `main`; building it on a 2 GB server is slow. To try a branch that isn't merged yet, build it here instead with `docker compose build app` (expect 15–20 minutes on a `t3.small`).
 
 `hash-password` asks for your sign-in password twice and prints one line starting with `argon2id:`. Put it in `.env` as `DOSSIER_PASSWORD=argon2id:…` (`nano .env`), and set `TZ` to your time zone (for example `Asia/Karachi`) while you're there. Then:
 
@@ -92,8 +92,8 @@ Once the app logs that it's ready and Caddy that it obtained the certificate, op
 
 ```bash
 cd ~/dossier/deploy
-docker pull ghcr.io/aientech/dossier:latest
-docker tag ghcr.io/aientech/dossier:latest dossier:local
+docker pull ghcr.io/mrahmadusama/dossier:main
+docker tag ghcr.io/mrahmadusama/dossier:main dossier:local
 docker compose up -d
 docker image prune -f
 ```
