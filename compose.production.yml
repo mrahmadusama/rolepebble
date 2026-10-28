@@ -1,8 +1,8 @@
-# Dossier with Docker Compose (see the installation guide, https://github.com/AienTech/dossier/wiki). Save this
-# file as compose.yml in a folder of its own, put POSTGRES_PASSWORD,
-# DOSSIER_PASSWORD (a hash of your password, from `docker run --rm -it
-# ghcr.io/aientech/dossier hash-password`) and DOSSIER_SECRET in a .env file
-# next to it, then:
+# RolePebble with Docker Compose, without a reverse proxy (deploy/ has the
+# setup with HTTPS). Save this file as compose.yml in a folder of its own, put
+# POSTGRES_PASSWORD, DOSSIER_PASSWORD (a hash of your password, from `docker run
+# --rm -it ghcr.io/mrahmadusama/rolepebble:main hash-password`) and DOSSIER_SECRET in a .env
+# file next to it, then:
 #
 #   docker compose up -d
 #
@@ -26,7 +26,7 @@ services:
       retries: 10
 
   app:
-    image: ${DOSSIER_IMAGE:-ghcr.io/aientech/dossier:latest}
+    image: ${DOSSIER_IMAGE:-ghcr.io/mrahmadusama/rolepebble:main}
     restart: unless-stopped
     depends_on:
       db:
@@ -52,7 +52,7 @@ services:
       # Gmail and Calendar: a Google OAuth client (or enter it in Settings → Google).
       DOSSIER_GOOGLE_CLIENT_ID: ${DOSSIER_GOOGLE_CLIENT_ID:-}
       DOSSIER_GOOGLE_CLIENT_SECRET: ${DOSSIER_GOOGLE_CLIENT_SECRET:-}
-      # The address Dossier is reached at, for Google's redirect.
+      # The address RolePebble is reached at, for Google's redirect.
       DOSSIER_PUBLIC_URL: ${DOSSIER_PUBLIC_URL:-}
     # Only on the server itself: put a reverse proxy with HTTPS in front.
     ports:
@@ -67,7 +67,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   # A local model, with COMPOSE_PROFILES=ai in .env: `docker compose up -d`,
-  # then pull one (see "Choosing an AI provider" in the wiki). Dossier reaches it at http://ollama:11434.
+  # then pull one (see "Choosing an AI provider" in the wiki). RolePebble reaches it at http://ollama:11434.
   ollama:
     profiles: [ai]
     image: ollama/ollama:0.40.6
