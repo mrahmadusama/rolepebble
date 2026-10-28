@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Help installing Dossier
-    url: https://github.com/AienTech/dossier/wiki
-    about: Step-by-step guides for Docker, Docker Compose, Node.js, an Ubuntu server, CapRover, Coolify and Dokploy.
-  - name: Troubleshooting
-    url: https://github.com/AienTech/dossier/wiki/Troubleshooting
-    about: What to do about the problems people run into most.
+  - name: Help with RolePebble
+    url: https://github.com/mrahmadusama/rolepebble/blob/main/README.md#help
+    about: Questions about using RolePebble go to support@rolepebble.com.
   - name: Report a security problem
-    url: https://github.com/AienTech/dossier/security/advisories/new
+    url: https://github.com/mrahmadusama/rolepebble/blob/main/SECURITY.md#reporting-a-vulnerability
     about: Report it privately, never in a public issue. SECURITY.md says how.
+  - name: Self-hosting Dossier instead?
+    url: https://dossier.aien.me
+    about: RolePebble is run by Ahmad Usama, not by the Dossier project. Problems with your own Dossier server belong in Dossier's tracker.

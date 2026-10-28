@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in Dossier doesn't work the way it should.
+description: Something in RolePebble doesn't work the way it should.
 labels: ["bug"]
 body:
   - type: markdown
@@ -7,9 +7,8 @@ body:
       value: |
         Thanks for taking the time to report this. Before you do:
 
-        - Look in [Troubleshooting](https://github.com/AienTech/dossier/wiki/Troubleshooting): the fix may already be there.
-        - Search the [open and closed issues](https://github.com/AienTech/dossier/issues?q=is%3Aissue), in case someone has reported it.
-        - Found a security problem? Don't report it here: [report it privately](https://github.com/AienTech/dossier/security/advisories/new) instead.
+        - Search the [open and closed issues](https://github.com/mrahmadusama/rolepebble/issues?q=is%3Aissue), in case someone has reported it.
+        - Found a security problem? Don't report it here: [report it privately](https://github.com/mrahmadusama/rolepebble/blob/main/SECURITY.md#reporting-a-vulnerability) instead.
 
         Everything you write here is public. Leave out passwords, API keys, values from your `.env`, and anything from your profile or applications you'd rather keep to yourself.
 
@@ -17,7 +16,7 @@ body:
     id: what-happened
     attributes:
       label: What happened?
-      description: What you did, and what Dossier did. Copy any error message word for word.
+      description: What you did, and what RolePebble did. Copy any error message word for word.
       placeholder: When I press Download PDF on an application, the page says …
     validations:
       required: true
@@ -43,24 +42,9 @@ body:
   - type: input
     id: version
     attributes:
-      label: Dossier version
+      label: RolePebble version
       description: Settings → About shows it.
       placeholder: "1.7.0"
-    validations:
-      required: true
-
-  - type: dropdown
-    id: install
-    attributes:
-      label: How do you run Dossier?
-      options:
-        - Docker Compose, as in the README
-        - docker run
-        - Node.js, built from source
-        - CapRover
-        - Coolify
-        - Dokploy
-        - Another way (say which under Anything else)
     validations:
       required: true
 

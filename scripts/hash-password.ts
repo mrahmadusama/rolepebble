@@ -1,6 +1,6 @@
 // Prints a hash of a password, for DOSSIER_PASSWORD. In the image:
 //
-//   docker run --rm -it ghcr.io/aientech/dossier hash-password
+//   docker run --rm -it ghcr.io/mrahmadusama/rolepebble:main hash-password
 //
 // and in development `docker/bin/yarn hash-password`. It asks for the
 // password twice without showing it. When stdin isn't a terminal, it reads

@@ -55,4 +55,4 @@ jobs:
           object=$(gh api "repos/$GH_REPO/git/ref/tags/$GITHUB_REF_NAME" --jq 'select(.object.type == "tag") | .object.sha')
           notes=""
           if [ -n "$object" ]; then notes=$(gh api "repos/$GH_REPO/git/tags/$object" --jq .message); fi
-          gh release create "$GITHUB_REF_NAME" --verify-tag --title "Dossier ${GITHUB_REF_NAME#v}" --notes "${notes:-Dossier ${GITHUB_REF_NAME#v}}"
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "RolePebble ${GITHUB_REF_NAME#v}" --notes "${notes:-RolePebble ${GITHUB_REF_NAME#v}}"

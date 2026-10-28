@@ -1,13 +1,11 @@
 name: Feature request
-description: An idea for something Dossier could do, or do better.
+description: An idea for something RolePebble could do, or do better.
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for the idea. Please search the [open and closed issues](https://github.com/AienTech/dossier/issues?q=is%3Aissue) first. If someone has asked for it already, a thumbs-up or a comment there helps more than a new issue.
-
-        Dossier is made for one person on a small server. [Known limitations](https://github.com/AienTech/dossier/blob/main/README.md#known-limitations) in the README lists what that leaves out for now.
+        Thanks for the idea. Please search the [open and closed issues](https://github.com/mrahmadusama/rolepebble/issues?q=is%3Aissue) first. If someone has asked for it already, a thumbs-up or a comment there helps more than a new issue.
 
   - type: textarea
     id: problem
@@ -20,7 +18,7 @@ body:
   - type: textarea
     id: idea
     attributes:
-      label: What would you like Dossier to do?
+      label: What would you like RolePebble to do?
       description: How you picture it working. Sketches, and screenshots of other apps that do it well, are welcome.
     validations:
       required: true
@@ -29,7 +27,7 @@ body:
     id: today
     attributes:
       label: How do you manage without it today?
-      description: What you do instead, in Dossier or outside it, if anything.
+      description: What you do instead, in RolePebble or outside it, if anything.
 
   - type: textarea
     id: more
