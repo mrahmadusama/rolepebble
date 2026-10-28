@@ -200,7 +200,7 @@ function WorthALook({ items, quietDays }: { items: DashboardFigures["attention"]
 function Welcome() {
   return (
     <Panel>
-      <h2 className="font-serif text-section">Welcome to Dossier</h2>
+      <h2 className="font-serif text-section">Welcome to RolePebble</h2>
       <p className="text-sm text-muted">
         Start with your profile: your roles, skills and education are what every tailored resume and cover letter is built from.
         Then paste a job posting, and your funnel and next steps will show up here.

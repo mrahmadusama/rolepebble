@@ -139,7 +139,7 @@ describe("Score in Claude (#221)", () => {
     windowOpen.mockRestore();
   });
 
-  it("closes the waiting tab when Dossier scores it after all", async () => {
+  it("closes the waiting tab when RolePebble scores it after all", async () => {
     const user = userEvent.setup();
     const tab = { closed: false, opener: {}, location: { href: "about:blank" }, close: vi.fn() };
     const windowOpen = vi.spyOn(window, "open").mockReturnValue(tab as unknown as Window);

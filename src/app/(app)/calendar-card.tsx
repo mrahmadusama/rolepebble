@@ -197,7 +197,7 @@ function SourceNotice({ source }: { source: CalendarSource }) {
     source.status === "failed"
       ? `Your Google Calendar didn't load: ${source.message}`
       : source.status === "no-permission"
-        ? "Dossier may not use your calendar yet. Allow it in Settings → Google to see your other events here."
+        ? "RolePebble may not use your calendar yet. Allow it in Settings → Google to see your other events here."
         : "Connect Google Calendar in Settings → Google to see your other events here, and keep interviews in step with it.";
   return (
     <p>

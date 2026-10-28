@@ -74,7 +74,7 @@ test("replaces the profile after asking", async ({ page }) => {
   await expect(page.getByRole("button", { name: /^Design Lead.*Acme Payments/, expanded: false })).toBeVisible();
 });
 
-test("reads a PDF too: Dossier's own base resume", async ({ page }) => {
+test("reads a PDF too: RolePebble's own base resume", async ({ page }) => {
   const pdf = await (await page.request.get("/api/pdf?doc=base")).body();
   await page.goto("/profile/import");
   await page.getByLabel("Your resume, as PDF, Word (.docx) or Markdown (.md)").setInputFiles({ name: "resume.pdf", mimeType: "application/pdf", buffer: pdf });

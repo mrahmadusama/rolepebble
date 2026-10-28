@@ -575,10 +575,12 @@ model Note {
 
 // ─── Job search (E14) ────────────────────────────────────────────────────────
 
-/// The job sources Find jobs can search (E14-1 to E14-3).
+/// The job sources postings and searches come from (E14-1, E14-2).
 enum PostingSource {
   JSEARCH
   ADZUNA
+  /// The Bundesagentur für Arbeit, no longer searched: it stays only for
+  /// postings and searches saved before RolePebble removed it.
   ARBEITSAGENTUR
 }
 

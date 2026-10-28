@@ -11,7 +11,7 @@ const GENERATE_SECRET = "for example the output of `openssl rand -base64 32`";
 const HASH_PASSWORD = "Make one with `docker run --rm -it ghcr.io/aientech/dossier hash-password`";
 
 export const AI_PROVIDERS = ["local", "openai", "anthropic", "mistral", "lmstudio"] as const;
-export const JOB_SOURCE_NAMES = ["jsearch", "adzuna", "arbeitsagentur", "off"] as const;
+export const JOB_SOURCE_NAMES = ["jsearch", "adzuna", "off"] as const;
 
 // An empty value (`DOSSIER_AI_KEY=` in .env) counts as unset.
 const unsetIfEmpty = (value: unknown) =>
@@ -72,15 +72,6 @@ const schema = z.object({
         error: "DOSSIER_BACKUP_RETENTION_DAYS must be at least 1.",
       }),
     ),
-  // The daily usage ping (usage-ping.ts): unset, Dossier asks after
-  // sign-in and sends nothing before a yes; on or off answers for good.
-  DOSSIER_TELEMETRY: optional(
-    z
-      .string()
-      .trim()
-      .toLowerCase()
-      .pipe(z.enum(["on", "off"], { error: (issue) => `DOSSIER_TELEMETRY must be on or off (got "${String(issue.input)}").` })),
-  ),
   DOSSIER_AI_PROVIDER: optional(
     z.enum(AI_PROVIDERS, {
       error: (issue) =>
@@ -122,15 +113,6 @@ const schema = z.object({
   ),
   DOSSIER_ADZUNA_APP_ID: optional(z.string()),
   DOSSIER_ADZUNA_KEY: optional(z.string()),
-  // Off takes the Bundesagentur für Arbeit out everywhere (#223): it isn't an
-  // official API, so a server can choose not to offer it. Unset means on.
-  DOSSIER_JOBS_ARBEITSAGENTUR: optional(
-    z
-      .string()
-      .trim()
-      .toLowerCase()
-      .pipe(z.enum(["on", "off"], { error: (issue) => `DOSSIER_JOBS_ARBEITSAGENTUR must be on or off (got "${String(issue.input)}").` })),
-  ),
   // Google sign-in for Gmail and Calendar (E15-1): an OAuth client of type
   // "Web application". Settings → Google can save one instead, which wins.
   // Never echo the secret.
@@ -152,24 +134,6 @@ const schema = z.object({
   DOSSIER_GOOGLE_TEST_BASE_URL: optional(
     z.url({ protocol: /^https?$/, error: "DOSSIER_GOOGLE_TEST_BASE_URL must be an http:// or https:// URL." }),
   ),
-  // For the end-to-end tests only: sends the usage ping to <url> instead of
-  // the project's receiver (e2e/fake-jobs.mts answers).
-  DOSSIER_USAGE_PING_TEST_URL: optional(
-    z.url({ protocol: /^https?$/, error: "DOSSIER_USAGE_PING_TEST_URL must be an http:// or https:// URL." }),
-  ),
-  // For the end-to-end tests only: asks <url> for the latest release instead
-  // of GitHub's API (e2e/fake-jobs.mts answers).
-  DOSSIER_UPDATES_TEST_BASE_URL: optional(
-    z.url({ protocol: /^https?$/, error: "DOSSIER_UPDATES_TEST_BASE_URL must be an http:// or https:// URL." }),
-  ),
-}).check((context) => {
-  if (context.value.DOSSIER_JOBS_SOURCE === "arbeitsagentur" && context.value.DOSSIER_JOBS_ARBEITSAGENTUR === "off") {
-    context.issues.push({
-      code: "custom",
-      input: context.value,
-      message: "DOSSIER_JOBS_SOURCE is arbeitsagentur, but DOSSIER_JOBS_ARBEITSAGENTUR is off. Choose another source, or remove one of the two.",
-    });
-  }
 });
 
 export type Env = z.infer<typeof schema>;
@@ -214,7 +178,7 @@ export function checkEnvOnStartup(): void {
   } catch (error) {
     if (!(error instanceof EnvError)) throw error;
     for (const problem of error.problems) {
-      console.error(`Dossier can't start: ${problem}`);
+      console.error(`RolePebble can't start: ${problem}`);
     }
     process.exit(1);
   }

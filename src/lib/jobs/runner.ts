@@ -48,7 +48,7 @@ export type JobView<R = unknown> = {
 
 export const JOB_MESSAGES = {
   failed: "Something went wrong while working on this. Try again.",
-  interrupted: "Dossier restarted before this finished. Try again.",
+  interrupted: "RolePebble restarted before this finished. Try again.",
   cancelled: "Cancelled.",
 } as const;
 

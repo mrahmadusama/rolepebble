@@ -1,11 +1,9 @@
-// Where Dossier's releases are published, for the update check and its
-// notice (update-check.ts, the sidebar). Safe to use in the browser.
+// Where RolePebble's source code is published, which the AGPL says every user
+// of the server can get (section 13), and Dossier, the project it's built on.
+// Safe to use in the browser.
 
-export const RELEASES_REPOSITORY = "AienTech/dossier";
-/** The repository's page, for credits and support (the sidebar). */
-export const REPOSITORY_URL = `https://github.com/${RELEASES_REPOSITORY}`;
-/** How to update, in the wiki. */
-export const UPGRADE_GUIDE_URL = `${REPOSITORY_URL}/wiki/Upgrading`;
-
-/** A published release: its version, without the "v", and its page on GitHub. */
-export type Release = { version: string; url: string };
+export const SOURCE_REPOSITORY = "mrahmadusama/rolepebble";
+/** The repository's page, for the sidebar's and Settings → About's source code links. */
+export const REPOSITORY_URL = `https://github.com/${SOURCE_REPOSITORY}`;
+/** Dossier by AienTech, which RolePebble is built on, for the credit (the link AienTech asked for). */
+export const UPSTREAM_URL = "https://dossier.aien.me";

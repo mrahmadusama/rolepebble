@@ -42,7 +42,7 @@ test("won't fetch a posting from the server's own network (E7-8)", async ({ page
   await page.goto("/new?fresh=1");
   await page.getByLabel(/^Link to the posting/).fill("http://localhost:3100/login");
   await page.getByRole("button", { name: "Fetch" }).click();
-  await expect(page.getByText("Dossier doesn't fetch addresses on your own network. Paste the posting instead.")).toBeVisible();
+  await expect(page.getByText("RolePebble doesn't fetch addresses on your own network. Paste the posting instead.")).toBeVisible();
   await expect(page.getByLabel("Job posting")).toHaveValue("");
 });
 

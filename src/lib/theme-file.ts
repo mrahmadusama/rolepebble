@@ -26,7 +26,7 @@ export const THEME_FILE_FORMAT = "dossier-theme";
  */
 export const THEME_FILE_VERSION = 3;
 
-const font = z.enum(ThemeFont, { error: (issue) => `That theme uses a font Dossier doesn't have (${String(issue.input)}).` });
+const font = z.enum(ThemeFont, { error: (issue) => `That theme uses a font RolePebble doesn't have (${String(issue.input)}).` });
 
 /** A theme's name and look, checked the same way wherever it comes from. */
 export const themeFieldsSchema = z.object({
@@ -86,10 +86,10 @@ export function themeFileName(theme: Pick<ThemeData, "name">): string {
 export function parseThemeFile(json: unknown): { ok: true; theme: ThemeFields } | { ok: false; error: string } {
   const header = json as { format?: unknown; version?: unknown } | null;
   if (typeof json !== "object" || json === null || header?.format !== THEME_FILE_FORMAT) {
-    return { ok: false, error: "That file isn't a Dossier theme." };
+    return { ok: false, error: "That file isn't a RolePebble theme." };
   }
   if (typeof header.version !== "number" || header.version > THEME_FILE_VERSION) {
-    return { ok: false, error: "That theme comes from a newer version of Dossier. Update this server first." };
+    return { ok: false, error: "That theme comes from a newer version of RolePebble. Update this server first." };
   }
   const parsed = themeFileSchema.safeParse(json);
   if (!parsed.success) {

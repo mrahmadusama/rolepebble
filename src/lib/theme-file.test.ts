@@ -50,12 +50,12 @@ describe("theme files (E5-7)", () => {
 
   it("refuses other files, newer versions, unknown fonts and bad colors, in plain words", () => {
     const file = themeFile(editorial);
-    expect(parseThemeFile({ hello: "world" })).toEqual({ ok: false, error: "That file isn't a Dossier theme." });
-    expect(parseThemeFile(null)).toEqual({ ok: false, error: "That file isn't a Dossier theme." });
-    expect(parseThemeFile({ ...file, version: 4 })).toEqual({ ok: false, error: "That theme comes from a newer version of Dossier. Update this server first." });
+    expect(parseThemeFile({ hello: "world" })).toEqual({ ok: false, error: "That file isn't a RolePebble theme." });
+    expect(parseThemeFile(null)).toEqual({ ok: false, error: "That file isn't a RolePebble theme." });
+    expect(parseThemeFile({ ...file, version: 4 })).toEqual({ ok: false, error: "That theme comes from a newer version of RolePebble. Update this server first." });
     expect(parseThemeFile({ ...file, theme: { ...file.theme, headFont: "COMIC_SANS" } })).toEqual({
       ok: false,
-      error: "That theme uses a font Dossier doesn't have (COMIC_SANS).",
+      error: "That theme uses a font RolePebble doesn't have (COMIC_SANS).",
     });
     expect(parseThemeFile({ ...file, theme: { ...file.theme, accent: "green" } })).toEqual({ ok: false, error: "That theme file is damaged (theme.accent)." });
   });

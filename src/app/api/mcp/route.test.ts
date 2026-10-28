@@ -79,7 +79,7 @@ describe("the Claude connector at /api/mcp (#221)", () => {
     expect((await call({ jsonrpc: "2.0", id: 1, method: "tools/list" }, "not-a-token")).status).toBe(401);
   });
 
-  it("answers MCP with Dossier's tools once signed in, and none that delete, archive or send", async () => {
+  it("answers MCP with RolePebble's tools once signed in, and none that delete, archive or send", async () => {
     const token = await accessToken();
     const init = await call(
       { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } } },
@@ -121,7 +121,7 @@ describe("the Claude connector at /api/mcp (#221)", () => {
     expect(JSON.parse(text)).toMatchObject({ search_id: "s1", searched: `product designer in ${city}`, link: "https://dossier.example/jobs?search=s1" });
   });
 
-  it("asks Claude to write the application itself when Dossier has no AI model", async () => {
+  it("asks Claude to write the application itself when RolePebble has no AI model", async () => {
     const { isError, text } = await tool("draft_application", { posting_text: "Product designer at Acme" });
     expect(isError).toBe(true);
     expect(text).toContain("save_application");

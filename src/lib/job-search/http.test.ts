@@ -26,7 +26,7 @@ describe("requestJson", () => {
 
   it("says the source changed when the answer isn't JSON", async () => {
     stubFetch(() => new Response("<html>Moved</html>", { status: 200 }));
-    await expect(requestJson("ARBEITSAGENTUR", url)).rejects.toMatchObject({ problem: "changed", detail: "ARBEITSAGENTUR: /api/search: not JSON" });
+    await expect(requestJson("ADZUNA", url)).rejects.toMatchObject({ problem: "changed", detail: "ADZUNA: /api/search: not JSON" });
   });
 
   it("refuses answers over 5 MB", async () => {

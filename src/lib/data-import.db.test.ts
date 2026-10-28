@@ -342,11 +342,11 @@ describe("importExport (E10-6)", () => {
 describe("parseExport (E10-6)", () => {
   it("explains what's wrong with a file", async () => {
     const good = JSON.parse(JSON.stringify(await buildExport(prisma(), { now })));
-    expect(parseExport("not json")).toEqual({ ok: false, error: "That file isn't a Dossier export: it isn't JSON." });
-    expect(parseExport(JSON.stringify({ hello: "world" }))).toEqual({ ok: false, error: "That file isn't a Dossier export." });
+    expect(parseExport("not json")).toEqual({ ok: false, error: "That file isn't a RolePebble export: it isn't JSON." });
+    expect(parseExport(JSON.stringify({ hello: "world" }))).toEqual({ ok: false, error: "That file isn't a RolePebble export." });
     expect(parseExport(JSON.stringify({ ...good, schemaVersion: EXPORT_SCHEMA_VERSION + 1 }))).toEqual({
       ok: false,
-      error: `That export comes from a newer version of Dossier (schema ${EXPORT_SCHEMA_VERSION + 1}). Update this server first.`,
+      error: `That export comes from a newer version of RolePebble (schema ${EXPORT_SCHEMA_VERSION + 1}). Update this server first.`,
     });
     expect(parseExport(JSON.stringify({ ...good, schemaVersion: 0 }))).toMatchObject({ ok: false, error: expect.stringMatching(/isn't one this version/) });
     const damaged = { ...good, applications: [{ ...good.applications[0], status: "MAYBE" }] };

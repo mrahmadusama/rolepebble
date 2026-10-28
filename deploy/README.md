@@ -55,8 +55,8 @@ ssh -i ~/Downloads/dossier.pem ubuntu@<elastic-ip>
 On the server:
 
 ```bash
-git clone https://github.com/mrahmadusama/dossier.git
-cd dossier
+git clone https://github.com/mrahmadusama/rolepebble.git
+cd rolepebble
 sh deploy/setup-server.sh
 exit
 ```
@@ -64,16 +64,16 @@ exit
 Log back in (so the `docker` group applies). Then fetch the app's image, make the secrets, and hash your password:
 
 ```bash
-cd dossier/deploy
-docker pull ghcr.io/aientech/dossier:latest
-docker tag ghcr.io/aientech/dossier:latest dossier:local
+cd rolepebble/deploy
+docker pull ghcr.io/mrahmadusama/rolepebble:main
+docker tag ghcr.io/mrahmadusama/rolepebble:main dossier:local
 cp env.example .env
 sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
 sed -i "s|^DOSSIER_SECRET=.*|DOSSIER_SECRET=$(openssl rand -base64 32)|" .env
 docker run --rm -it dossier:local hash-password
 ```
 
-The image is the published one for this release: building it on a 2 GB server is slow, and your fork has no changes of its own. If you change the code, build instead with `docker compose build app` (expect 15–20 minutes on a `t3.small`).
+The image is RolePebble's own, which CI builds and publishes each time a change lands on `main`; building it on a 2 GB server is slow. To try a branch that isn't merged yet, build it here instead with `docker compose build app` (expect 15–20 minutes on a `t3.small`).
 
 `hash-password` asks for your sign-in password twice and prints one line starting with `argon2id:`. Put it in `.env` as `DOSSIER_PASSWORD=argon2id:…` (`nano .env`), and set `TZ` to your time zone (for example `Asia/Karachi`) while you're there. Then:
 
@@ -91,9 +91,9 @@ Once the app logs that it's ready and Caddy that it obtained the certificate, op
 ## Updating
 
 ```bash
-cd ~/dossier/deploy
-docker pull ghcr.io/aientech/dossier:latest
-docker tag ghcr.io/aientech/dossier:latest dossier:local
+cd ~/rolepebble/deploy
+docker pull ghcr.io/mrahmadusama/rolepebble:main
+docker tag ghcr.io/mrahmadusama/rolepebble:main dossier:local
 docker compose up -d
 docker image prune -f
 ```
@@ -108,7 +108,7 @@ The app writes nightly backups to the `data` volume (Settings → Your data also
 docker compose exec -T db pg_dump -U dossier dossier | gzip > dossier-$(date +%F).sql.gz
 ```
 
-and on your computer: `scp -i ~/Downloads/dossier.pem ubuntu@<elastic-ip>:dossier/deploy/dossier-*.sql.gz .`
+and on your computer: `scp -i ~/Downloads/dossier.pem ubuntu@<elastic-ip>:rolepebble/deploy/dossier-*.sql.gz .`
 
 ## Alternative: a home machine with Cloudflare Tunnel
 

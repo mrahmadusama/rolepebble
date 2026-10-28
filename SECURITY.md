@@ -1,10 +1,10 @@
 # Security
 
-Dossier is a single-user app you run on your own server. It holds your career history, your job applications and, if you use a hosted model, an AI provider's API key. This page covers what protects that data, what it expects from your setup, and how to report a problem. What Dossier keeps, for how long and who receives what is in [PRIVACY.md](PRIVACY.md).
+RolePebble is run by Ahmad Usama, not by the Dossier project it's built on. It holds your career history, your job applications and, if you enter one, an AI provider's API key. This page covers what protects that data, what it expects from a setup, and how to report a problem. What RolePebble keeps, for how long and who receives what is in [PRIVACY.md](PRIVACY.md).
 
 ## Reporting a vulnerability
 
-Please report it privately through GitHub: on the repository's **Security** tab, choose **Report a vulnerability**. Don't open a public issue for it.
+Please write to **support@rolepebble.com** with "Security" in the subject, or report it privately through GitHub: on this repository's **Security** tab, choose **Report a vulnerability**. Don't open a public issue for it, and please don't report RolePebble's problems to the Dossier project. A problem that's in Dossier too is worth reporting to Dossier as well, through its own [security policy](https://github.com/AienTech/dossier/security).
 
 ## What Dossier does
 
@@ -34,7 +34,7 @@ So the worst a hostile posting or mail can do is get odd wording into its own dr
 - **Use HTTPS.** Put Dossier behind a reverse proxy that ends TLS (Caddy, Traefik, nginx). Set `Strict-Transport-Security` there. Dossier adds `upgrade-insecure-requests` to its policy when the proxy says the request came over HTTPS (`X-Forwarded-Proto`).
 - **Don't expose port 3000 directly.** Rate limiting trusts the last `X-Forwarded-For` entry, which is only the real client behind a proxy.
 - **Pick a long `DOSSIER_SECRET`** and keep it with your backups: without it, saved API keys can't be read. Changing it or the password signs out every session.
-- **Keep it updated.** Settings → About tells you when a new version is out.
+- **Keep it updated.** Rebuild and redeploy when this repository changes (see deploy/README.md).
 
 ## Dependencies
 

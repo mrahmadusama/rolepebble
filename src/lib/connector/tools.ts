@@ -72,8 +72,8 @@ function documentText(units: unknown): string {
 
 /** Where a posting comes from, in a tool's input. */
 const postingSource = {
-  posting_id: z.string().max(100).optional().describe("A posting Dossier handed over, by its posting_id"),
-  paste_id: z.string().max(100).optional().describe("A pasted posting Dossier handed over, by its paste_id"),
+  posting_id: z.string().max(100).optional().describe("A posting RolePebble handed over, by its posting_id"),
+  paste_id: z.string().max(100).optional().describe("A pasted posting RolePebble handed over, by its paste_id"),
   search_id: z.string().max(100).optional().describe("A search from search_jobs"),
   number: z.number().int().min(1).optional().describe("The posting's number in that search"),
   posting_url: z.url({ protocol: /^https?$/ }).max(2000).optional().describe("The posting's web address"),
@@ -87,7 +87,7 @@ type ResolvedPosting = { text: string; url: string; postingId: string | null; ti
 async function resolvePosting(source: PostingSource): Promise<ResolvedPosting | { error: string }> {
   if (source.posting_id) {
     const row = await prisma.posting.findUnique({ where: { id: source.posting_id } });
-    if (!row) return { error: "That posting is no longer in Dossier. Open it again from Find jobs." };
+    if (!row) return { error: "That posting is no longer in RolePebble. Open it again from Find jobs." };
     const found = foundFromPosting(row);
     const description = found.complete ? found.description : ((await fullText(found)) ?? found.description);
     if (!description.trim()) return { error: "That posting has no text to write from. Give its link as posting_url instead." };
@@ -127,16 +127,16 @@ async function resolvePosting(source: PostingSource): Promise<ResolvedPosting | 
 export function createDossierServer(origin: string): McpServer {
   const linkTo = (path: string) => `${origin}${path}`;
   const server = new McpServer(
-    { name: "dossier", title: "Dossier", version: appVersion },
+    { name: "dossier", title: "RolePebble", version: appVersion },
     {
       instructions:
-        "Dossier is the user's own job search app: one profile, tailored resumes and cover letters, and every application tracked. " +
+        "RolePebble is the user's own job search app: one profile, tailored resumes and cover letters, and every application tracked. " +
         "Search jobs with search_jobs (in the profile's city and country unless the user says otherwise), " +
         "and when the user wants to know which fit best, score them against the profile and save the scores with save_job_scores. " +
         "To draft an application, you write it yourself: call get_profile and get_posting, write a tailored resume and cover letter " +
         "from facts in the profile only (never invent experience, employers, numbers or degrees; say what's missing instead), " +
         "show the user a short summary, then save it with save_application. Read or update applications with the other tools. " +
-        "Nothing is ever sent for the user: drafts wait in Dossier for them to review and download as PDFs.",
+        "Nothing is ever sent for the user: drafts wait in RolePebble for them to review and download as PDFs.",
     },
   );
 
@@ -145,7 +145,7 @@ export function createDossierServer(origin: string): McpServer {
     {
       title: "Read the profile",
       description:
-        "The user's profile in Dossier: headline, summary, facts about them, skills, languages, experience, projects, education and publications, with the ids save_application uses. Contact details and links are left out.",
+        "The user's profile in RolePebble: headline, summary, facts about them, skills, languages, experience, projects, education and publications, with the ids save_application uses. Contact details and links are left out.",
       annotations: { readOnlyHint: true },
     },
     async () => text({ ...JSON.parse(profileForPrompt(await loadProfile())), link: linkTo("/profile") }),
@@ -156,7 +156,7 @@ export function createDossierServer(origin: string): McpServer {
     {
       title: "Search for jobs",
       description:
-        "Searches the job source set up in Dossier's settings and keeps the search in Find jobs → Past searches. Each search uses one search from the user's plan with that source. " +
+        "Searches the job source set up in RolePebble's settings and keeps the search in Find jobs → Past searches. Each search uses one search from the user's plan with that source. " +
         "Returns a search_id and numbered postings; pass both to get_posting, save_job_scores or save_application, or the search_id to more_jobs.",
       inputSchema: z.object({
         keywords: z.string().trim().min(1).max(200).describe("Job title, skill or company, e.g. 'product designer'"),
@@ -235,7 +235,7 @@ export function createDossierServer(origin: string): McpServer {
           .array(
             z.object({
               number: z.number().int().min(1).optional().describe("The posting's number in the search"),
-              posting_id: z.string().max(100).optional().describe("Instead of a number: a posting Dossier handed over"),
+              posting_id: z.string().max(100).optional().describe("Instead of a number: a posting RolePebble handed over"),
               score: z.number().int().min(0).max(100),
               reasons: z.array(z.string().max(300)).min(1).max(4),
               red_flags: z.array(z.string().max(300)).max(3).default([]),
@@ -271,7 +271,7 @@ export function createDossierServer(origin: string): McpServer {
     "list_applications",
     {
       title: "List applications",
-      description: "The user's applications in Dossier, newest activity first, with their status. Optionally only one status.",
+      description: "The user's applications in RolePebble, newest activity first, with their status. Optionally only one status.",
       inputSchema: z.object({
         status: z.enum(ApplicationStatus).optional().describe("DRAFT, SENT, SCREENING, INTERVIEW, OFFER, ACCEPTED, REJECTED or DECLINED"),
         include_archived: z.boolean().optional(),
@@ -354,7 +354,7 @@ export function createDossierServer(origin: string): McpServer {
     {
       title: "Read a posting",
       description:
-        "The whole text of a job posting, from a search (search_id and number), one Dossier handed over (posting_id or paste_id) or a link (posting_url), to write an application from or score.",
+        "The whole text of a job posting, from a search (search_id and number), one RolePebble handed over (posting_id or paste_id) or a link (posting_url), to write an application from or score.",
       inputSchema: z.object({
         posting_id: postingSource.posting_id,
         paste_id: postingSource.paste_id,
@@ -376,15 +376,15 @@ export function createDossierServer(origin: string): McpServer {
     {
       title: "Save an application you wrote",
       description:
-        "Saves a tailored resume and cover letter you wrote as a Draft application in Dossier, where the user can review, edit and download them as PDFs. " +
-        "Give the posting (posting_id or paste_id when Dossier handed it over, search_id and number, posting_url or posting_text), its details, the resume (by the ids from get_profile) and the letter. " +
+        "Saves a tailored resume and cover letter you wrote as a Draft application in RolePebble, where the user can review, edit and download them as PDFs. " +
+        "Give the posting (posting_id or paste_id when RolePebble handed it over, search_id and number, posting_url or posting_text), its details, the resume (by the ids from get_profile) and the letter. " +
         "Only use facts from the profile. Nothing is sent.",
       inputSchema: z.object({
         ...postingSource,
         details: writtenDetailsSchema,
         resume: writtenResumeSchema,
         cover_letter: writtenLetterSchema,
-        match: writtenMatchSchema.describe("What the posting asks for and whether the profile covers it, partly covers it, or has a gap; Dossier shows it as the application's match"),
+        match: writtenMatchSchema.describe("What the posting asks for and whether the profile covers it, partly covers it, or has a gap; RolePebble shows it as the application's match"),
         note: z.string().max(2000).optional().describe("What the user asked to stress, kept with the application"),
       }),
       annotations: { readOnlyHint: false, openWorldHint: true },
@@ -407,7 +407,7 @@ export function createDossierServer(origin: string): McpServer {
         status: "Draft",
         link: linkTo(`/applications/${saved.applicationId}`),
         check_these: saved.unverified.length > 0 ? saved.unverified : undefined,
-        next: saved.unverified.length > 0 ? "Dossier marked names or numbers it couldn't find in the profile or posting; tell the user to check them." : undefined,
+        next: saved.unverified.length > 0 ? "RolePebble marked names or numbers it couldn't find in the profile or posting; tell the user to check them." : undefined,
       });
     },
   );
@@ -415,16 +415,16 @@ export function createDossierServer(origin: string): McpServer {
   server.registerTool(
     "draft_application",
     {
-      title: "Have Dossier draft an application",
+      title: "Have RolePebble draft an application",
       description:
-        "Has Dossier's own AI model draft the application, only when an AI provider is set up in Dossier's settings. " +
+        "Has RolePebble's own AI model draft the application, only when an AI provider is set up in RolePebble's settings. " +
         "Without one, write it yourself with get_profile, get_posting and save_application. Takes one to three minutes: follow it with check_draft.",
       inputSchema: z.object({ ...postingSource, note: z.string().max(2000).optional().describe("Anything the documents should stress, in the user's words") }),
       annotations: { readOnlyHint: false, openWorldHint: true },
     },
     async ({ note, ...source }) => {
       if (!(await isAiUsable())) {
-        return failure("Dossier has no AI model of its own set up. Write the application yourself: get_profile, get_posting, then save_application.");
+        return failure("RolePebble has no AI model of its own set up. Write the application yourself: get_profile, get_posting, then save_application.");
       }
       const posting = await resolvePosting(source);
       if ("error" in posting) return failure(posting.error);

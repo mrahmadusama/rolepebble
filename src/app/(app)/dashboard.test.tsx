@@ -136,7 +136,7 @@ describe("the dashboard (E9-7)", () => {
 
   it("welcomes a new user", () => {
     render(<Dashboard {...props} empty figures={{ ...figures, sent: 0 }} />);
-    expect(screen.getByRole("heading", { name: "Welcome to Dossier" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Welcome to RolePebble" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Fill in your profile" })).toHaveAttribute("href", "/profile");
     expect(screen.queryByRole("region", { name: "Your funnel" })).not.toBeInTheDocument();
   });

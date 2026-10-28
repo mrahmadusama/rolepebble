@@ -6,7 +6,7 @@ type Rule = { allow: boolean; pattern: string };
 export type RobotsRules = Rule[] | "all" | "none";
 
 /**
- * The rules in a robots.txt that apply to `token` ("dossier"): the groups
+ * The rules in a robots.txt that apply to `token` ("rolepebble"): the groups
  * naming it, or else the "*" groups (RFC 9309 §2.2.1). Groups for the same
  * agent are merged.
  */

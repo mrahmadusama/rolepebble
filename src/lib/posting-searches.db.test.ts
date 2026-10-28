@@ -141,7 +141,7 @@ describe("showMoreFor", () => {
     const run = await runSearch(query);
     const id = run.ok ? run.id : "";
     // The user switched sources meanwhile: the search goes on with its own.
-    await saveSettings({ jobSource: "ARBEITSAGENTUR" });
+    await saveSettings({ jobSource: "ADZUNA" });
 
     const requests = stubFetch(() => json(jsearchV2LastPage));
     const more = await showMoreFor(id);
@@ -174,6 +174,16 @@ describe("showMoreFor", () => {
     const run = await runSearch(query);
     stubFetch(() => json({}, { status: 429 }));
     expect(await showMoreFor(run.ok ? run.id : "")).toMatchObject({ ok: false, problem: "quota" });
+  });
+
+  it("never goes on with a search kept from a source since removed", async () => {
+    const posting = { ...EMPTY_POSTING, source: "ARBEITSAGENTUR" as const, externalId: "10001-1", title: "Softwareentwickler" };
+    const search = await prisma().postingSearch.create({ data: { source: "ARBEITSAGENTUR", query, postings: [posting], found: 1, next: "page:2" } });
+    const requests = stubFetch(() => json({}));
+    expect(await loadSearch(search.id)).toMatchObject({ source: "ARBEITSAGENTUR", next: null, postings: [expect.objectContaining({ title: "Softwareentwickler" })] });
+    expect(await showMoreFor(search.id)).toEqual({ ok: true, postings: [], next: null });
+    expect(await fullText(posting)).toBeNull();
+    expect(requests).toHaveLength(0);
   });
 });
 

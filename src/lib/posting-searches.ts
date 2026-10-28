@@ -6,6 +6,7 @@ import { askSource } from "@/lib/job-search/find";
 import {
   EMPTY_QUERY,
   foundPostingSchema,
+  isJobSource,
   postingKey,
   searchQuerySchema,
   type FoundPosting,
@@ -68,7 +69,8 @@ export async function loadSearch(id?: string, { timeZone, now = new Date() }: { 
     query: queryOf(search.query),
     ranAt: ranAtLabel(search.createdAt, timeZone, now),
     postings: await withStates(postingsOf(search.postings)),
-    next: search.next,
+    // A search on a source since removed can't go on.
+    next: isJobSource(search.source) ? search.next : null,
   };
 }
 
@@ -76,7 +78,7 @@ export async function loadSearch(id?: string, { timeZone, now = new Date() }: { 
 export async function showMoreFor(id: string): Promise<{ ok: true; postings: ShownPosting[]; next: string | null } | SearchProblem> {
   const search = await prisma.postingSearch.findUnique({ where: { id } });
   if (!search) return { ok: false, problem: "changed", message: "That search is no longer kept. Search again." };
-  if (!search.next) return { ok: true, postings: [], next: null };
+  if (!search.next || !isJobSource(search.source)) return { ok: true, postings: [], next: null };
   const answer = await askSource(queryOf(search.query), { source: search.source, next: search.next });
   if (!answer.ok) return answer;
   const kept = postingsOf(search.postings);

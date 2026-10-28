@@ -139,7 +139,7 @@ describe("managing themes (E5-7)", () => {
     if (result.ok) expect(await baseThemeId()).toBe(result.data.id);
 
     const bad = await importTheme({ file: { ...file, theme: { ...file.theme, bodyFont: "PAPYRUS" } } });
-    expect(bad).toEqual({ ok: false, error: "That theme uses a font Dossier doesn't have (PAPYRUS)." });
+    expect(bad).toEqual({ ok: false, error: "That theme uses a font RolePebble doesn't have (PAPYRUS)." });
     expect(await prisma().theme.count({ where: { builtIn: false } })).toBe(1);
   });
 });

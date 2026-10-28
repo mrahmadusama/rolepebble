@@ -11,9 +11,12 @@ import { countryCodeFor } from "./countries";
 // In this code "job" already means a background task (src/lib/jobs), so a
 // job ad is a "posting".
 
-/** The job sources Dossier can search (E14-1 to E14-3), in the order Settings lists them; one is chosen there. */
-export const JOB_SOURCES = [PostingSource.JSEARCH, PostingSource.ADZUNA, PostingSource.ARBEITSAGENTUR] as const;
-export type JobSource = PostingSource;
+/** The job sources Dossier can search (E14-1, E14-2), in the order Settings lists them; one is chosen there. */
+export const JOB_SOURCES = [PostingSource.JSEARCH, PostingSource.ADZUNA] as const;
+export type JobSource = (typeof JOB_SOURCES)[number];
+
+/** Whether postings from `source` can still be searched; ones kept from a source since removed can't. */
+export const isJobSource = (source: PostingSource): source is JobSource => (JOB_SOURCES as readonly PostingSource[]).includes(source);
 
 /** Where a JSearch key comes from: OpenWeb Ninja directly, or the RapidAPI marketplace. */
 export const JSEARCH_HOSTS = ["openwebninja", "rapidapi"] as const;
@@ -63,7 +66,8 @@ export const EMPTY_QUERY: SearchQuery = {
 
 /** A posting as a source found it, in one shape for every source. */
 export const foundPostingSchema = z.object({
-  source: z.enum(JOB_SOURCES),
+  /** Any source a posting was kept from, so ones from a source since removed still load. */
+  source: z.enum(PostingSource),
   /** The source's own id for it. */
   externalId: z.string().min(1).max(500),
   title: z.string().max(500),
@@ -107,7 +111,7 @@ export type PostingState = {
 export type ShownPosting = FoundPosting & { state: PostingState };
 
 /** What went wrong with a search, in words for the screen (E14-6). */
-export type SearchProblem = { ok: false; problem: "off" | "not-accepted" | "no-country" | "no-key" | "key" | "quota" | "country" | "unavailable" | "changed"; message: string };
+export type SearchProblem = { ok: false; problem: "off" | "no-country" | "no-key" | "key" | "quota" | "country" | "unavailable" | "changed"; message: string };
 
 /** What a search gives the screen: postings, or what went wrong. */
 export type SearchOutcome = { ok: true; postings: ShownPosting[]; next: string | null } | SearchProblem;
@@ -115,7 +119,7 @@ export type SearchOutcome = { ok: true; postings: ShownPosting[]; next: string |
 /** A search kept with what it found (E14-10), as Find jobs opens it. */
 export type StoredSearch = {
   id: string;
-  source: JobSource;
+  source: PostingSource;
   query: SearchQuery;
   /** "today at 14:32", "yesterday at 09:05", "on Thu 1 Oct at 18:20", in the user's time zone. */
   ranAt: string;
@@ -127,7 +131,7 @@ export type StoredSearch = {
 export type PastSearchDay = {
   /** "Today", "Yesterday" or "Thu 1 Oct". */
   day: string;
-  searches: { id: string; source: JobSource; query: SearchQuery; found: number; time: string }[];
+  searches: { id: string; source: PostingSource; query: SearchQuery; found: number; time: string }[];
 };
 
 /** "product designer · Hamburg, 25 km · Remote only · Past week": a search in a line. */
@@ -138,7 +142,7 @@ export function describeSearch(query: SearchQuery, countryName: string): string 
 }
 
 /** Identifies a posting across searches. */
-export const postingKey = (posting: { source: JobSource; externalId: string }) => `${posting.source}:${posting.externalId}`;
+export const postingKey = (posting: { source: PostingSource; externalId: string }) => `${posting.source}:${posting.externalId}`;
 
 /** A link from a source, kept only when it's a web address, so it can't run script as an href. */
 export function safeLink(value: string | null | undefined): string {

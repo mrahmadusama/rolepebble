@@ -1,7 +1,7 @@
 import "server-only";
 
-import type { Posting } from "@/generated/prisma/client";
-import { linkKey, postingKey, type FoundPosting, type JobSource, type PostingState, type ShownPosting } from "@/lib/job-search/search";
+import type { Posting, PostingSource } from "@/generated/prisma/client";
+import { linkKey, postingKey, type FoundPosting, type PostingState, type ShownPosting } from "@/lib/job-search/search";
 import { stringsOf } from "@/lib/agent/candidates";
 import { prisma } from "@/lib/prisma";
 
@@ -11,7 +11,7 @@ import { prisma } from "@/lib/prisma";
 
 export type { PostingState };
 
-type PostingRef = { source: JobSource; externalId: string };
+type PostingRef = { source: PostingSource; externalId: string };
 
 const whereRef = ({ source, externalId }: PostingRef) => ({ source_externalId: { source, externalId } });
 

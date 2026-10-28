@@ -1,15 +1,15 @@
 "use client";
 
-import { ArrowUpRight, Star } from "lucide-react";
+import { ArrowUpRight, Code } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 import { REPOSITORY_URL } from "@/lib/releases";
 
 import { useSidebarCollapsed } from "./sidebar-frame";
 
-const LABEL = "Star on GitHub";
+const LABEL = "Source code";
 
-/** The sidebar's link to Dossier's repository, for credits and support. */
+/** The sidebar's link to RolePebble's source code, which the AGPL says every user can get. */
 export function RepositoryLink() {
   const collapsed = useSidebarCollapsed();
   return (
@@ -23,7 +23,7 @@ export function RepositoryLink() {
         collapsed && "justify-center px-1.5",
       )}
     >
-      <Star size={16} aria-hidden="true" className="shrink-0" />
+      <Code size={16} aria-hidden="true" className="shrink-0" />
       <span className={cn(collapsed && "sr-only")}>{LABEL}</span>{" "}
       <span className="sr-only">(opens in a new tab)</span>
       {!collapsed && <ArrowUpRight size={14} aria-hidden="true" className="ml-auto shrink-0" />}

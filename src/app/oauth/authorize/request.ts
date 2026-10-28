@@ -25,7 +25,7 @@ export async function checkAuthorizeRequest(params: Record<string, string | stri
   if (!client) return { error: "Claude's sign-in link isn't valid any more. Remove the connector in Claude and add it again." };
   const redirectUri = one(params.redirect_uri);
   if (!allowedRedirect(redirectUri) || !clientAllows(client, redirectUri)) return { error: "This sign-in would send you somewhere other than Claude, so it was stopped." };
-  if (one(params.response_type) !== "code") return { error: "Claude asked for a kind of sign-in Dossier doesn't offer." };
+  if (one(params.response_type) !== "code") return { error: "Claude asked for a kind of sign-in RolePebble doesn't offer." };
   const codeChallenge = one(params.code_challenge);
   if (one(params.code_challenge_method) !== "S256" || !/^[A-Za-z0-9_-]{43,128}$/.test(codeChallenge)) {
     return { error: "Claude's sign-in request is missing its PKCE challenge." };

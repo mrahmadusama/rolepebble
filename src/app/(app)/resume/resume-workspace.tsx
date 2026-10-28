@@ -113,12 +113,12 @@ export function ResumeWorkspace({ profile, themes: initialThemes, usage, baseThe
     saveFile(new Blob([JSON.stringify(themeFile(base), null, 2)], { type: "application/json" }), themeFileName(base));
 
   const importFile = async (file: File) => {
-    if (file.size > 100_000) return toast("That file is too big to be a Dossier theme.");
+    if (file.size > 100_000) return toast("That file is too big to be a RolePebble theme.");
     let json: unknown;
     try {
       json = JSON.parse(await file.text());
     } catch {
-      return toast("That file isn't a Dossier theme.");
+      return toast("That file isn't a RolePebble theme.");
     }
     // Checked here for a quick answer, and again on the server.
     const read = parseThemeFile(json);

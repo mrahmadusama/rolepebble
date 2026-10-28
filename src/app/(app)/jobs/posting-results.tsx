@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
 import { fitBand, type PostingFit } from "@/lib/fit";
 import type { JobView } from "@/lib/jobs/runner";
 import { postedAgo, postingKey, type FoundPosting, type PostingState, type ShownPosting, type StoredSearch } from "@/lib/job-search/search";
-import { arbeitsagenturPage, SOURCE_INFO } from "@/lib/job-search/sources";
+import { sourceName } from "@/lib/job-search/sources";
 
 import { dismissFoundPosting, loadFullText, restorePosting, savePostingForLater, showMorePostings, startScoringPosting, unsavePosting } from "./actions";
 import { useStartApplication } from "./use-start-application";
@@ -175,7 +175,7 @@ export function PostingResults(props: PostingResultsProps) {
         <p className={cn("flex flex-wrap items-baseline gap-x-3 gap-y-1 text-meta text-muted", mode !== "search" && visible.length === 0 && "hidden")}>
           <span>
             {props.mode === "search"
-              ? `${plural(postings.length, "posting", "postings")} from ${SOURCE_INFO[props.search.source].name}${next ? ", more to come" : ""} · searched ${props.search.ranAt}`
+              ? `${plural(postings.length, "posting", "postings")} from ${sourceName(props.search.source)}${next ? ", more to come" : ""} · searched ${props.search.ranAt}`
               : mode === "saved"
                 ? plural(visible.length, "saved posting", "saved postings")
                 : `${plural(visible.length, "dismissed posting", "dismissed postings")}, kept out of your searches`}
@@ -449,7 +449,6 @@ function PostingDetail({
   children?: ReactNode;
 }) {
   const headingId = useId();
-  const sourcePage = arbeitsagenturPage(posting);
   // The posting as first shown; the component is keyed by it.
   const [initial] = useState(posting);
   const [text, setText] = useState<Text>(initial.complete ? { status: "ready", text: initial.description } : { status: "loading" });
@@ -510,13 +509,6 @@ function PostingDetail({
         {posting.url && (
           <a href={posting.url} target="_blank" rel="noopener noreferrer" className={buttonClassName("secondary", "sm")}>
             Open posting<span aria-hidden>↗</span>
-            <span className="sr-only"> (opens in a new tab)</span>
-          </a>
-        )}
-        {/* A BA posting with a link of its own still links to its ad on arbeitsagentur.de (#223). */}
-        {sourcePage && sourcePage !== posting.url && (
-          <a href={sourcePage} target="_blank" rel="noopener noreferrer" className={buttonClassName("secondary", "sm")}>
-            On arbeitsagentur.de<span aria-hidden>↗</span>
             <span className="sr-only"> (opens in a new tab)</span>
           </a>
         )}

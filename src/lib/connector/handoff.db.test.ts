@@ -23,7 +23,7 @@ beforeEach(() => resetDatabase(prisma()));
 afterAll(() => prisma().$disconnect());
 
 describe("handing work to Claude chat (#221)", () => {
-  it("only happens with the connector on and no AI model of Dossier's own", async () => {
+  it("only happens with the connector on and no AI model of RolePebble's own", async () => {
     expect(await handsOffToClaude(false)).toBe(false);
     await saveSettings({ connectorEnabledAt: "2026-10-23T09:00:00.000Z" });
     expect(await handsOffToClaude(false)).toBe(true);

@@ -1,0 +1,20 @@
+RolePebble
+Copyright (C) 2026 Ahmad Usama
+
+RolePebble is a modified version of Dossier (https://github.com/AienTech/dossier),
+copyright (C) AienTech and contributors, used under the GNU Affero General
+Public License, version 3 (see LICENSE).
+
+Changes from Dossier, from 28 October 2026 on, are listed in the git history
+of https://github.com/mrahmadusama/rolepebble. Among them:
+
+- 2026-10-28: renamed to RolePebble in the interface; removed the daily usage
+  ping and the update check; added a link to this source code in the sidebar
+  and in Settings -> About; added a deployment setup (deploy/).
+- 2026-10-28: own icon; own privacy policy (PRIVACY.md) and security contact;
+  removed the Bundesagentur fuer Arbeit job source.
+
+RolePebble is distributed under the same license, WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE. Anyone who uses it over a network can get its complete source code
+from the repository above.

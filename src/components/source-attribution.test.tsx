@@ -20,7 +20,6 @@ describe("attributionHref", () => {
 
   it("has no link for the other sources", () => {
     expect(attributionHref("JSEARCH", "https://www.adzuna.de/land/ad/1")).toBeNull();
-    expect(attributionHref("ARBEITSAGENTUR", "https://www.arbeitsagentur.de/jobsuche/jobdetail/1")).toBeNull();
   });
 });
 
@@ -39,12 +38,12 @@ describe("SourceAttribution", () => {
     expect(container.firstElementChild).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("is plain text for the Bundesagentur für Arbeit, and nothing for JSearch", () => {
-    const { container, rerender } = render(<SourceAttribution source="ARBEITSAGENTUR" url="https://www.arbeitsagentur.de/jobsuche/jobdetail/1" />);
-    expect(screen.getByText("Source: Bundesagentur für Arbeit").tagName).toBe("P");
-    rerender(<SourceAttribution source="ARBEITSAGENTUR" url="" placeholder />);
+  it("is nothing for JSearch, or for a posting kept from a source since removed", () => {
+    const { container, rerender } = render(<SourceAttribution source="JSEARCH" url="https://jobs.example/1" />);
     expect(container).toBeEmptyDOMElement();
-    rerender(<SourceAttribution source="JSEARCH" url="https://jobs.example/1" />);
+    rerender(<SourceAttribution source="ARBEITSAGENTUR" url="https://jobs.example/1" />);
+    expect(container).toBeEmptyDOMElement();
+    rerender(<SourceAttribution source="ARBEITSAGENTUR" url="" placeholder />);
     expect(container).toBeEmptyDOMElement();
   });
 });
