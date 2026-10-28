@@ -12,6 +12,7 @@ import { mcpUrl } from "@/lib/connector/oauth";
 import { exportFileName } from "@/lib/data-export";
 import { formatShortDate } from "@/lib/dates";
 import { env } from "@/lib/env";
+import { features } from "@/lib/features";
 import { googleConnection } from "@/lib/google/account";
 import { loadGoogleClientConfig, redirectUri } from "@/lib/google/oauth";
 import { lastKnownTimeZone, userTimeZone } from "@/lib/time-zone";
@@ -38,14 +39,16 @@ export const metadata: Metadata = { title: "Settings" };
 /** Settings (PRD §6.8); the section is in `?section=` (E10-1). */
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
   const params = await searchParams;
-  const section = settingsSectionFromParam(params.section);
+  // Google and the Claude connector aren't listed while they're off, and their addresses open AI provider.
+  const on = features();
+  const section = settingsSectionFromParam(params.section, on);
   const settings = await loadSettings();
 
   return (
-    <SettingsScreen section={section}>
+    <SettingsScreen section={section} features={on}>
       {section === "ai" ? (
         <>
-          <AiProviderSection initial={await loadAiSettingsView()} />
+          <AiProviderSection initial={await loadAiSettingsView()} gmail={on.google} />
           <AiBehaviour initial={{ creativity: settings.creativity, strict: settings.strict, showDiff: settings.showDiff }} />
         </>
       ) : section === "jobs" ? (
@@ -95,6 +98,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         <ConnectorSection initial={{ on: settings.connectorEnabledAt !== null }} address={mcpUrl(env.DOSSIER_PUBLIC_URL ?? (await requestOrigin()))} />
       ) : section === "data" ? (
         <DataSection
+          gmail={on.google}
           hasApiKey={[settings.apiKeyEnc, settings.jsearchKeyEnc, settings.adzunaKeyEnc].some((key) => key !== null)}
           exportName={exportFileName()}
           backups={{

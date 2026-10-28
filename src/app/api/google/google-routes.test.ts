@@ -11,7 +11,7 @@ import { GET as connect } from "./connect/route";
 // Connecting Google (E15-1): the redirect to Google's consent page and the
 // way back, with Google's token endpoint mocked.
 
-const env = vi.hoisted(() => ({ DOSSIER_SECRET: "s".repeat(40), DOSSIER_GOOGLE_CLIENT_ID: "client" as string | undefined, DOSSIER_GOOGLE_CLIENT_SECRET: "secret" }));
+const env = vi.hoisted(() => ({ DOSSIER_SECRET: "s".repeat(40), DOSSIER_GOOGLE: "on", DOSSIER_GOOGLE_CLIENT_ID: "client" as string | undefined, DOSSIER_GOOGLE_CLIENT_SECRET: "secret" }));
 vi.mock("@/lib/env", () => ({ env }));
 // Nothing saved in Settings → Google: the client comes from the environment.
 vi.mock("@/lib/settings-data", () => ({ loadSettings: async () => ({ googleClientId: null, googleClientSecretEnc: null }) }));
@@ -24,6 +24,7 @@ const request = (path: string) => new NextRequest(`${origin}${path}`, { headers:
 const idToken = (email: string) => `h.${Buffer.from(JSON.stringify({ email })).toString("base64url")}.s`;
 
 beforeEach(() => {
+  env.DOSSIER_GOOGLE = "on";
   env.DOSSIER_GOOGLE_CLIENT_ID = "client";
   vi.mocked(getSession).mockResolvedValue({ persistent: false, issuedAt: new Date(), expiresAt: new Date() });
   vi.mocked(loadGoogleAccount).mockResolvedValue(null);
@@ -68,6 +69,17 @@ describe("GET /api/google/callback", () => {
     expect(back(await callback(request(`/api/google/callback?state=${state}`)))).toBe("failed");
     vi.mocked(getSession).mockResolvedValue(null);
     expect((await callback(request(`/api/google/callback?state=${state}&code=abc`))).headers.get("location")).toBe(`${origin}/login`);
+    expect(saveGoogleAccount).not.toHaveBeenCalled();
+  });
+});
+
+describe("while Gmail and Calendar are off (DOSSIER_GOOGLE)", () => {
+  it("answers 404 on both routes, and saves nothing", async () => {
+    env.DOSSIER_GOOGLE = "off";
+    expect((await connect(request("/api/google/connect"), undefined)).status).toBe(404);
+    const state = await signState("/settings?section=google");
+    expect((await callback(request(`/api/google/callback?state=${state}&code=abc`))).status).toBe(404);
+    expect(exchangeCode).not.toHaveBeenCalled();
     expect(saveGoogleAccount).not.toHaveBeenCalled();
   });
 });

@@ -6,6 +6,7 @@ import { isAiConfigured } from "@/lib/ai/config";
 import { editsSchema, matchSchema, matchScore } from "@/lib/application-data";
 import { loadApplication, loadDocuments, readJson } from "@/lib/application-documents";
 import { formatShortDate } from "@/lib/dates";
+import { googleEnabled } from "@/lib/features";
 import { resolveFileName } from "@/lib/file-name";
 import { refineJobKey } from "@/lib/jobs/refine";
 import { regenerateUnitJob, unitJobKey } from "@/lib/jobs/regenerate-unit";
@@ -26,8 +27,11 @@ import { tabFrom } from "./tabs";
  * Takes an interview moved or deleted in Google Calendar into the
  * application, once per request and before anything reads it:
  * loadApplication is cached for the request, and the title reads it first.
+ * Not while Google is off (DOSSIER_GOOGLE).
  */
-const pullCalendar = cache((id: string) => pullInterviewEvents({ applicationId: id, signal: AbortSignal.timeout(3_000) }).catch(() => 0));
+const pullCalendar = cache(async (id: string) =>
+  googleEnabled() ? pullInterviewEvents({ applicationId: id, signal: AbortSignal.timeout(3_000) }).catch(() => 0) : 0,
+);
 
 export async function generateMetadata({ params }: PageProps<"/applications/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -40,6 +44,7 @@ export async function generateMetadata({ params }: PageProps<"/applications/[id]
 export default async function ApplicationPage({ params, searchParams }: PageProps<"/applications/[id]">) {
   const [{ id }, { tab }] = await Promise.all([params, searchParams]);
   await pullCalendar(id);
+  const gmailOn = googleEnabled();
   const [{ application, profile, settings, extracted, resume, letter, email, includeReferences, letterDate }, aiReady, unitJobs, refineJobs, emailJobs, timeZone, google, emails, themes] =
     await Promise.all([
       loadDocuments(id),
@@ -49,7 +54,7 @@ export default async function ApplicationPage({ params, searchParams }: PageProp
       findUnfinishedJobs(emailJobKey(id)),
       userTimeZone(),
       googleConnection(),
-      loadConversation(id),
+      gmailOn ? loadConversation(id) : [],
       loadThemes(),
     ]);
 
@@ -113,7 +118,7 @@ export default async function ApplicationPage({ params, searchParams }: PageProp
       writingEmail={emailJobs.at(-1)?.id ?? null}
       attachments={{ resume: resume ? fileName("RESUME") : null, letter: letter ? fileName("COVER_LETTER") : null }}
       gmail={
-        google.status === "not-configured" && emails.length === 0
+        !gmailOn || (google.status === "not-configured" && emails.length === 0)
           ? undefined
           : {
               sender:
@@ -133,7 +138,8 @@ export default async function ApplicationPage({ params, searchParams }: PageProp
       includeReferences={includeReferences}
       letterDate={letterDate}
       score={match && match.items.length > 0 ? matchScore(match) : null}
-      initialTab={tabFrom(tab)}
+      // The Conversation tab isn't there without Gmail.
+      initialTab={!gmailOn && tabFrom(tab) === "conversation" ? "resume" : tabFrom(tab)}
       aiReady={aiReady}
       rewriting={rewriting}
       messages={messages}

@@ -7,6 +7,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { ApplicationStatus } from "@/generated/prisma/enums";
 import { action, ActionError } from "@/lib/action";
 import { isAiConfigured } from "@/lib/ai/config";
+import { requireGoogle } from "@/lib/features";
 import { draftReplyJob, replyJobKey } from "@/lib/jobs/draft-reply";
 import { findUnfinishedJobs, startJob } from "@/lib/jobs/runner";
 import { prisma } from "@/lib/prisma";
@@ -24,7 +25,8 @@ import { formatSlot } from "./slots";
 import { checkInboxNow, readReply } from "./sync";
 
 // Gmail and Calendar from the app (E15). Google's failures reach the user as
-// their own message; every send is a separate, confirmed request.
+// their own message; every send is a separate, confirmed request. Each one
+// refuses while Gmail and Calendar are off (DOSSIER_GOOGLE, src/lib/features.ts).
 
 const refreshEverything = () => revalidatePath("/", "layout");
 
@@ -68,6 +70,7 @@ export const saveGoogleSettings = action(
     bufferMinutes: z.number().int().min(0).max(120).optional(),
   }),
   async ({ workTimeZone, workDays, ...changes }) => {
+    requireGoogle();
     if (changes.workStart && changes.workEnd && changes.workStart >= changes.workEnd) throw new ActionError("The working day has to end after it starts.");
     await saveSettings({
       ...changes,
@@ -98,6 +101,7 @@ export const saveGoogleClient = action(
       .optional(),
   }),
   async ({ id, secret }) => {
+    requireGoogle();
     const current = await loadSettings();
     const before = await loadGoogleClientConfig();
     await saveSettings({
@@ -113,6 +117,7 @@ export const saveGoogleClient = action(
 
 /** "Disconnect": revokes Dossier's access at Google. Mail already in Dossier stays. */
 export const disconnectGoogleAccount = action(z.object({}), async (_, { toast }) => {
+  requireGoogle();
   await google(disconnectGoogle);
   revalidatePath("/settings");
   toast("Disconnected from Google.");
@@ -121,6 +126,7 @@ export const disconnectGoogleAccount = action(z.object({}), async (_, { toast })
 
 /** "Check now" in the inbox and Settings. */
 export const checkInbox = action(z.object({}), async (_, { toast }) => {
+  requireGoogle();
   const result = await google(checkInboxNow);
   refreshEverything();
   if (!result) toast("Already checking. It'll be done in a moment.");
@@ -130,6 +136,7 @@ export const checkInbox = action(z.object({}), async (_, { toast }) => {
 
 /** "Send with Gmail" on the Email tab, after the confirmation. */
 export const sendWithGmail = action(z.object({ id: z.string().min(1) }), async ({ id }, { toast }) => {
+  requireGoogle();
   const sent = await google(() => sendApplicationEmail(id));
   refreshEverything();
   toast(sent.eventId ? `Sent. ${statusInfo(ApplicationStatus.SENT).toast}` : "Sent. I'll watch for replies.");
@@ -140,6 +147,7 @@ export const sendWithGmail = action(z.object({ id: z.string().min(1) }), async (
 export const startDraftingReply = action(
   z.object({ emailId: z.string().min(1), note: z.string().max(2000).default(""), slots: z.array(z.iso.datetime({ offset: true })).max(8).nullable().default(null) }),
   async ({ emailId, note, slots }) => {
+    requireGoogle();
     const email = await prisma.emailMessage.findUnique({ where: { id: emailId }, select: { applicationId: true } });
     if (!email) throw new ActionError("That email is no longer in RolePebble.");
     if (!(await isAiConfigured())) throw new ActionError("That needs an AI provider. Choose one in Settings → AI provider.");
@@ -151,6 +159,7 @@ export const startDraftingReply = action(
 
 /** Saves the answer as edited by hand. */
 export const saveReplyDraft = action(z.object({ emailId: z.string().min(1), body: z.string().max(20_000) }), async ({ emailId, body }) => {
+  requireGoogle();
   const { count } = await prisma.emailMessage.updateMany({ where: { id: emailId }, data: { replyDraft: body } });
   if (count === 0) throw new ActionError("That email is no longer in RolePebble.");
   return null;
@@ -158,6 +167,7 @@ export const saveReplyDraft = action(z.object({ emailId: z.string().min(1), body
 
 /** "Send" on a drafted answer, after the confirmation. */
 export const sendReplyEmail = action(z.object({ emailId: z.string().min(1), body: z.string().min(1).max(20_000) }), async ({ emailId, body }, { toast }) => {
+  requireGoogle();
   await google(() => sendReply(emailId, body));
   refreshEverything();
   toast("Answer sent.");
@@ -166,6 +176,7 @@ export const sendReplyEmail = action(z.object({ emailId: z.string().min(1), body
 
 /** "No answer needed": takes it off the list. */
 export const markHandled = action(z.object({ emailId: z.string().min(1), handled: z.boolean() }), async ({ emailId, handled }) => {
+  requireGoogle();
   await prisma.emailMessage.updateMany({ where: { id: emailId }, data: { handledAt: handled ? new Date() : null } });
   refreshEverything();
   return null;
@@ -173,6 +184,7 @@ export const markHandled = action(z.object({ emailId: z.string().min(1), handled
 
 /** Links a mail to an application ("Needs a look"), with the rest of its thread. Null unlinks. */
 export const linkEmail = action(z.object({ emailId: z.string().min(1), applicationId: z.string().min(1).nullable() }), async ({ emailId, applicationId }, { toast }) => {
+  requireGoogle();
   const email = await prisma.emailMessage.findUnique({ where: { id: emailId }, select: { threadId: true } });
   if (!email) throw new ActionError("That email is no longer in RolePebble.");
   if (applicationId && !(await prisma.application.count({ where: { id: applicationId } }))) throw new ActionError("That application no longer exists.");
@@ -189,6 +201,7 @@ export const linkEmail = action(z.object({ emailId: z.string().min(1), applicati
  * who it's from and to, and what the AI read go.
  */
 export const dismissEmail = action(z.object({ emailId: z.string().min(1) }), async ({ emailId }, { toast }) => {
+  requireGoogle();
   await prisma.emailMessage.updateMany({
     where: { id: emailId },
     data: {
@@ -218,6 +231,7 @@ export const dismissEmail = action(z.object({ emailId: z.string().min(1) }), asy
 
 /** "Read again": the AI reads a mail it couldn't before. */
 export const rereadEmail = action(z.object({ emailId: z.string().min(1) }), async ({ emailId }) => {
+  requireGoogle();
   if (!(await isAiConfigured())) throw new ActionError("That needs an AI provider. Choose one in Settings → AI provider.");
   await readReply(emailId);
   refreshEverything();
@@ -226,6 +240,7 @@ export const rereadEmail = action(z.object({ emailId: z.string().min(1) }), asyn
 
 /** Takes up a reply's suggested status (or turns it down), through the status module. */
 export const applySuggestedStatus = action(z.object({ emailId: z.string().min(1), accept: z.boolean() }), async ({ emailId, accept }, { toast }) => {
+  requireGoogle();
   const email = await prisma.emailMessage.findUnique({ where: { id: emailId }, select: { applicationId: true, suggestedStatus: true } });
   if (!email) throw new ActionError("That email is no longer in RolePebble.");
   await prisma.emailMessage.update({ where: { id: emailId }, data: { suggestedStatus: null } });
@@ -239,6 +254,7 @@ export const applySuggestedStatus = action(z.object({ emailId: z.string().min(1)
 
 /** Free times to offer, for the reply's slot picker. */
 export const loadFreeSlots = action(z.object({}), async () => {
+  requireGoogle();
   const connection = await googleConnection();
   if (connection.status !== "connected" || !connection.canUseCalendar) return { slots: [], timeZone: null, fromCalendar: false };
   const { slots, timeZone, fromCalendar } = await google(() => proposeSlots());
@@ -249,6 +265,7 @@ export const loadFreeSlots = action(z.object({}), async () => {
 export const confirmInterview = action(
   z.object({ emailId: z.string().min(1), start: z.iso.datetime({ offset: true }), moveToInterview: z.boolean() }),
   async ({ emailId, start, moveToInterview }, { toast }) => {
+    requireGoogle();
     const email = await prisma.emailMessage.findUnique({ where: { id: emailId }, select: { applicationId: true } });
     if (!email?.applicationId) throw new ActionError("Link this email to an application first.");
     const { eventLink } = await google(() => scheduleInterview(email.applicationId!, new Date(start)));

@@ -21,7 +21,7 @@ export type Handoff = "write" | "score";
 /** A new claude.ai chat that starts with `prompt`. Prompts stay short: links over about 2,000 characters break. */
 export const claudeChatUrl = (prompt: string) => `https://claude.ai/new?q=${encodeURIComponent(prompt)}`;
 
-/** Whether the buttons hand work to Claude: the connector is on and Dossier has no usable model of its own. */
+/** Whether the buttons hand work to Claude: the connector is on (in Settings and on the server) and Dossier has no usable model of its own. */
 export async function handsOffToClaude(aiUsable: boolean): Promise<boolean> {
   return !aiUsable && (await connectorSince()) !== null;
 }

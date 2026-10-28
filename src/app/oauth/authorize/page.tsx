@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
 import { verifySession } from "@/lib/auth/session";
+import { connectorEnabled } from "@/lib/features";
 
 import { Consent } from "./consent";
 import { checkAuthorizeRequest } from "./request";
@@ -11,9 +13,11 @@ export const metadata: Metadata = { title: "Connect Claude" };
 /**
  * Claude asks to use Dossier through the connector (#221, src/app/api/mcp).
  * Signed-out visitors sign in first: the proxy sends them to /login and back.
+ * It isn't there while the server leaves the connector out (DOSSIER_CONNECTOR).
  */
 export default async function AuthorizePage({ searchParams }: PageProps<"/oauth/authorize">) {
   await verifySession();
+  if (!connectorEnabled()) notFound();
   const params = await searchParams;
   const checked = await checkAuthorizeRequest(params);
   const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? "";

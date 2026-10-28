@@ -12,10 +12,19 @@ const HASH_PASSWORD = "Make one with `docker run --rm -it ghcr.io/aientech/dossi
 
 export const AI_PROVIDERS = ["local", "openai", "anthropic", "mistral", "lmstudio"] as const;
 export const JOB_SOURCE_NAMES = ["jsearch", "adzuna", "off"] as const;
+const SWITCH = ["on", "off"] as const;
 
 // An empty value (`DOSSIER_AI_KEY=` in .env) counts as unset.
 const unsetIfEmpty = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
+
+/** A feature switch: on or off, in any case, and off while unset (src/lib/features.ts). */
+const featureSwitch = (name: string) =>
+  z.preprocess(unsetIfEmpty, z.string().trim().toLowerCase().default("off")).pipe(
+    z.enum(SWITCH, {
+      error: (issue) => `${name} must be on or off (got "${String(issue.input)}").`,
+    }),
+  );
 
 const required = (name: string, fix: string) =>
   z.preprocess(
@@ -113,6 +122,10 @@ const schema = z.object({
   ),
   DOSSIER_ADZUNA_APP_ID: optional(z.string()),
   DOSSIER_ADZUNA_KEY: optional(z.string()),
+  // RolePebble's first version leaves out Gmail and Calendar, and the Claude
+  // connector: each stays hidden until its switch is on.
+  DOSSIER_GOOGLE: featureSwitch("DOSSIER_GOOGLE"),
+  DOSSIER_CONNECTOR: featureSwitch("DOSSIER_CONNECTOR"),
   // Google sign-in for Gmail and Calendar (E15-1): an OAuth client of type
   // "Web application". Settings → Google can save one instead, which wins.
   // Never echo the secret.

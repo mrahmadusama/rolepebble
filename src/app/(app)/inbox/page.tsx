@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { isAiConfigured } from "@/lib/ai/config";
+import { googleEnabled } from "@/lib/features";
 import { googleConnection } from "@/lib/google/account";
 import { loadInbox } from "@/lib/google/inbox-data";
 import { prisma } from "@/lib/prisma";
@@ -13,9 +15,11 @@ export const metadata: Metadata = { title: "Inbox" };
 
 /**
  * Employers' replies from Gmail (E15-3): the ones waiting for an answer,
- * mail that couldn't be linked to an application, and recent updates.
+ * mail that couldn't be linked to an application, and recent updates. It
+ * isn't there while Gmail is off (DOSSIER_GOOGLE).
  */
 export default async function InboxPage() {
+  if (!googleEnabled()) notFound();
   const [inbox, connection, settings, aiReady, timeZone, applications] = await Promise.all([
     loadInbox(),
     googleConnection(),

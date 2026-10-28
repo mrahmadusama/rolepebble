@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { periodFromParam } from "@/lib/dashboard";
+import { googleEnabled } from "@/lib/features";
 import { waitingByApplication } from "@/lib/google/inbox-data";
 import { loadDashboard } from "@/lib/dashboard-data";
 import { dayPeriod, hourIn } from "@/lib/greeting";
@@ -25,7 +26,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
   const [{ period: param, date }, settings, timeZone] = await Promise.all([searchParams, loadSettings(), userTimeZone()]);
   const now = new Date();
   const range = periodFromParam(param) ?? settings.dashboardPeriod;
-  const replies = await waitingByApplication().catch(() => undefined);
+  const replies = googleEnabled() ? await waitingByApplication().catch(() => undefined) : undefined;
   const [figures, name] = await Promise.all([
     loadDashboard({ period: range, quietDays: settings.quietDays, timeZone, replies }),
     loadProfileName(),

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/env", () => ({ env: { DOSSIER_SECRET: "s".repeat(40), DOSSIER_PASSWORD: "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA" } }));
+const env = vi.hoisted(() => ({ DOSSIER_SECRET: "s".repeat(40), DOSSIER_PASSWORD: "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA", DOSSIER_CONNECTOR: "on" }));
+vi.mock("@/lib/env", () => ({ env }));
 const settings = vi.hoisted(() => ({ connectorEnabledAt: "2026-10-23T09:00:00.000Z" as string | null }));
 vi.mock("@/lib/settings-data", () => ({ loadSettings: async () => settings }));
 const db = vi.hoisted(() => ({ postingSearch: { findUnique: vi.fn() }, postingScore: { upsert: vi.fn() } }));
@@ -20,6 +21,10 @@ vi.mock("@/lib/posting-searches", () => ({
 import { demoProfile } from "@/lib/demo-profile";
 import { challengeOf, exchangeCode, issueCode, registerClient } from "@/lib/connector/oauth";
 
+import { GET as metadata } from "../oauth/metadata/route";
+import { GET as protectedResource } from "../oauth/protected-resource/route";
+import { POST as register } from "../oauth/register/route";
+import { POST as tokenEndpoint } from "../oauth/token/route";
 import { GET, POST } from "./route";
 
 const CLAUDE = "https://claude.ai/api/mcp/auth_callback";
@@ -59,6 +64,7 @@ const tool = async (name: string, args: Record<string, unknown>) => {
 
 beforeEach(() => {
   settings.connectorEnabledAt = "2026-10-23T09:00:00.000Z";
+  env.DOSSIER_CONNECTOR = "on";
   searches.ran = [];
 });
 
@@ -68,6 +74,16 @@ describe("the Claude connector at /api/mcp (#221)", () => {
     settings.connectorEnabledAt = null;
     expect((await call({ jsonrpc: "2.0", id: 1, method: "tools/list" }, token)).status).toBe(404);
     expect((await GET(new Request("https://dossier.example/api/mcp"))).status).toBe(404);
+  });
+
+  it("isn't there, nor is its sign-in, while the server leaves the connector out (DOSSIER_CONNECTOR)", async () => {
+    const token = await accessToken();
+    env.DOSSIER_CONNECTOR = "off";
+    expect((await call({ jsonrpc: "2.0", id: 1, method: "tools/list" }, token)).status).toBe(404);
+    expect((await metadata(new Request("https://dossier.example/.well-known/oauth-authorization-server"))).status).toBe(404);
+    expect((await protectedResource(new Request("https://dossier.example/.well-known/oauth-protected-resource"))).status).toBe(404);
+    expect((await register(new Request("https://dossier.example/api/oauth/register", { method: "POST", body: "{}" }))).status).toBe(404);
+    expect((await tokenEndpoint(new Request("https://dossier.example/api/oauth/token", { method: "POST", body: "" }))).status).toBe(404);
   });
 
   it("asks Claude to sign in, and says where to find out how", async () => {

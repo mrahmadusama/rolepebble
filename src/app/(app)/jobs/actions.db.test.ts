@@ -31,7 +31,7 @@ vi.mock("@/lib/prisma", async () => {
 vi.mock("@/lib/auth/session", () => ({
   getSession: async () => ({ persistent: false, issuedAt: new Date(), expiresAt: new Date(Date.now() + 60_000) }),
 }));
-vi.mock("@/lib/env", () => ({ env: { DOSSIER_SECRET: "a".repeat(32) } }));
+vi.mock("@/lib/env", () => ({ env: { DOSSIER_SECRET: "a".repeat(32), DOSSIER_CONNECTOR: "on" } }));
 const ai = vi.hoisted(() => ({ ready: true }));
 vi.mock("@/lib/ai/config", () => ({ isAiConfigured: async () => ai.ready, isAiUsable: async () => ai.ready }));
 vi.mock("@/lib/jobs/runner", async (importOriginal) => ({

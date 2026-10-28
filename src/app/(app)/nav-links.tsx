@@ -4,22 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/cn";
-import { isCurrent, NAV } from "@/lib/nav";
+import type { Features } from "@/lib/features";
+import { isCurrent, visibleNav } from "@/lib/nav";
 
 import { useSidebarCollapsed } from "./sidebar-frame";
 
 /** The sidebar's navigation, with the current section highlighted. */
-export function NavLinks({ counts }: { counts?: Record<string, number> } = {}) {
+export function NavLinks({ features, counts }: { features: Features; counts?: Record<string, number> }) {
   const pathname = usePathname();
   const collapsed = useSidebarCollapsed();
+  const nav = visibleNav(features);
   return (
     <nav aria-label="Main" className="flex flex-1 flex-col gap-1">
-      {NAV.map(({ label, items }, index) => (
+      {nav.map(({ label, items }, index) => (
         <div
           key={label ?? index}
           className={cn(
             "flex flex-col gap-0.5",
-            index === NAV.length - 1 && cn("mt-auto border-t border-line pt-2", collapsed ? "-mx-1 px-1" : "-mx-2 px-2"),
+            index === nav.length - 1 && cn("mt-auto border-t border-line pt-2", collapsed ? "-mx-1 px-1" : "-mx-2 px-2"),
           )}
         >
           {label &&

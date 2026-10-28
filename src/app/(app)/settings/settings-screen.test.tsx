@@ -6,7 +6,7 @@ import { SettingsScreen } from "./settings-screen";
 describe("SettingsScreen", () => {
   it("has the header and the six sections, the current one marked (E10-1)", () => {
     render(
-      <SettingsScreen section="data">
+      <SettingsScreen section="data" features={{ google: true, connector: true }}>
         <p>Section body</p>
       </SettingsScreen>,
     );
@@ -19,5 +19,15 @@ describe("SettingsScreen", () => {
     expect(within(nav).getByRole("link", { name: "Your data" })).toHaveAttribute("href", "/settings?section=data");
     expect(within(nav).getByRole("link", { name: "About" })).not.toHaveAttribute("aria-current");
     expect(screen.getByText("Section body")).toBeInTheDocument();
+  });
+
+  it("lists neither Google nor the Claude connector while they're off", () => {
+    render(
+      <SettingsScreen section="ai" features={{ google: false, connector: false }}>
+        <p>Section body</p>
+      </SettingsScreen>,
+    );
+    const nav = screen.getByRole("navigation", { name: "Settings sections" });
+    expect(within(nav).getAllByRole("link").map((link) => link.textContent)).toEqual(["AI provider", "Job search", "Job agent", "Documents", "Your data", "About"]);
   });
 });

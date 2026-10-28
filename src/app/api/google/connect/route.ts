@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { googleEnabled } from "@/lib/features";
 import { loadGoogleAccount } from "@/lib/google/account";
 import { authorizeUrl, googleClient, redirectUri, SCOPES, signState, type ScopeGroup } from "@/lib/google/oauth";
 import { publicOrigin } from "@/lib/google/origin";
@@ -13,6 +14,7 @@ const GROUPS: readonly ScopeGroup[] = ["send", "read", "calendar"];
  * consent page, which comes back to /api/google/callback.
  */
 export const GET = route(async (request) => {
+  if (!googleEnabled()) return new Response(null, { status: 404 });
   const client = await googleClient();
   const settings = new URL("/settings?section=google", publicOrigin(request));
   if (!client) {

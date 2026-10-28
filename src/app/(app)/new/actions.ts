@@ -7,6 +7,7 @@ import { action, ActionError } from "@/lib/action";
 import { createApplicationFromDocuments } from "@/lib/application-create";
 import { matchSchema } from "@/lib/application-data";
 import { handOffPastedPosting } from "@/lib/connector/handoff";
+import { requireConnector } from "@/lib/features";
 import { readPostingJob } from "@/lib/jobs/read-posting";
 import { startJob } from "@/lib/jobs/runner";
 import { writeDocumentsJob } from "@/lib/jobs/write-documents";
@@ -30,7 +31,10 @@ export const handOffToClaude = action(
     posting: z.string().trim().min(1, "Paste a job posting first.").max(100_000),
     postingUrl: z.string().trim().max(2000),
   }),
-  async ({ posting, postingUrl }) => ({ url: await handOffPastedPosting({ text: posting, url: /^https?:\/\//i.test(postingUrl) ? postingUrl : "" }) }),
+  async ({ posting, postingUrl }) => {
+    requireConnector();
+    return { url: await handOffPastedPosting({ text: posting, url: /^https?:\/\//i.test(postingUrl) ? postingUrl : "" }) };
+  },
 );
 
 const detailsSchema = z.object({

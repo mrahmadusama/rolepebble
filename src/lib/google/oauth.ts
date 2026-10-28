@@ -4,6 +4,7 @@ import { jwtVerify, SignJWT } from "jose";
 import { z } from "zod";
 
 import { env, type Env } from "@/lib/env";
+import { googleEnabled } from "@/lib/features";
 import { deriveKey } from "@/lib/keys";
 import { decryptSecret, GOOGLE_CLIENT_SECRET, SecretUnreadable } from "@/lib/secrets";
 import type { SettingsData } from "@/lib/settings";
@@ -83,8 +84,13 @@ export async function loadGoogleClientConfig(): Promise<GoogleClientConfig> {
   return resolveGoogleClient(await loadSettings(), env);
 }
 
-/** The client in effect, or null while Google isn't set up. */
+/**
+ * The client in effect, or null while Google isn't set up. Also null while
+ * Gmail and Calendar are off (DOSSIER_GOOGLE): the account reads as not set
+ * up, so nothing calls Google, even with an account connected before.
+ */
 export async function googleClient(): Promise<{ id: string; secret: string } | null> {
+  if (!googleEnabled()) return null;
   return (await loadGoogleClientConfig()).client;
 }
 

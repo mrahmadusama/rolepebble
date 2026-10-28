@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { NavLinks } from "./nav-links";
 
+const ALL_ON = { google: true, connector: true };
+
 let pathname = "/";
 vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 vi.mock("next/link", () => ({
@@ -12,7 +14,7 @@ vi.mock("next/link", () => ({
 
 function currentItem(path: string) {
   pathname = path;
-  const { unmount } = render(<NavLinks />);
+  const { unmount } = render(<NavLinks features={ALL_ON} />);
   const current = screen
     .getAllByRole("link")
     .filter((link) => link.getAttribute("aria-current") === "page")
@@ -23,7 +25,7 @@ function currentItem(path: string) {
 
 describe("NavLinks", () => {
   it("lists the sections in the prototype's order", () => {
-    render(<NavLinks />);
+    render(<NavLinks features={ALL_ON} />);
     expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
       "Dashboard",
       "Profile",
@@ -35,6 +37,12 @@ describe("NavLinks", () => {
       "Inbox",
       "Settings",
     ]);
+  });
+
+  it("leaves the Inbox out while Gmail is off", () => {
+    render(<NavLinks features={{ google: false, connector: true }} counts={{ "/inbox": 3 }} />);
+    expect(screen.queryByRole("link", { name: /Inbox/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Applications" })).toBeInTheDocument();
   });
 
   it("marks exactly one current section", () => {

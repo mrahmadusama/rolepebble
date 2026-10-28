@@ -7,15 +7,16 @@ import { PageHeader } from "@/components/page-header";
 import { SavedIndicator } from "@/components/saved-indicator";
 import { TrackSaveContext, useSaveTracker } from "@/components/save-tracker";
 import { cn } from "@/lib/cn";
+import type { Features } from "@/lib/features";
 
-import { SETTINGS_SECTIONS, settingsSectionHref, type SettingsSectionId } from "./sections";
+import { settingsSectionHref, settingsSections, type SettingsSectionId } from "./sections";
 
 /**
  * The Settings frame (E10-1): the section list on the left, the section on
  * the right, stacked on narrow windows. Every control saves on its own; the
  * header says when it's done.
  */
-export function SettingsScreen({ section, children }: { section: SettingsSectionId; children: ReactNode }) {
+export function SettingsScreen({ section, features, children }: { section: SettingsSectionId; features: Features; children: ReactNode }) {
   const saves = useSaveTracker();
 
   return (
@@ -27,7 +28,7 @@ export function SettingsScreen({ section, children }: { section: SettingsSection
       />
       <div className="flex flex-wrap items-start gap-x-12 gap-y-8 px-10 pb-20">
         <nav aria-label="Settings sections" className="flex max-w-[220px] min-w-[200px] flex-[1_1_200px] flex-col gap-0.5">
-          {SETTINGS_SECTIONS.map((entry) => (
+          {settingsSections(features).map((entry) => (
             <Link
               key={entry.id}
               href={settingsSectionHref(entry.id)}
