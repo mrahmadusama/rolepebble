@@ -18,7 +18,7 @@ describe("About (E10-9)", () => {
 
   it("links to the source code and credits Dossier (AGPL)", () => {
     render(<AboutSection facts={facts} />);
-    expect(screen.getByRole("link", { name: "source code (opens in a new tab)" })).toHaveAttribute("href", "https://github.com/mrahmadusama/dossier");
+    expect(screen.getByRole("link", { name: "source code (opens in a new tab)" })).toHaveAttribute("href", "https://github.com/mrahmadusama/rolepebble");
     expect(screen.getByRole("link", { name: "Dossier (opens in a new tab)" })).toHaveAttribute("href", "https://dossier.aien.me");
   });
 

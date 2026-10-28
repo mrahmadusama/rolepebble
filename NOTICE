@@ -6,7 +6,7 @@ copyright (C) AienTech and contributors, used under the GNU Affero General
 Public License, version 3 (see LICENSE).
 
 Changes from Dossier, from 28 October 2026 on, are listed in the git history
-of https://github.com/mrahmadusama/dossier. Among them:
+of https://github.com/mrahmadusama/rolepebble. Among them:
 
 - 2026-10-28: renamed to RolePebble in the interface; removed the daily usage
   ping and the update check; added a link to this source code in the sidebar
