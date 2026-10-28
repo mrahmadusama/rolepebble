@@ -34,8 +34,8 @@ beforeEach(() => resetDatabase(prisma()));
 afterAll(() => prisma().$disconnect());
 
 describe("postings", () => {
-  it("lists the same sources as the schema's enum", () => {
-    expect([...JOB_SOURCES].sort()).toEqual(Object.values(PostingSource).sort());
+  it("lists the schema's sources, except the Bundesagentur kept only for old rows", () => {
+    expect([...JOB_SOURCES, "ARBEITSAGENTUR"].sort()).toEqual(Object.values(PostingSource).sort());
   });
 
   it("saves a posting with everything the screen needs, and reads it back in the same shape", async () => {
