@@ -68,7 +68,7 @@ CI (`.github/workflows/ci.yml`) runs lint, typecheck, all unit and database test
 `deploy/` has a Docker Compose setup (PostgreSQL, the app, Caddy for HTTPS, or a Cloudflare Tunnel) and a step-by-step guide. Planned:
 
 - **Staging:** `staging.rolepebble.com` on a Hetzner CX22, running the image CI publishes from `main`, kept out of search engines. Later the production server.
-- **Landing page:** `rolepebble.com` with a waitlist, on Cloudflare Pages, emails stored in Cloudflare D1. Built in `site/`; it goes live once the owner has the domain and follows the steps in `site/README.md`.
+- **Landing page:** live at https://rolepebble.pages.dev (Cloudflare Pages project `rolepebble`, owner's Cloudflare account, production branch `main`, root directory `site`, output `public`). The waitlist is in the D1 database `rolepebble-waitlist`, bound as `DB`. Every merge to `main` deploys it; pull requests get preview links. `rolepebble.com` gets attached once the owner registers it.
 
 The owner's **personal** Dossier (plain upstream Dossier, for their own job search) runs separately from the old fork `mrahmadusama/dossier`. It isn't part of this repo; don't deploy RolePebble there.
 
@@ -77,14 +77,14 @@ The owner's **personal** Dossier (plain upstream Dossier, for their own job sear
 | Phase | What | Status |
 |---|---|---|
 | 0 | Validate: domain, waitlist, talk to job seekers, choose payments (Stripe isn't available to sellers in Pakistan: use a merchant of record like Paddle or Lemon Squeezy, after checking payouts to Pakistan) | In progress (owner) |
-| 1 | Fork preparation: name, icon, policies, contact, AGPL links, remove calls home and the Bundesagentur, hide Gmail/Calendar and the connector, repo pages, staging, landing page | Code done (PRs #1, #3, #4), landing page built. Waiting on the domain to put it live, and on the Hetzner server for staging |
+| 1 | Fork preparation: name, icon, policies, contact, AGPL links, remove calls home and the Bundesagentur, hide Gmail/Calendar and the connector, repo pages, staging, landing page | Code done (PRs #1, #3, #4); landing page live at rolepebble.pages.dev (PR #6). Waiting on the domain and the Hetzner server for staging |
 | 2 | Multi-tenancy: accounts (email + password, verification, reset), `userId` on every per-user model, a user-scoped Prisma client plus Postgres row-level security, isolation tests, per-user background jobs, `pg_dump` backups | Not started. The biggest piece: no model has an owner, ~430 queries, six schedulers |
 | 3 | Billing and AI limits: included AI with monthly credits on a cheap model, plus bring-your-own-key; JSearch first | Not started |
 | 4 | Infrastructure, legal (privacy policy reviewed by a lawyer, terms), security review of the isolation layer | Not started |
 | 5 | Private beta from the waitlist, then public launch | Not started |
 | Later | Gmail/Calendar (needs Google verification and a CASA assessment), Google sign-in, B2B for career coaches | |
 
-**Phase 1, still open:** owner registers `rolepebble.com` (Cloudflare Registrar) with Email Routing for support@, then connects the landing page to Cloudflare Pages (`site/README.md`); owner creates the Hetzner CX22 and shares its IP, and the agent sets up staging. The landing page's text is waiting on the owner's review. The real logo replaces the placeholder cairn icon whenever the owner has it.
+**Phase 1, still open:** owner registers `rolepebble.com` (Cloudflare Registrar) with Email Routing for support@, and attaches it to the Pages project; owner creates the Hetzner CX22 and shares its IP, and the agent sets up staging. The landing page's wordmark (pebble "o", in Outfit) and pebble icon are the owner's choices.
 
 ## For the next session
 
