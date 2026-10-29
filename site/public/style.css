@@ -359,25 +359,24 @@ ol {
   font-weight: 500;
 }
 
-/* Hero visual: a sketch of the app, not a screenshot */
+/* Hero: a photo, with the badges in notches cut into its corners */
 
 .hero-visual {
   position: relative;
   margin-top: 64px;
-  padding: 132px 48px 0;
+  aspect-ratio: 2 / 1;
   border-radius: 28px;
-  background:
-    radial-gradient(120% 80% at 50% 0%, #34604f 0%, var(--moss) 55%, #17302a 100%);
+  background: var(--moss);
   overflow: hidden;
 }
 
-.hero-visual::before {
-  content: "";
+.hero-photo {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
-  background-size: 18px 18px;
-  mask-image: linear-gradient(to bottom, #000, transparent 70%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
 }
 
 /* The badges sit in notches cut into the panel's corners: a gap the color
@@ -482,10 +481,10 @@ ol {
   font-size: 0.5em;
 }
 
+/* The app sketch in "Honest by design": a drawing of the app, not a screenshot */
+
 .window {
   position: relative;
-  max-width: 900px;
-  margin: 0 auto;
   background: #fff;
   border-radius: 16px 16px 0 0;
   box-shadow: 0 -10px 60px -20px rgba(0, 0, 0, 0.5);
@@ -517,83 +516,11 @@ ol {
 }
 
 .window-body {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 20px;
-  padding: 20px 20px 0;
+  padding: 20px;
   background: var(--soft);
-}
-
-.paper {
-  padding: 24px 26px 28px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-bottom: 0;
-  border-radius: 8px 8px 0 0;
-}
-
-.paper-name {
-  font: 600 22px/1.1 var(--display);
-}
-
-.paper-role {
-  margin-top: 4px;
-  color: var(--muted);
-}
-
-.paper-h {
-  margin-top: 18px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--line);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--moss-2);
-}
-
-.paper-item {
-  margin-top: 10px;
-}
-
-.paper-item i {
-  float: right;
-  font-style: normal;
-  color: var(--muted);
-}
-
-.paper-line {
-  height: 7px;
-  margin-top: 7px;
-  border-radius: 4px;
-  background: #eceeea;
-}
-
-.paper-line.short {
-  width: 82%;
-}
-
-.paper-line.shorter {
-  width: 64%;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.chips span {
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: var(--soft);
-  font-size: 12px;
 }
 
 .match {
-  align-self: start;
-  margin-bottom: 128px;
   padding: 18px 18px 16px;
   background: #fff;
   border: 1px solid var(--line);
@@ -693,6 +620,101 @@ ol {
   margin-top: 14px;
   color: var(--muted);
   font-size: 18px;
+}
+
+/* Sound familiar? */
+
+.familiar {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 64px;
+  align-items: center;
+}
+
+.familiar-photo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  border-radius: 24px;
+  object-fit: cover;
+  object-position: 62% 50%;
+}
+
+.thoughts {
+  margin-top: 32px;
+}
+
+.thoughts li {
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+}
+
+.thoughts li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.thought {
+  font: 500 22px/1.3 var(--display);
+  letter-spacing: -0.01em;
+}
+
+.relief {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.relief .icon {
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: var(--lime-ink);
+  stroke-width: 2.5;
+}
+
+/* A note from the founder */
+
+.note {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.note blockquote {
+  margin: 22px 0 0;
+  font: 400 clamp(21px, 2.4vw, 27px)/1.45 var(--display);
+  letter-spacing: -0.01em;
+}
+
+.note blockquote p + p {
+  margin-top: 16px;
+}
+
+.note figcaption {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+.note-mark {
+  width: 34px;
+  height: 37px;
+}
+
+.note figcaption span {
+  display: grid;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.note figcaption b {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
 }
 
 /* Why */
@@ -1015,36 +1037,11 @@ ol {
   color: var(--lime-ink);
 }
 
-.quote-card {
-  margin: 0;
-  padding: 40px;
+.honest-visual {
+  padding: 40px 36px 0;
   border-radius: 24px;
-  background: var(--moss);
-  color: #fff;
-}
-
-.quote-gap {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: #fbeedd;
-  color: #7a3f0c;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.quote-card blockquote {
-  margin: 24px 0 0;
-  font: 400 clamp(22px, 2.4vw, 28px)/1.35 var(--display);
-  letter-spacing: -0.01em;
-}
-
-.quote-card figcaption {
-  margin-top: 20px;
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.65);
+  background: radial-gradient(120% 80% at 50% 0%, #34604f 0%, var(--moss) 55%, #17302a 100%);
+  overflow: hidden;
 }
 
 /* FAQ */
@@ -1239,19 +1236,16 @@ ol {
     display: none;
   }
 
-  .window-body {
+  .familiar {
     grid-template-columns: 1fr;
+    gap: 40px;
   }
 
-  .paper {
-    display: none;
+  .familiar-photo {
+    aspect-ratio: 16 / 10;
   }
 
-  .match {
-    margin-bottom: 20px;
-  }
-
-  /* The second badge moves to the top right, clear of the sketch. */
+  /* The second badge moves to the top right, clear of the face. */
   .notch-end {
     --at: 0 100%;
     top: 0;
@@ -1271,7 +1265,7 @@ ol {
   }
 
   .hero-visual {
-    padding-top: 150px;
+    aspect-ratio: 3 / 2;
   }
 }
 
@@ -1321,8 +1315,12 @@ ol {
 
   .hero-visual {
     margin-top: 44px;
-    padding: 92px 14px 0;
+    aspect-ratio: 4 / 5;
     border-radius: 22px;
+  }
+
+  .hero-photo {
+    object-position: 68% 50%;
   }
 
   .notch {
@@ -1394,8 +1392,12 @@ ol {
     padding-right: 40px;
   }
 
-  .quote-card {
-    padding: 28px;
+  .honest-visual {
+    padding: 24px 14px 0;
+  }
+
+  .thought {
+    font-size: 19px;
   }
 
   .cta {
