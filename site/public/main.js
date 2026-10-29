@@ -41,6 +41,16 @@ if (steps) {
   update();
 }
 
+// Where the visitor came from, from links like /?ref=instagram. Kept for the
+// visit, so it still counts if they join after moving around the page.
+let ref = new URLSearchParams(location.search).get("ref");
+try {
+  if (ref) sessionStorage.setItem("ref", ref);
+  else ref = sessionStorage.getItem("ref");
+} catch {
+  // Storage can be off (private windows); the tag then counts only on this page.
+}
+
 for (const form of document.querySelectorAll("[data-waitlist]")) {
   const note = form.querySelector(".form-note");
   const button = form.querySelector("button");
@@ -57,9 +67,11 @@ for (const form of document.querySelectorAll("[data-waitlist]")) {
     note.removeAttribute("data-state");
     note.textContent = "Adding you…";
     try {
+      const body = new FormData(form);
+      if (ref) body.set("ref", ref);
       const response = await fetch(form.action, {
         method: "POST",
-        body: new FormData(form),
+        body,
         headers: { Accept: "application/json" },
       });
       const result = await response.json().catch(() => ({}));

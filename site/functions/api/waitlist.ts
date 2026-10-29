@@ -26,6 +26,9 @@ interface Context {
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;
 const SOURCES = new Set(["hero", "footer"]);
+// Where a visitor came from, from links like /?ref=instagram: a short tag
+// we choose, never anything about the person.
+const REF = /^[a-z0-9-]{1,40}$/;
 
 function reply(request: Request, ok: boolean, status: number, error?: string) {
   const wantsJson = request.headers.get("accept")?.includes("application/json");
@@ -52,13 +55,19 @@ export async function onRequestPost({ request, env }: Context): Promise<Response
     return reply(request, false, 400, "Please enter a valid email address.");
   }
   const source = String(form.get("source") ?? "");
+  const ref = String(form.get("ref") ?? "").trim().toLowerCase();
 
   try {
     // Joining twice is fine: the first time is kept.
     await env.DB.prepare(
-      "INSERT INTO waitlist (email, source, created_at) VALUES (?, ?, ?) ON CONFLICT (email) DO NOTHING",
+      "INSERT INTO waitlist (email, source, ref, created_at) VALUES (?, ?, ?, ?) ON CONFLICT (email) DO NOTHING",
     )
-      .bind(email, SOURCES.has(source) ? source : null, new Date().toISOString())
+      .bind(
+        email,
+        SOURCES.has(source) ? source : null,
+        REF.test(ref) ? ref : null,
+        new Date().toISOString(),
+      )
       .run();
   } catch {
     return reply(request, false, 500, "That didn't work. Please try again in a moment.");
