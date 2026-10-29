@@ -32,7 +32,7 @@ function reply(request: Request, ok: boolean, status: number, error?: string) {
   if (wantsJson) {
     return Response.json(ok ? { ok } : { ok, error }, { status });
   }
-  const page = ok ? "/thanks.html" : "/?invalid#join";
+  const page = ok ? "/thanks" : "/?invalid#join";
   return Response.redirect(new URL(page, request.url).toString(), 303);
 }
 

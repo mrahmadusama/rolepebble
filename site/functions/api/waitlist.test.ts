@@ -92,7 +92,7 @@ describe("POST /api/waitlist", () => {
       });
 
       expect(response.status).toBe(303);
-      expect(response.headers.get("location")).toBe("https://rolepebble.com/thanks.html");
+      expect(response.headers.get("location")).toBe("https://rolepebble.com/thanks");
     });
 
     it("redirects back to the form when the address isn't valid", async () => {
