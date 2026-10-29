@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RolePebble · Every application, tailored</title>
+  <meta name="description" content="RolePebble writes a resume and cover letter for every job you apply to, using only facts from your profile, and tracks every application from draft to offer. Join the waitlist.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="canonical" href="https://rolepebble.com/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="RolePebble">
+  <meta property="og:title" content="RolePebble · Every application, tailored">
+  <meta property="og:description" content="A resume and cover letter written for every job, using only facts from your profile, and every application tracked from draft to offer.">
+  <meta property="og:url" content="https://rolepebble.com/">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="apple-touch-icon" href="/apple-icon.png">
+  <link rel="preload" href="/fonts/Outfit-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/style.css">
+  <script>document.documentElement.classList.add("js");</script>
+  <script src="/main.js" defer></script>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-mark" viewBox="11 9 42 46"><ellipse cx="32" cy="46" rx="19" ry="8" fill="#1f3a32"/><ellipse cx="33.5" cy="29.5" rx="13" ry="6.5" transform="rotate(-5 33.5 29.5)" fill="#2c5246"/><ellipse cx="30.5" cy="16" rx="8" ry="5" transform="rotate(6 30.5 16)" fill="#6fbf4a"/></symbol>
+      <symbol id="i-pebble-o" viewBox="0 0 60 52"><ellipse cx="30" cy="27" rx="29" ry="22" transform="rotate(-8 30 27)"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+      <symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+      <symbol id="i-kanban" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z"/></symbol>
+      <symbol id="i-languages" viewBox="0 0 24 24"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="m5.6 5.6 2.1 2.1"/><path d="m16.3 16.3 2.1 2.1"/><path d="m5.6 18.4 2.1-2.1"/><path d="m16.3 7.7 2.1-2.1"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+      <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+    </defs>
+  </svg>
+
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="header">
+    <nav class="nav" aria-label="Main">
+      <a class="brand" href="/" aria-label="RolePebble home">
+        <svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg>
+        <span class="wordmark">R<svg class="wordmark-o" viewBox="0 0 60 52" aria-hidden="true"><use href="#i-pebble-o"/></svg>lePebble</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#why">Why RolePebble</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#steps">How it works</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <a class="btn btn-dark" href="#join">Join the waitlist <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container hero-text">
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Private beta coming soon</p>
+        <h1>Every application, tailored.</h1>
+        <p class="lead">One profile. A resume and cover letter written for each job, using only what's true about you. Every application tracked from draft to offer.</p>
+        <form class="waitlist" action="/api/waitlist" method="post" data-waitlist>
+          <label class="visually-hidden" for="hero-email">Email address</label>
+          <input id="hero-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+          <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <input type="hidden" name="source" value="hero">
+          <button class="btn btn-lime" type="submit">Join the waitlist <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <p class="form-note" role="status"></p>
+        </form>
+      </div>
+
+      <div class="container">
+        <div class="hero-visual">
+          <div class="notch notch-start">
+            <div class="badge badge-lime">
+              <span class="badge-label">How you match</span>
+              <span class="badge-number">4<small>/5</small></span>
+            </div>
+          </div>
+          <div class="notch notch-end">
+            <div class="badge badge-dark">
+              <span class="badge-label">Things made up</span>
+              <span class="badge-number">0</span>
+            </div>
+          </div>
+
+          <div class="window" aria-hidden="true">
+            <div class="window-bar"><span></span><span></span><span></span><p>Product Designer · Ledgerly</p></div>
+            <div class="window-body">
+              <div class="paper">
+                <p class="paper-name">Jane Doe</p>
+                <p class="paper-role">Product Designer · Amsterdam</p>
+                <p class="paper-h">Experience</p>
+                <p class="paper-item"><b>Senior Product Designer</b>, Northwind Logistics <i>2021 – now</i></p>
+                <p class="paper-line"></p><p class="paper-line short"></p>
+                <p class="paper-item"><b>Product Designer</b>, Fieldnote <i>2018 – 2021</i></p>
+                <p class="paper-line"></p><p class="paper-line shorter"></p>
+                <p class="paper-h">Skills</p>
+                <p class="chips"><span>Figma</span><span>Design systems</span><span>Prototyping</span><span>Research</span></p>
+              </div>
+              <div class="match">
+                <p class="match-title">Requirements</p>
+                <ul>
+                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>5+ years of product design<small>3 roles, since 2015</small></span></li>
+                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>Built a design system<small>At Northwind Logistics</small></span></li>
+                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>Prototyping in Figma<small>At Fieldnote</small></span></li>
+                  <li class="gap"><svg class="icon"><use href="#i-plus"/></svg><span>Experience with Kubernetes<small>Not in your profile: shown as a gap</small></span></li>
+                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>Dutch is a plus<small>Dutch: native</small></span></li>
+                </ul>
+                <p class="match-foot"><svg class="icon"><use href="#i-download"/></svg> Resume and cover letter ready as PDF</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why -->
+    <section class="section" id="why">
+      <div class="container why">
+        <div>
+          <p class="tag">Why RolePebble</p>
+          <h2>Job hunting is a second job. RolePebble does the paperwork.</h2>
+        </div>
+        <div class="why-copy">
+          <p>Sending the same resume everywhere doesn't work, and rewriting it for every posting takes hours. RolePebble reads each posting, shows how you match, and writes a resume and cover letter for it from your own profile, so you spend your time on the jobs, not the documents.</p>
+          <a class="btn btn-lime" href="#join">Join the waitlist <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+        <ul class="pills">
+          <li><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg> Never invents experience</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-sparkle"/></svg> Written for each posting</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-kanban"/></svg> Every application tracked</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg> Open source</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head">
+          <p class="tag">Features</p>
+          <h2>Everything between “I'm looking” and “I accept”</h2>
+          <p class="sub">One place for your profile, your documents and your applications.</p>
+        </div>
+        <ul class="features">
+          <li class="feature">
+            <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg></span>
+            <h3>Tailored resume</h3>
+            <p>Written for each posting from your profile, in the tone you choose, and downloaded as a clean PDF.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg></span>
+            <h3>Cover letter</h3>
+            <p>A letter for the role, not a template, with the important gaps addressed honestly.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span>
+            <h3>See how you match</h3>
+            <p>Each requirement checked against your profile, with where it comes from. What's missing is shown as a gap.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg></span>
+            <h3>Refine in a chat</h3>
+            <p>Ask for changes in plain words, edit any part yourself, and undo anything the AI changed.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-kanban"/></svg></span>
+            <h3>Application board</h3>
+            <p>Every application on a board from draft to offer, with a dashboard of how your search is going.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg></span>
+            <h3>Find jobs</h3>
+            <p>Search postings, score them against your profile, and start an application in one click.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-palette"/></svg></span>
+            <h3>Twelve resume themes</h3>
+            <p>From classic to modern, previewed live, so your resume looks right for the job.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-languages"/></svg></span>
+            <h3>21 languages</h3>
+            <p>Resumes and cover letters in any of 21 languages, with headings and dates to match.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Steps -->
+    <section class="section steps-section" id="steps">
+      <div class="container">
+        <div class="section-head">
+          <p class="tag">How it works</p>
+          <h2>From a job posting to a sent application, in four steps</h2>
+          <p class="sub">Set up your profile once. Every application after that takes minutes.</p>
+        </div>
+
+        <div class="steps" data-steps>
+          <div class="steps-aside" aria-hidden="true">
+            <p class="steps-count"><span data-step-current>1</span>/4</p>
+            <span class="steps-rule"></span>
+          </div>
+
+          <ol class="steps-list">
+            <li class="step" style="--i:0" data-step="1">
+              <span class="step-dot" aria-hidden="true"></span>
+              <article class="step-card tone-sage">
+                <span class="step-corner" aria-hidden="true"><svg class="icon"><use href="#i-user"/></svg></span>
+                <p class="step-num">Step 1</p>
+                <h3>Build your profile once</h3>
+                <p>Your experience, skills, projects and education in one place. Start from the resume you already have, as a PDF or Word file.</p>
+                <ul class="checks">
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Import your existing resume</li>
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> A strength meter shows what's missing</li>
+                </ul>
+              </article>
+            </li>
+            <li class="step" style="--i:1" data-step="2">
+              <span class="step-dot" aria-hidden="true"></span>
+              <article class="step-card tone-butter">
+                <span class="step-corner" aria-hidden="true"><svg class="icon"><use href="#i-clipboard"/></svg></span>
+                <p class="step-num">Step 2</p>
+                <h3>Paste a job posting</h3>
+                <p>RolePebble pulls out what the job asks for and checks it against your profile, so you see where you stand before you apply.</p>
+                <ul class="checks">
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Each requirement matched to your experience</li>
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Gaps shown, never papered over</li>
+                </ul>
+              </article>
+            </li>
+            <li class="step" style="--i:2" data-step="3">
+              <span class="step-dot" aria-hidden="true"></span>
+              <article class="step-card tone-peach">
+                <span class="step-corner" aria-hidden="true"><svg class="icon"><use href="#i-file"/></svg></span>
+                <p class="step-num">Step 3</p>
+                <h3>Get a tailored resume and cover letter</h3>
+                <p>Written for this posting from facts in your profile. Ask for changes in a chat until it's right, then download the PDFs.</p>
+                <ul class="checks">
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Your tone, your theme, your language</li>
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Every version kept, every change undoable</li>
+                </ul>
+              </article>
+            </li>
+            <li class="step" style="--i:3" data-step="4">
+              <span class="step-dot" aria-hidden="true"></span>
+              <article class="step-card tone-sky">
+                <span class="step-corner" aria-hidden="true"><svg class="icon"><use href="#i-kanban"/></svg></span>
+                <p class="step-num">Step 4</p>
+                <h3>Apply and track it to an offer</h3>
+                <p>Every application on one board, from draft to sent, interview and offer, with a dashboard that shows what to follow up next.</p>
+                <ul class="checks">
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Board and table of every application</li>
+                  <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> See what's working, week by week</li>
+                </ul>
+              </article>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- Honesty -->
+    <section class="section">
+      <div class="container honest">
+        <div class="honest-copy">
+          <p class="tag">Honest by design</p>
+          <h2>It never invents experience.</h2>
+          <p>Drafts only use facts from your profile. When a posting asks for something you don't have, RolePebble shows you the gap instead of making something up, and you decide what to do about it.</p>
+          <ul class="checks">
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Nothing is sent or applied for without you</li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Gaps you fill go into your profile for next time</li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Export all your data, or delete it, any time</li>
+          </ul>
+        </div>
+        <figure class="quote-card">
+          <p class="quote-gap"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg> Experience with Kubernetes</p>
+          <blockquote>“Gaps aren't dealbreakers. I'll never invent experience. The important ones get addressed honestly in your cover letter.”</blockquote>
+          <figcaption>RolePebble, when a posting asks for something your profile doesn't have</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="container faq">
+        <div class="section-head left">
+          <p class="tag">FAQ</p>
+          <h2>Questions, answered</h2>
+          <p class="sub">Something else? Write to <a href="mailto:support@rolepebble.com">support@rolepebble.com</a>.</p>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>When can I use it?</summary>
+            <p>RolePebble is in development. People on the waitlist get invited to the private beta first, in small groups, and we'll email you when it's your turn.</p>
+          </details>
+          <details>
+            <summary>How much will it cost?</summary>
+            <p>There'll be a free plan to get started, and paid plans for more tailored applications. Prices will be announced before launch. The private beta is free.</p>
+          </details>
+          <details>
+            <summary>Will it make things up to get me the job?</summary>
+            <p>No. Resumes and cover letters only use facts from your profile. When a job asks for something you don't have, you'll see it as a gap, not as an invented line on your resume.</p>
+          </details>
+          <details>
+            <summary>What happens to my data?</summary>
+            <p>Your profile and documents are only used to write your applications. You can export everything as one file or delete it all at any time. The <a href="https://github.com/mrahmadusama/rolepebble/blob/main/PRIVACY.md">privacy policy</a> says exactly who receives what.</p>
+          </details>
+          <details>
+            <summary>Who's behind RolePebble?</summary>
+            <p>RolePebble is run by Ahmad Usama. It's built on <a href="https://dossier.aien.me">Dossier</a>, an open-source job search app by AienTech, and like Dossier its <a href="https://github.com/mrahmadusama/rolepebble">source code</a> is public under the GNU AGPL.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Join -->
+    <section class="section" id="join">
+      <div class="container">
+        <div class="cta">
+          <h2>Your next application starts here.</h2>
+          <p>Join the waitlist and be first in when the private beta opens.</p>
+          <form class="waitlist" action="/api/waitlist" method="post" data-waitlist>
+            <label class="visually-hidden" for="cta-email">Email address</label>
+            <input id="cta-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+            <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <input type="hidden" name="source" value="footer">
+            <button class="btn btn-lime" type="submit">Join the waitlist <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+            <p class="form-note" role="status">We'll only email you about RolePebble. Leave the list any time.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="/" aria-label="RolePebble home">
+          <svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg>
+          <span class="wordmark">R<svg class="wordmark-o" viewBox="0 0 60 52" aria-hidden="true"><use href="#i-pebble-o"/></svg>lePebble</span>
+        </a>
+        <p>Every application, tailored. Run by Ahmad Usama. Built on <a href="https://dossier.aien.me">Dossier</a> by AienTech.</p>
+      </div>
+      <ul class="footer-links">
+        <li><a href="mailto:support@rolepebble.com">support@rolepebble.com</a></li>
+        <li><a href="https://github.com/mrahmadusama/rolepebble/blob/main/PRIVACY.md">Privacy</a></li>
+        <li><a href="https://github.com/mrahmadusama/rolepebble">Source code</a></li>
+      </ul>
+    </div>
+    <p class="container footer-small">Free software under the <a href="https://github.com/mrahmadusama/rolepebble/blob/main/LICENSE">GNU AGPL-3.0</a>. This page sets no cookies and loads nothing from other sites.</p>
+  </footer>
+</body>
+</html>

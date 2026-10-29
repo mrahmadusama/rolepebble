@@ -42,7 +42,7 @@ export default defineConfig({
         test: {
           name: "node",
           environment: "node",
-          include: ["src/**/*.test.ts", "prisma/**/*.test.ts"],
+          include: ["src/**/*.test.ts", "prisma/**/*.test.ts", "site/**/*.test.ts"],
           exclude: [...configDefaults.exclude, "**/*.db.test.ts"],
         },
       },
