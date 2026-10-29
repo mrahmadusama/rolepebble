@@ -350,7 +350,7 @@ ol {
 .hero-visual {
   position: relative;
   margin-top: 64px;
-  padding: 56px 48px 0;
+  padding: 132px 48px 0;
   border-radius: 28px;
   background:
     radial-gradient(120% 80% at 50% 0%, #34604f 0%, var(--moss) 55%, #17302a 100%);
@@ -366,28 +366,92 @@ ol {
   mask-image: linear-gradient(to bottom, #000, transparent 70%);
 }
 
-.badge {
+/* The badges sit in notches cut into the panel's corners: a gap the color
+   of the page around each one, with the panel's edge curving into it. */
+
+.notch {
+  --notch-gap: 10px;
+  --curve: 20px;
+  --outer: 26px;
   position: absolute;
   z-index: 2;
+  /* Past the panel's edge, so none of the panel shows around it. */
+  margin: -1px;
+  background: var(--bg);
+}
+
+.notch::before,
+.notch::after {
+  content: "";
+  position: absolute;
+  width: var(--curve);
+  height: var(--curve);
+  background: radial-gradient(
+    circle at var(--at),
+    transparent calc(var(--curve) - 0.5px),
+    var(--bg) var(--curve)
+  );
+}
+
+/* Top left: the curves are to its right and below it. */
+.notch-start {
+  --at: 100% 100%;
+  top: 0;
+  left: 0;
+  padding: 0 var(--notch-gap) var(--notch-gap) 0;
+  border-bottom-right-radius: var(--outer);
+}
+
+.notch-start::before {
+  top: 0;
+  left: 100%;
+}
+
+.notch-start::after {
+  top: 100%;
+  left: 0;
+}
+
+/* Bottom right: the curves are to its left and above it. */
+.notch-end {
+  --at: 0 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--notch-gap) 0 0 var(--notch-gap);
+  border-top-left-radius: var(--outer);
+}
+
+.notch-end::before {
+  bottom: 0;
+  right: 100%;
+}
+
+.notch-end::after {
+  bottom: 100%;
+  right: 0;
+}
+
+.badge {
   display: grid;
-  gap: 2px;
-  padding: 16px 20px;
+  align-content: space-between;
+  gap: 18px;
+  min-width: 168px;
+  padding: 18px 22px 16px;
   border-radius: 16px;
 }
 
-.badge-left {
-  top: 24px;
-  left: 24px;
+.badge-lime {
   background: var(--lime);
   color: var(--lime-ink);
 }
 
-.badge-right {
-  right: 24px;
-  bottom: 24px;
-  background: #fff;
-  color: var(--ink);
-  box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.45);
+.badge-dark {
+  background: #10291f;
+  color: #fff;
+}
+
+.badge-dark .badge-number {
+  color: var(--lime);
 }
 
 .badge-label {
@@ -431,7 +495,9 @@ ol {
 }
 
 .window-bar p {
-  margin-left: 12px;
+  flex: 1;
+  margin-right: 51px;
+  text-align: center;
   font-size: 13px;
   color: var(--muted);
 }
@@ -513,6 +579,7 @@ ol {
 
 .match {
   align-self: start;
+  margin-bottom: 128px;
   padding: 18px 18px 16px;
   background: #fff;
   border: 1px solid var(--line);
@@ -1169,6 +1236,29 @@ ol {
   .match {
     margin-bottom: 20px;
   }
+
+  /* The second badge moves to the top right, clear of the sketch. */
+  .notch-end {
+    --at: 0 100%;
+    top: 0;
+    bottom: auto;
+    padding: 0 0 var(--notch-gap) var(--notch-gap);
+    border-radius: 0 0 0 var(--outer);
+  }
+
+  .notch-end::before {
+    top: 0;
+    bottom: auto;
+  }
+
+  .notch-end::after {
+    top: 100%;
+    bottom: auto;
+  }
+
+  .hero-visual {
+    padding-top: 150px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1221,19 +1311,21 @@ ol {
     border-radius: 22px;
   }
 
+  .notch {
+    --notch-gap: 8px;
+    --curve: 14px;
+    --outer: 20px;
+  }
+
   .badge {
+    gap: 6px;
+    min-width: 0;
     padding: 10px 14px;
+    border-radius: 12px;
   }
 
-  .badge-left {
-    top: 16px;
-    left: 16px;
-  }
-
-  .badge-right {
-    top: 16px;
-    right: 16px;
-    bottom: auto;
+  .badge-label {
+    font-size: 13px;
   }
 
   .badge-number {
