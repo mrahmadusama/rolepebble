@@ -1,9 +1,9 @@
 /* RolePebble's landing page. One file, no build step. */
 
 @font-face {
-  font-family: "Space Grotesk";
-  src: url("/fonts/SpaceGrotesk-Variable.woff2") format("woff2");
-  font-weight: 300 700;
+  font-family: "Outfit";
+  src: url("/fonts/Outfit-Variable.woff2") format("woff2");
+  font-weight: 100 900;
   font-display: swap;
 }
 
@@ -36,7 +36,7 @@
   --sky: #dbe5f4;
   --sky-2: #c3d3ec;
 
-  --display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --display: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --text: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --radius: 18px;
   --header-h: 76px;

@@ -2,7 +2,7 @@
 
 RolePebble's landing page and waitlist, on Cloudflare Pages.
 
-- `public/`: the page as it's served. Plain HTML, CSS and a little JavaScript, no build step. Fonts are served from here (Space Grotesk and Geist, both under the SIL Open Font License), so the page loads nothing from other sites.
+- `public/`: the page as it's served. Plain HTML, CSS and a little JavaScript, no build step. Fonts are served from here (Outfit and Geist, both under the SIL Open Font License), so the page loads nothing from other sites.
 - `functions/api/waitlist.ts`: the one server part, a Cloudflare Pages Function that saves an email address to the waitlist. Its tests run with the app's (`yarn vitest run --project node site/`).
 - `schema.sql`: the waitlist table, in a Cloudflare D1 database.
 
