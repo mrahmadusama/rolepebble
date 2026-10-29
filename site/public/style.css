@@ -228,6 +228,20 @@ ol {
   height: 31px;
 }
 
+/* The name, with its first "o" drawn as a pebble. */
+.wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.wordmark-o {
+  width: 0.62em;
+  height: 0.56em;
+  margin: 0 0.015em;
+  fill: #6fbf4a;
+}
+
 .nav-links {
   display: flex;
   gap: 4px;
