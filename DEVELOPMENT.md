@@ -239,7 +239,7 @@ CI pushes an image for every commit on `main` to `ghcr.io/<owner>/<repository>:<
 
 ## The website
 
-`site/` is the project's website, plain HTML, CSS and a little JavaScript. `site/build.sh` puts it together in `_site/` with the README's screenshots (`.github/images/`), the app's icons and three of its fonts, so there's one copy of each. To look at it, serve `_site/` with any static server, for example `docker run --rm -p 8080:80 -v "$PWD/_site:/usr/share/nginx/html:ro" nginx:alpine`, then open http://localhost:8080. The public repository's Pages workflow publishes it when any of those change on `main`. When the README's screenshots change, the site's change with them.
+`site/` is RolePebble's landing page at rolepebble.com: plain HTML, CSS and a little JavaScript in `site/public/`, and the waitlist's one Cloudflare Pages Function in `site/functions/`, which keeps addresses in Cloudflare D1. There's no build step. [site/README.md](site/README.md) says how to preview it and how it's deployed; its function's tests run with the `node` project.
 
 ## Reset
 

@@ -67,6 +67,12 @@ To have an address removed, write to support@rolepebble.com.
 
 The Claude connector lets you use RolePebble from Claude. It's off until you turn it on in Settings → Claude connector. What Claude reads through it goes to Anthropic under your own Claude account and its terms. Claude can save drafts and scores in RolePebble, and change an application's status; it can't delete, archive or send anything.
 
+## The waitlist
+
+The website, rolepebble.com, is hosted by Cloudflare. It sets no cookies and loads nothing from other sites; Cloudflare handles each visit, including your IP address, to deliver the page.
+
+If you join the waitlist, we keep your email address, which of the page's forms you used, and when you joined, in a Cloudflare D1 database. We use it only to invite you to the beta and to tell you when RolePebble opens, because you asked us to (Art. 6(1)(a) GDPR). We don't share it with anyone else. It's deleted when you ask, by writing to support@rolepebble.com or replying to any of our emails, and at the latest a year after RolePebble opens to the public.
+
 ## Your rights
 
 You can, at any time:

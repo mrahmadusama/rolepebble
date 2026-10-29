@@ -16,8 +16,6 @@ const eslintConfig = defineConfig([
     "design/**",
     // The HTML coverage report from `yarn test:coverage`.
     "coverage/**",
-    // The website, as site/build.sh puts it together.
-    "_site/**",
     // End-to-end test output.
     "playwright-report/**",
     "test-results/**",

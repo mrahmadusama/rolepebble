@@ -13,6 +13,8 @@ of https://github.com/mrahmadusama/rolepebble. Among them:
   and in Settings -> About; added a deployment setup (deploy/).
 - 2026-10-28: own icon; own privacy policy (PRIVACY.md) and security contact;
   removed the Bundesagentur fuer Arbeit job source.
+- 2026-10-29: replaced Dossier's website (site/) with RolePebble's landing
+  page and waitlist.
 
 RolePebble is distributed under the same license, WITHOUT ANY WARRANTY; without
 even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
