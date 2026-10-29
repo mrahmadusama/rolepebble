@@ -72,7 +72,7 @@
       <div class="container hero-text">
         <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Private beta coming soon</p>
         <h1>Every application, tailored.</h1>
-        <p class="lead">One profile. A resume and cover letter written for each job, using only what's true about you. Every application tracked from draft to offer.</p>
+        <p class="lead">Applying shouldn't wear you down. Fill in your profile once, and RolePebble writes a resume and cover letter for each job from what's true about you, and keeps track of every application.</p>
         <form class="waitlist" action="/api/waitlist" method="post" data-waitlist>
           <label class="visually-hidden" for="hero-email">Email address</label>
           <input id="hero-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
@@ -85,6 +85,8 @@
 
       <div class="container">
         <div class="hero-visual">
+          <!-- Photo by Christian Velitchkov on Unsplash (Unsplash License): https://unsplash.com/photos/oCD1HUJmFIM -->
+          <img class="hero-photo" src="/images/hero-1600.webp" srcset="/images/hero-800.webp 800w, /images/hero-1600.webp 1600w" sizes="(max-width: 1200px) 100vw, 1152px" width="1600" height="1092" alt="A man at his laptop, chin in hand, thinking." fetchpriority="high">
           <div class="notch notch-start">
             <div class="badge badge-lime">
               <span class="badge-label">How you match</span>
@@ -97,34 +99,36 @@
               <span class="badge-number">0</span>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
 
-          <div class="window" aria-hidden="true">
-            <div class="window-bar"><span></span><span></span><span></span><p>Product Designer · Ledgerly</p></div>
-            <div class="window-body">
-              <div class="paper">
-                <p class="paper-name">Jane Doe</p>
-                <p class="paper-role">Product Designer · Amsterdam</p>
-                <p class="paper-h">Experience</p>
-                <p class="paper-item"><b>Senior Product Designer</b>, Northwind Logistics <i>2021 – now</i></p>
-                <p class="paper-line"></p><p class="paper-line short"></p>
-                <p class="paper-item"><b>Product Designer</b>, Fieldnote <i>2018 – 2021</i></p>
-                <p class="paper-line"></p><p class="paper-line shorter"></p>
-                <p class="paper-h">Skills</p>
-                <p class="chips"><span>Figma</span><span>Design systems</span><span>Prototyping</span><span>Research</span></p>
-              </div>
-              <div class="match">
-                <p class="match-title">Requirements</p>
-                <ul>
-                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>5+ years of product design<small>3 roles, since 2015</small></span></li>
-                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>Built a design system<small>At Northwind Logistics</small></span></li>
-                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>Prototyping in Figma<small>At Fieldnote</small></span></li>
-                  <li class="gap"><svg class="icon"><use href="#i-plus"/></svg><span>Experience with Kubernetes<small>Not in your profile: shown as a gap</small></span></li>
-                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>Dutch is a plus<small>Dutch: native</small></span></li>
-                </ul>
-                <p class="match-foot"><svg class="icon"><use href="#i-download"/></svg> Resume and cover letter ready as PDF</p>
-              </div>
-            </div>
-          </div>
+    <!-- Sound familiar? -->
+    <section class="section" id="familiar">
+      <div class="container familiar">
+        <!-- Photo by Mina Rad on Unsplash (Unsplash License): https://unsplash.com/photos/TRNRxPvnF_g -->
+        <img class="familiar-photo" src="/images/late-night-1200.webp" srcset="/images/late-night-700.webp 700w, /images/late-night-1200.webp 1200w" sizes="(max-width: 900px) 100vw, 560px" width="1200" height="801" alt="A man working late at his laptop in a dark office, head in his hand." loading="lazy">
+        <div>
+          <p class="tag">Sound familiar?</p>
+          <h2>Job hunting is hard. You're not doing it wrong.</h2>
+          <ul class="thoughts">
+            <li>
+              <p class="thought">“I've rewritten my resume five times this week.”</p>
+              <p class="relief"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Write your profile once. Every resume is written from it.</p>
+            </li>
+            <li>
+              <p class="thought">“I apply and never hear back.”</p>
+              <p class="relief"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Each application is written for what that job asks, so your most relevant experience comes first.</p>
+            </li>
+            <li>
+              <p class="thought">“I'm not sure I'm even qualified.”</p>
+              <p class="relief"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> See how you match before you apply: what you have, and the honest gaps.</p>
+            </li>
+            <li>
+              <p class="thought">“I've lost track of where I applied.”</p>
+              <p class="relief"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Every application on one board, from draft to offer.</p>
+            </li>
+          </ul>
         </div>
       </div>
     </section>
@@ -134,10 +138,10 @@
       <div class="container why">
         <div>
           <p class="tag">Why RolePebble</p>
-          <h2>Job hunting is a second job. RolePebble does the paperwork.</h2>
+          <h2>You're more than a keyword match.</h2>
         </div>
         <div class="why-copy">
-          <p>Sending the same resume everywhere doesn't work, and rewriting it for every posting takes hours. RolePebble reads each posting, shows how you match, and writes a resume and cover letter for it from your own profile, so you spend your time on the jobs, not the documents.</p>
+          <p>The same resume sent everywhere hides what makes you right for each job, and rewriting it every time takes hours. RolePebble reads each posting, shows how you match, and writes a resume and cover letter for it from your own profile, so the best of you comes through.</p>
           <a class="btn btn-lime" href="#join">Join the waitlist <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
         </div>
         <ul class="pills">
@@ -155,7 +159,7 @@
         <div class="section-head">
           <p class="tag">Features</p>
           <h2>Everything between “I'm looking” and “I accept”</h2>
-          <p class="sub">One place for your profile, your documents and your applications.</p>
+          <p class="sub">So your energy goes into the jobs, not the paperwork.</p>
         </div>
         <ul class="features">
           <li class="feature">
@@ -208,7 +212,7 @@
         <div class="section-head">
           <p class="tag">How it works</p>
           <h2>From a job posting to a sent application, in four steps</h2>
-          <p class="sub">Set up your profile once. Every application after that takes minutes.</p>
+          <p class="sub">Set it up once. After that, each application takes minutes, not an evening.</p>
         </div>
 
         <div class="steps" data-steps>
@@ -280,19 +284,32 @@
       <div class="container honest">
         <div class="honest-copy">
           <p class="tag">Honest by design</p>
-          <h2>It never invents experience.</h2>
-          <p>Drafts only use facts from your profile. When a posting asks for something you don't have, RolePebble shows you the gap instead of making something up, and you decide what to do about it.</p>
+          <h2>Your real experience is enough.</h2>
+          <p>RolePebble never invents experience: drafts only use facts from your profile. When a posting asks for something you don't have, RolePebble shows you the gap instead of making something up, and you decide what to do about it.</p>
           <ul class="checks">
             <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Nothing is sent or applied for without you</li>
             <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Gaps you fill go into your profile for next time</li>
             <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Export all your data, or delete it, any time</li>
           </ul>
         </div>
-        <figure class="quote-card">
-          <p class="quote-gap"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg> Experience with Kubernetes</p>
-          <blockquote>“Gaps aren't dealbreakers. I'll never invent experience. The important ones get addressed honestly in your cover letter.”</blockquote>
-          <figcaption>RolePebble, when a posting asks for something your profile doesn't have</figcaption>
-        </figure>
+        <div class="honest-visual">
+          <div class="window" aria-hidden="true">
+            <div class="window-bar"><span></span><span></span><span></span><p>Product Designer · Ledgerly</p></div>
+            <div class="window-body">
+              <div class="match">
+                <p class="match-title">Requirements</p>
+                <ul>
+                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>5+ years of product design<small>3 roles, since 2015</small></span></li>
+                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>Built a design system<small>At Northwind Logistics</small></span></li>
+                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>Prototyping in Figma<small>At Fieldnote</small></span></li>
+                  <li class="gap"><svg class="icon"><use href="#i-plus"/></svg><span>Experience with Kubernetes<small>Not in your profile: shown as a gap</small></span></li>
+                  <li class="ok"><svg class="icon"><use href="#i-check"/></svg><span>Dutch is a plus<small>Dutch: native</small></span></li>
+                </ul>
+                <p class="match-foot"><svg class="icon"><use href="#i-download"/></svg> Resume and cover letter ready as PDF</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -329,11 +346,28 @@
       </div>
     </section>
 
+    <!-- A note from the founder -->
+    <section class="section note-section">
+      <div class="container">
+        <figure class="note">
+          <p class="tag">A note from Ahmad</p>
+          <blockquote>
+            <p>Looking for a job is one of the most stressful things we do, and most tools add pressure: more keywords, more applications, more tricks.</p>
+            <p>I'm building RolePebble to do the opposite: help you show your real experience well, for every job, without making anything up. Your data stays yours, and you'll always know what RolePebble does with it.</p>
+          </blockquote>
+          <figcaption>
+            <svg class="note-mark" aria-hidden="true"><use href="#i-mark"/></svg>
+            <span><b>Ahmad Usama</b> Founder of RolePebble</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
     <!-- Join -->
     <section class="section" id="join">
       <div class="container">
         <div class="cta">
-          <h2>Your next application starts here.</h2>
+          <h2>You bring the experience. We'll handle the paperwork.</h2>
           <p>Join the waitlist and be first in when the private beta opens.</p>
           <form class="waitlist" action="/api/waitlist" method="post" data-waitlist>
             <label class="visually-hidden" for="cta-email">Email address</label>

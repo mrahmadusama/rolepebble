@@ -6,6 +6,13 @@ RolePebble's landing page and waitlist, on Cloudflare Pages.
 - `functions/api/waitlist.ts`: the one server part, a Cloudflare Pages Function that saves an email address to the waitlist. Its tests run with the app's (`yarn vitest run --project node site/`).
 - `schema.sql`: the waitlist table, in a Cloudflare D1 database.
 
+## Photos
+
+Both from Unsplash, under the [Unsplash License](https://unsplash.com/license) (free to use, including commercially). Resized to WebP in `public/images/`.
+
+- `hero-*.webp`: [Christian Velitchkov](https://unsplash.com/@cvelitchkov), https://unsplash.com/photos/oCD1HUJmFIM
+- `late-night-*.webp`: [Mina Rad](https://unsplash.com/@miinrad), https://unsplash.com/photos/TRNRxPvnF_g
+
 ## Preview
 
 Any static server shows the page; only the waitlist form needs Cloudflare's tools:
