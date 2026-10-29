@@ -71,7 +71,7 @@ The Claude connector lets you use RolePebble from Claude. It's off until you tur
 
 The website, rolepebble.com, is hosted by Cloudflare. It sets no cookies and loads nothing from other sites; Cloudflare handles each visit, including your IP address, to deliver the page.
 
-If you join the waitlist, we keep your email address, which of the page's forms you used, and when you joined, in a Cloudflare D1 database. We use it only to invite you to the beta and to tell you when RolePebble opens, because you asked us to (Art. 6(1)(a) GDPR). We don't share it with anyone else. It's deleted when you ask, by writing to support@rolepebble.com or replying to any of our emails, and at the latest a year after RolePebble opens to the public.
+If you join the waitlist, we keep your email address, which of the page's forms you used, where you came from if the link you followed said so (for example "instagram"), and when you joined, in a Cloudflare D1 database. We use it only to invite you to the beta and to tell you when RolePebble opens, because you asked us to (Art. 6(1)(a) GDPR). We don't share it with anyone else. It's deleted when you ask, by writing to support@rolepebble.com or replying to any of our emails, and at the latest a year after RolePebble opens to the public.
 
 ## Your rights
 

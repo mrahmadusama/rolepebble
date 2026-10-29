@@ -47,8 +47,27 @@ From then on, every merge to `main` that changes the site goes live in a minute 
 D1 → `rolepebble-waitlist` → Console:
 
 ```sql
-SELECT email, source, created_at FROM waitlist ORDER BY created_at;
+SELECT email, source, ref, created_at FROM waitlist ORDER BY created_at;
 ```
+
+How many joined from each place (`ref` is empty for people who came straight to the site):
+
+```sql
+SELECT ref, COUNT(*) AS people FROM waitlist GROUP BY ref ORDER BY people DESC;
+```
+
+## Links that count
+
+Add `?ref=` and a short tag (lowercase letters, numbers and dashes) to any link to the site, and signups from it are counted under that tag:
+
+| Where | Link |
+|---|---|
+| Instagram bio | `https://rolepebble.pages.dev/?ref=instagram` |
+| Instagram story link sticker | `https://rolepebble.pages.dev/?ref=ig-story` |
+| An Instagram ad | `https://rolepebble.pages.dev/?ref=ig-ad` |
+| LinkedIn | `https://rolepebble.pages.dev/?ref=linkedin` |
+
+The tag stays for the whole visit, so it counts even if someone scrolls around before joining.
 
 To remove someone who asks (PRIVACY.md promises it):
 

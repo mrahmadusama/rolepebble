@@ -29,13 +29,26 @@ describe("POST /api/waitlist", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true });
     expect(prepare).toHaveBeenCalledWith(expect.stringContaining("ON CONFLICT (email) DO NOTHING"));
-    expect(bind).toHaveBeenCalledWith("jane@example.com", "hero", expect.any(String));
+    expect(bind).toHaveBeenCalledWith("jane@example.com", "hero", null, expect.any(String));
   });
 
   it("keeps no source it doesn't know", async () => {
     const { db, bind } = fakeDb();
     await onRequestPost({ request: post({ email: "a@b.co", source: "<script>" }), env: { DB: db } });
-    expect(bind).toHaveBeenCalledWith("a@b.co", null, expect.any(String));
+    expect(bind).toHaveBeenCalledWith("a@b.co", null, null, expect.any(String));
+  });
+
+  it("keeps where the visitor came from, as a short tag", async () => {
+    const { db, prepare, bind } = fakeDb();
+    await onRequestPost({ request: post({ email: "a@b.co", ref: " Instagram " }), env: { DB: db } });
+    expect(prepare).toHaveBeenCalledWith(expect.stringContaining("(email, source, ref, created_at)"));
+    expect(bind).toHaveBeenCalledWith("a@b.co", null, "instagram", expect.any(String));
+  });
+
+  it.each(["jane@example.com", "<b>hi</b>", "x".repeat(41)])("keeps no tag like %j", async (ref) => {
+    const { db, bind } = fakeDb();
+    await onRequestPost({ request: post({ email: "a@b.co", ref }), env: { DB: db } });
+    expect(bind).toHaveBeenCalledWith("a@b.co", null, null, expect.any(String));
   });
 
   it.each(["", "not-an-email", "a@b", "a b@c.de", `${"x".repeat(250)}@b.co`])(

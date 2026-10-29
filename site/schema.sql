@@ -5,5 +5,10 @@ CREATE TABLE IF NOT EXISTS waitlist (
   email TEXT PRIMARY KEY,
   -- Which form on the page: "hero" or "footer".
   source TEXT,
+  -- Where the visitor came from, from links like /?ref=instagram.
+  ref TEXT,
   created_at TEXT NOT NULL
 );
+
+-- A database made before `ref` existed needs it added, once:
+-- ALTER TABLE waitlist ADD COLUMN ref TEXT;
