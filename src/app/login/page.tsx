@@ -50,7 +50,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         aria-hidden="true"
         className="hidden bg-[linear-gradient(to_left,color-mix(in_srgb,var(--color-ink)_9%,transparent)_0%,transparent_65%)] min-[960px]:grid min-[960px]:place-items-center"
       >
-        <BrandMark className="size-40 opacity-90 shadow-dialog rounded-[36px]" />
+        <BrandMark className="size-40 opacity-90" />
       </div>
     </main>
   );
