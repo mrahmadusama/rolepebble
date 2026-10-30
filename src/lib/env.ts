@@ -11,7 +11,7 @@ const GENERATE_SECRET = "for example the output of `openssl rand -base64 32`";
 const HASH_PASSWORD = "Make one with `docker run --rm -it ghcr.io/mrahmadusama/rolepebble:main hash-password`";
 
 export const AI_PROVIDERS = ["local", "openai", "anthropic", "mistral", "lmstudio"] as const;
-export const JOB_SOURCE_NAMES = ["jsearch", "adzuna", "off"] as const;
+export const JOB_SOURCE_NAMES = ["jsearch", "adzuna", "freehire", "off"] as const;
 const SWITCH = ["on", "off"] as const;
 
 // An empty value (`DOSSIER_AI_KEY=` in .env) counts as unset.
@@ -126,6 +126,14 @@ const schema = z.object({
   // connector: each stays hidden until its switch is on.
   DOSSIER_GOOGLE: featureSwitch("DOSSIER_GOOGLE"),
   DOSSIER_CONNECTOR: featureSwitch("DOSSIER_CONNECTOR"),
+  // FreeHire as a job source: off until switched on, as its free use is for
+  // personal job search and a hosted service needs one of its API plans.
+  DOSSIER_FREEHIRE: featureSwitch("DOSSIER_FREEHIRE"),
+  // FreeHire origin; unset uses https://freehire.me. Point at a self-hosted
+  // FreeHire, or leave unset for the public catalogue.
+  DOSSIER_FREEHIRE_URL: optional(
+    z.url({ protocol: /^https?$/, error: "DOSSIER_FREEHIRE_URL must be an http:// or https:// URL." }).transform((url) => url.replace(/\/+$/, "")),
+  ),
   // Google sign-in for Gmail and Calendar (E15-1): an OAuth client of type
   // "Web application". Settings → Google can save one instead, which wins.
   // Never echo the secret.

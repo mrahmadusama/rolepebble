@@ -51,10 +51,11 @@ export function appEnv(): Record<string, string> {
     // Google's sign-in, Gmail and Calendar are the fake Google's (E15). It's
     // only used once a spec enters an OAuth client in Settings → Google.
     DOSSIER_GOOGLE_TEST_BASE_URL: `http://localhost:${FAKE_GOOGLE_PORT}`,
-    // RolePebble leaves Gmail, Calendar and the Claude connector out unless
-    // they're switched on; the specs test them, so they're on here.
+    // RolePebble leaves Gmail, Calendar, the Claude connector and FreeHire out
+    // unless they're switched on; the specs test them, so they're on here.
     DOSSIER_GOOGLE: "on",
     DOSSIER_CONNECTOR: "on",
+    DOSSIER_FREEHIRE: "on",
     PORT: String(APP_PORT),
   };
 }

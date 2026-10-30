@@ -137,6 +137,7 @@ const experienceFields = z.object({
   role: text(200),
   company: text(200),
   location: text(200),
+  descriptor: text(300),
   bullets: text(10_000),
   ...dateSpan,
 });
@@ -146,6 +147,7 @@ const experienceItem = (entry: {
   role: string;
   company: string;
   location: string;
+  descriptor: string;
   bullets: string;
   startYear: number | null;
   startMonth: number | null;
@@ -157,6 +159,7 @@ const experienceItem = (entry: {
   role: entry.role,
   company: entry.company,
   location: entry.location,
+  descriptor: entry.descriptor,
   bullets: entry.bullets,
   startYear: entry.startYear,
   startMonth: entry.startMonth,

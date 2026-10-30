@@ -114,6 +114,7 @@ const loadView = async () => jobSearchView(await loadJobSearchConfig());
 
 /** Picks the source to search, or Off. */
 export const saveJobSource = action(z.object({ source: z.enum([...JOB_SOURCES, "OFF"]) }), async ({ source }) => {
+  if (source === "FREEHIRE" && env.DOSSIER_FREEHIRE !== "on") throw new ActionError("FreeHire isn't available on this server.");
   await saveSettings({ jobSource: source });
   return loadView();
 });

@@ -32,9 +32,20 @@ export function answerText(content: unknown): string {
     .join("");
 }
 
+/**
+ * DeepSeek's API, by the server's host rather than the model's name (#189):
+ * its models think before they answer unless told not to, and the thinking
+ * counts towards `max_tokens`, so longer answers ran out of room.
+ */
+export function isDeepSeek(baseURL: string): boolean {
+  const host = URL.canParse(baseURL) ? new URL(baseURL).hostname : "";
+  return host === "deepseek.com" || host.endsWith(".deepseek.com");
+}
+
 /** Any server that speaks the OpenAI chat completions API, including llama.cpp's server. */
 export class OpenAICompatibleProvider extends BaseProvider {
   protected readonly client: OpenAI;
+  private readonly noThinking: boolean;
 
   constructor(
     readonly kind: "OPENAI" | "LOCAL" | "MISTRAL" | "LMSTUDIO",
@@ -53,6 +64,7 @@ export class OpenAICompatibleProvider extends BaseProvider {
       // With a key attached, no redirects to other hosts (E11-5).
       ...(apiKey ? { fetch: keyGuardedFetch() } : {}),
     });
+    this.noThinking = isDeepSeek(baseURL);
   }
 
   protected async chat(call: ChatCall): Promise<ChatAnswer> {
@@ -110,6 +122,7 @@ export class OpenAICompatibleProvider extends BaseProvider {
         ...(noTemperature || call.temperature === undefined ? {} : { temperature: call.temperature }),
         ...(maxCompletionTokens ? { max_completion_tokens: call.maxTokens } : { max_tokens: call.maxTokens }),
         ...(effort ? { reasoning_effort: effort } : {}),
+        ...(this.noThinking ? { thinking: { type: "disabled" } } : {}),
         ...responseFormat,
       },
       { signal: call.signal },

@@ -31,6 +31,7 @@ describe("parseEnv", () => {
       DOSSIER_BACKUP_RETENTION_DAYS: 14,
       DOSSIER_GOOGLE: "off",
       DOSSIER_CONNECTOR: "off",
+      DOSSIER_FREEHIRE: "off",
     });
   });
 
@@ -128,7 +129,7 @@ describe("parseEnv", () => {
 
 describe("feature switches", () => {
   it("leaves Google and the Claude connector off until they're switched on", () => {
-    expect(parseEnv(valid)).toMatchObject({ DOSSIER_GOOGLE: "off", DOSSIER_CONNECTOR: "off" });
+    expect(parseEnv(valid)).toMatchObject({ DOSSIER_GOOGLE: "off", DOSSIER_CONNECTOR: "off", DOSSIER_FREEHIRE: "off" });
     expect(parseEnv({ ...valid, DOSSIER_GOOGLE: "", DOSSIER_CONNECTOR: "  " })).toMatchObject({ DOSSIER_GOOGLE: "off", DOSSIER_CONNECTOR: "off" });
     expect(parseEnv({ ...valid, DOSSIER_GOOGLE: "on", DOSSIER_CONNECTOR: "off" })).toMatchObject({ DOSSIER_GOOGLE: "on", DOSSIER_CONNECTOR: "off" });
   });
@@ -155,6 +156,7 @@ describe("job search variables (E14-4)", () => {
         DOSSIER_JSEARCH_HOST: "rapidapi",
         DOSSIER_ADZUNA_APP_ID: "app",
         DOSSIER_ADZUNA_KEY: "adz",
+        DOSSIER_FREEHIRE_URL: "https://jobs.example/",
       }),
     ).toMatchObject({
       DOSSIER_JOBS_SOURCE: "jsearch",
@@ -162,12 +164,14 @@ describe("job search variables (E14-4)", () => {
       DOSSIER_JSEARCH_HOST: "rapidapi",
       DOSSIER_ADZUNA_APP_ID: "app",
       DOSSIER_ADZUNA_KEY: "adz",
+      DOSSIER_FREEHIRE_URL: "https://jobs.example",
     });
+    expect(parseEnv({ ...valid, DOSSIER_JOBS_SOURCE: "freehire" }).DOSSIER_JOBS_SOURCE).toBe("freehire");
   });
 
   it("rejects sources and hosts it doesn't know, without echoing keys", () => {
     expect(problems({ ...valid, DOSSIER_JOBS_SOURCE: "linkedin", DOSSIER_JSEARCH_HOST: "google", DOSSIER_JSEARCH_KEY: "ak_secret" })).toEqual([
-      'DOSSIER_JOBS_SOURCE must be one of jsearch, adzuna, off (got "linkedin").',
+      'DOSSIER_JOBS_SOURCE must be one of jsearch, adzuna, freehire, off (got "linkedin").',
       'DOSSIER_JSEARCH_HOST must be openwebninja or rapidapi (got "google").',
     ]);
   });

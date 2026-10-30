@@ -19,6 +19,7 @@ const off: JobSearchSettingsView = {
   source: "OFF",
   jsearch: { host: "openwebninja", keyState: "none" },
   adzuna: { appId: "", keyState: "none" },
+  freehire: { offered: false, host: "freehire.me" },
 };
 const withSource = (view: Partial<JobSearchSettingsView>): JobSearchSettingsView => ({ ...off, ...view });
 
@@ -83,6 +84,20 @@ describe("JobSearchSection", () => {
     expect(screen.getByLabelText("App key")).toHaveAttribute("type", "password");
   });
 
+  it("lists FreeHire only when the server offers it", () => {
+    render(<JobSearchSection initial={withSource({ freehire: { offered: true, host: "freehire.me" } })} />);
+    expect(screen.getAllByRole("radio").map((radio) => radio.getAttribute("aria-label"))).toEqual(["JSearch", "Adzuna", "FreeHire", "Off"]);
+  });
+
+  it("says which FreeHire it searches, with no key to ask for", () => {
+    const { unmount } = render(<JobSearchSection initial={withSource({ source: "FREEHIRE", freehire: { offered: true, host: "freehire.me" } })} />);
+    expect(screen.getByText("No key needed. RolePebble searches FreeHire's public catalogue at freehire.me.")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/key/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Test connection" })).toBeInTheDocument();
+    unmount();
+    render(<JobSearchSection initial={withSource({ source: "FREEHIRE", freehire: { offered: true, host: "jobs.example" } })} />);
+    expect(screen.getByText("No key needed. RolePebble searches your own FreeHire at jobs.example.")).toBeInTheDocument();
+  });
   it("shows keys from the environment and keys that can't be read", () => {
     const { unmount } = render(<JobSearchSection initial={withSource({ source: "JSEARCH", jsearch: { host: "openwebninja", keyState: "env" } })} />);
     expect(screen.getByLabelText("API key")).toHaveAttribute("placeholder", "Using DOSSIER_JSEARCH_KEY · type one to save it here");

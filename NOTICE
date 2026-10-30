@@ -15,6 +15,8 @@ of https://github.com/mrahmadusama/rolepebble. Among them:
   removed the Bundesagentur fuer Arbeit job source.
 - 2026-10-29: replaced Dossier's website (site/) with RolePebble's landing
   page and waitlist.
+- 2026-10-30: merged Dossier 1.10.0; its FreeHire job source stays behind a
+  switch (DOSSIER_FREEHIRE), off by default.
 
 RolePebble is distributed under the same license, WITHOUT ANY WARRANTY; without
 even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR

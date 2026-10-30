@@ -111,3 +111,28 @@ test("scores a posting against the profile, and keeps the score (#208)", async (
   await expect(page.getByRole("button", { name: "Score again" })).toBeVisible();
   await sql(`DELETE FROM "PostingScore"`);
 });
+
+test("searches FreeHire, which needs no key and has no radius", async ({ page }) => {
+  const chosen = async (source: string) =>
+    expect.poll(async () => (await sql<{ value: string }>(`SELECT value FROM "Setting" WHERE key = 'jobSource'`))[0]?.value).toContain(source);
+  await page.goto("/settings?section=jobs");
+  await page.getByRole("radio", { name: "FreeHire" }).click();
+  await expect(page.getByText("No key needed. RolePebble searches FreeHire's public catalogue at freehire.me.")).toBeVisible();
+  await chosen("FREEHIRE");
+
+  await page.goto("/jobs?q=product+designer&where=Rotterdam&country=nl");
+  const form = page.getByRole("search", { name: "Search postings" });
+  await expect(form.getByLabel("Within")).toBeDisabled();
+  await expect(form.getByText("FreeHire has no distance filter")).toBeVisible();
+  await form.getByRole("button", { name: "Search" }).click();
+  await expect(page.getByRole("heading", { level: 2, name: "Senior Product Designer, Payments" })).toBeVisible();
+  await expect(page.getByText(/^1 posting from FreeHire · searched/)).toBeVisible();
+  // Its whole text came with the search.
+  await expect(page.getByRole("region", { name: "Posting text" })).toContainText("for its payments team");
+  await expect(page.getByText("Jobs by FreeHire").last()).toBeVisible();
+
+  // Back to JSearch, as the environment sets it, for the tests after.
+  await page.goto("/settings?section=jobs");
+  await page.getByRole("radio", { name: "JSearch" }).click();
+  await chosen("JSEARCH");
+});

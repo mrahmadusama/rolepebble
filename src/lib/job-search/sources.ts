@@ -10,6 +10,8 @@ export type JobSearchSettingsView = {
   source: JobSource | "OFF";
   jsearch: { host: JSearchHost; keyState: JobKeyState };
   adzuna: { appId: string; keyState: JobKeyState };
+  /** FreeHire, when this server offers it (DOSSIER_FREEHIRE), and the host it searches. */
+  freehire: { offered: boolean; host: string };
 };
 
 export const JOB_KEY_UNREADABLE = "Your saved key can't be read. Please enter it again.";
@@ -41,6 +43,8 @@ export type SourceInfo = {
   attributionLink: { home: string; local: RegExp } | null;
   /** The countries it lists jobs in (ISO codes); null for every country. */
   countries: readonly string[] | null;
+  /** Whether it looks within a distance of the place; without, the place only puts postings there first. */
+  radius: boolean;
 };
 
 export const SOURCE_INFO: Record<JobSource, SourceInfo> = {
@@ -53,6 +57,7 @@ export const SOURCE_INFO: Record<JobSource, SourceInfo> = {
     attribution: null,
     attributionLink: null,
     countries: null,
+    radius: true,
   },
   ADZUNA: {
     name: "Adzuna",
@@ -64,8 +69,24 @@ export const SOURCE_INFO: Record<JobSource, SourceInfo> = {
     // Its terms: "Adzuna" on each displayed advert, at least 116 × 23 px, linked to adzuna.co.uk or the local site.
     attributionLink: { home: "https://www.adzuna.co.uk", local: /^www\.adzuna\.(?:[a-z]{2,3}|co\.[a-z]{2}|com\.[a-z]{2})$/ },
     countries: ["at", "au", "be", "br", "ca", "ch", "de", "es", "fr", "gb", "in", "it", "mx", "nl", "nz", "pl", "sg", "us", "za"],
+    radius: true,
+  },
+  FREEHIRE: {
+    name: "FreeHire",
+    description: "Mostly tech postings, read straight from company career pages (Greenhouse, Lever, Workday and more), with full postings.",
+    tag: "Most countries · free, no key · no distance filter",
+    keyUrl: null,
+    quotaPeriod: null,
+    attribution: "Jobs by FreeHire",
+    attributionLink: null,
+    countries: null,
+    // It has a city filter, but only for the names it knows, and a country with it widens rather than narrows.
+    radius: false,
   },
 };
+
+/** FreeHire's public catalogue; DOSSIER_FREEHIRE_URL can name a self-hosted one instead. */
+export const FREEHIRE_URL = "https://freehire.me";
 
 /** Sources that can't be searched any more, named for the postings and searches kept from them. */
 const REMOVED_SOURCE_NAMES: Record<Exclude<PostingSource, JobSource>, string> = {

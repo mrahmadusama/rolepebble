@@ -65,6 +65,8 @@ model Experience {
   role       String            @default("")
   company    String            @default("")
   location   String            @default("")
+  /// One line about the company or the role, under its title on resumes as written (#257).
+  descriptor String            @default("")
   startYear  Int?
   /// 1–12, or null when only the year is known.
   startMonth Int?
@@ -582,6 +584,7 @@ enum PostingSource {
   /// The Bundesagentur für Arbeit, no longer searched: it stays only for
   /// postings and searches saved before RolePebble removed it.
   ARBEITSAGENTUR
+  FREEHIRE
 }
 
 /// A posting from Find jobs that the user kept (E14-5): saved, dismissed, or

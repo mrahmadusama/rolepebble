@@ -119,6 +119,22 @@ describe("OpenAICompatibleProvider", () => {
     expect(requests).toHaveLength(4);
   });
 
+  it("tells DeepSeek's API not to think, by its host, and leaves other servers as they were (#189)", async () => {
+    const requests = stubFetch(() => openaiChat('{"name":"Jane","years":9}'));
+    for (const url of ["https://api.deepseek.com", "https://api.deepseek.com/v1", "https://example.com/v1", "https://notdeepseek.com/v1"]) {
+      const provider = new OpenAICompatibleProvider("OPENAI", url, "sk", "deepseek-flash", 60_000);
+      expect(await provider.complete({ ...ask, schema: Person, creativity: "FAITHFUL" })).toEqual({ name: "Jane", years: 9 });
+    }
+    expect(requests.map((request) => (request.body as Record<string, unknown>).thinking)).toEqual([
+      { type: "disabled" },
+      { type: "disabled" },
+      undefined,
+      undefined,
+    ]);
+    // Without thinking, the creativity counts again; the budget is the usual one.
+    expect(requests[0].body).toMatchObject({ temperature: 0.2, max_tokens: 4096, response_format: { type: "json_schema" } });
+  });
+
   it("maps HTTP failures to plain words, never the provider's message", async () => {
     const cases: [number, string][] = [
       [401, "auth"],
@@ -156,6 +172,8 @@ describe("AnthropicProvider", () => {
     expect(await provider.complete({ ...ask, creativity: "EXPRESSIVE" })).toBe("Hello!");
     expect(requests[0].url.href).toBe("https://api.anthropic.com/v1/messages");
     expect(requests[0].headers.get("x-api-key")).toBe("sk-ant");
+    expect(requests[0].headers.get("authorization")).toBeNull();
+    expect(requests[0].headers.get("anthropic-version")).toBe("2026-10-21");
     expect(requests[0].body).toMatchObject({ model: "claude-sonnet-5", system: "Be brief.", max_tokens: 4096 + 12_000 });
     expect(requests[0].body).not.toHaveProperty("temperature");
     expect(requests[0].body).not.toHaveProperty("output_config");
@@ -198,6 +216,60 @@ describe("AnthropicProvider", () => {
     const provider = new AnthropicProvider("https://api.anthropic.com", "sk-ant", "claude-sonnet-5", 60_000);
     expect(await provider.complete({ ...ask, schema: Person })).toEqual({ name: "Jane", years: 9 });
     expect(requests[0].body).toMatchObject({ output_config: { format: { type: "json_schema" } } });
+  });
+
+  describe("a schema the API refuses as too complex (#230)", () => {
+    const badRequest = (message: string) => json({ type: "error", error: { type: "invalid_request_error", message } }, { status: 400 });
+    const format = (body: unknown) => (body as { output_config?: { format?: unknown } }).output_config?.format;
+
+    it.each([
+      "The compiled grammar is too large, which would cause performance issues. Simplify your tool schemas or reduce the number of strict tools.",
+      "Schemas contains too many parameters with union types (32 parameters with type arrays or anyOf). This causes exponential compilation cost. Reduce the number of nullable or union-typed parameters (limit: 16 parameters with unions).",
+      "Schema is too complex for compilation.",
+    ])("goes in the prompt instead, with the effort still sent, and is remembered: %s", async (refusal) => {
+      const baseUrl = `https://claude-${Math.random()}.example`;
+      const requests = stubFetch(({ url, body }) =>
+        url.pathname === "/v1/models/claude-sonnet-5"
+          ? anthropicModel("claude-sonnet-5", true)
+          : format(body)
+            ? badRequest(refusal)
+            : anthropicMessage('```json\n{"name":"Jane","years":9}\n```'),
+      );
+      const provider = new AnthropicProvider(baseUrl, "sk-ant", "claude-sonnet-5", 60_000);
+      expect(await provider.complete({ ...ask, schema: Person, schemaName: "person", effort: "low" })).toEqual({ name: "Jane", years: 9 });
+      expect(await provider.complete({ ...ask, schema: Person, schemaName: "person", effort: "low" })).toEqual({ name: "Jane", years: 9 });
+      const messages = requests.filter((request) => request.url.pathname === "/v1/messages").map((request) => request.body);
+      expect(messages).toMatchObject([
+        { output_config: { effort: "low", format: { type: "json_schema" } } },
+        { output_config: { effort: "low" }, system: expect.stringContaining("matches this JSON schema") },
+        { output_config: { effort: "low" }, system: expect.stringContaining("matches this JSON schema") },
+      ]);
+      expect(format(messages[1])).toBeUndefined();
+      expect(format(messages[2])).toBeUndefined();
+    });
+
+    it("goes in the prompt only for that schema; others on the same model keep structured output", async () => {
+      const baseUrl = `https://claude-${Math.random()}.example`;
+      const City = z.object({ city: z.string() });
+      // Person's schema is refused; City's isn't.
+      const requests = stubFetch(({ body }) =>
+        JSON.stringify(format(body) ?? {}).includes('"years"')
+          ? badRequest("The compiled grammar is too large, which would cause performance issues.")
+          : anthropicMessage(format(body) ? '{"city":"Utrecht"}' : '{"name":"Jane","years":9}'),
+      );
+      const provider = new AnthropicProvider(baseUrl, "sk-ant", "claude-sonnet-5", 60_000);
+      expect(await provider.complete({ ...ask, schema: Person, schemaName: "person" })).toEqual({ name: "Jane", years: 9 });
+      expect(await provider.complete({ ...ask, schema: City, schemaName: "city" })).toEqual({ city: "Utrecht" });
+      expect(requests).toHaveLength(3);
+      expect(requests[2].body).toMatchObject({ system: "Be brief.", output_config: { format: { type: "json_schema" } } });
+    });
+
+    it("sends any other 400 once and says the provider had a problem", async () => {
+      const requests = stubFetch(() => badRequest('messages: roles must alternate between "user" and "assistant"'));
+      const provider = new AnthropicProvider(`https://claude-${Math.random()}.example`, "sk-ant", "claude-sonnet-5", 60_000);
+      expect(await failure(provider.complete({ ...ask, schema: Person, schemaName: "person" }))).toMatchObject({ kind: "provider" });
+      expect(requests).toHaveLength(1);
+    });
   });
 
   it("says when the model declines", async () => {

@@ -23,6 +23,7 @@ describe("resolveJobSearchConfig", () => {
       source: "OFF",
       jsearch: { host: "openwebninja", keyState: "none" },
       adzuna: { appId: "", keyState: "none" },
+      freehire: { offered: false, host: "freehire.me" },
     });
   });
 
@@ -82,6 +83,7 @@ describe("credentialsFor", () => {
     const both = resolveJobSearchConfig({ ...nothingSaved, adzunaAppId: "app", adzunaKeyEnc: encryptSecret(JOB_SOURCE_KEY, "adz") }, { DOSSIER_JSEARCH_KEY: "ak_env" });
     expect(credentialsFor(both, "ADZUNA")).toEqual({ appId: "app", key: "adz" });
     expect(credentialsFor(both, "JSEARCH")).toEqual({ key: "ak_env", host: "openwebninja" });
+    expect(credentialsFor(resolveJobSearchConfig(nothingSaved, { DOSSIER_FREEHIRE: "on" }), "FREEHIRE")).toEqual({});
   });
 
   it("says what's missing", () => {
@@ -96,5 +98,30 @@ describe("requestContext", () => {
   it("leaves sources at their own address, unless the end-to-end tests point them at a fake", () => {
     expect(requestContext("JSEARCH", undefined)).toEqual({});
     expect(requestContext("ADZUNA", "http://127.0.0.1:3998/")).toEqual({ baseUrl: "http://127.0.0.1:3998/adzuna" });
+    expect(requestContext("FREEHIRE", undefined, "https://jobs.example")).toEqual({ baseUrl: "https://jobs.example" });
+    expect(requestContext("FREEHIRE", "http://127.0.0.1:3998/", "https://jobs.example")).toEqual({
+      baseUrl: "http://127.0.0.1:3998/freehire",
+    });
+  });
+});
+
+describe("FreeHire from the environment", () => {
+  it("chooses FreeHire when DOSSIER_JOBS_SOURCE says so, while the server offers it", () => {
+    expect(resolveJobSearchConfig(nothingSaved, { DOSSIER_JOBS_SOURCE: "freehire", DOSSIER_FREEHIRE: "on" }).source).toBe("FREEHIRE");
+  });
+
+  it("reads FreeHire as off, saved or from the environment, while the server doesn't offer it", () => {
+    expect(resolveJobSearchConfig(nothingSaved, { DOSSIER_JOBS_SOURCE: "freehire" }).source).toBeNull();
+    const saved = resolveJobSearchConfig({ ...nothingSaved, jobSource: "FREEHIRE" }, noEnv);
+    expect(saved.source).toBeNull();
+    expect(jobSearchView(saved).source).toBe("OFF");
+    expect(() => credentialsFor(saved, "FREEHIRE")).toThrow("FreeHire isn't offered on this server. Choose another source in Settings → Job search.");
+  });
+
+  it("searches freehire.me, or the self-hosted FreeHire DOSSIER_FREEHIRE_URL names", () => {
+    expect(resolveJobSearchConfig(nothingSaved, noEnv).freehire).toEqual({ offered: false, url: "https://freehire.me" });
+    const own = resolveJobSearchConfig(nothingSaved, { DOSSIER_FREEHIRE: "on", DOSSIER_FREEHIRE_URL: "https://jobs.example:8443" });
+    expect(own.freehire).toEqual({ offered: true, url: "https://jobs.example:8443" });
+    expect(jobSearchView(own).freehire).toEqual({ offered: true, host: "jobs.example:8443" });
   });
 });
