@@ -92,6 +92,7 @@ export function ResumeDocument({ theme, profile, paper, layout, language, render
               head: <EntryHead title={role.role} at={role.company} dates={role.dates} timeline={resolved.timeline} />,
               children: (
                 <>
+                  {role.descriptor && <p className={styles.descriptor}>{role.descriptor}</p>}
                   {role.bullets.length > 0 && (
                     <ul className={styles.bullets}>
                       {role.bullets.map((bullet, index) => (

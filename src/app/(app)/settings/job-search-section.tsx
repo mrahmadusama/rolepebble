@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { JOB_SOURCES, type JobSource, type JSearchHost } from "@/lib/job-search/search";
-import { JOB_KEY_UNREADABLE, JSEARCH_KEY_URLS, SOURCE_INFO, type JobKeyState, type JobSearchSettingsView } from "@/lib/job-search/sources";
+import { FREEHIRE_URL, JOB_KEY_UNREADABLE, JSEARCH_KEY_URLS, SOURCE_INFO, type JobKeyState, type JobSearchSettingsView } from "@/lib/job-search/sources";
 import { cn } from "@/lib/cn";
 
 import { saveJobSearchDetails, saveJobSource, saveJobSourceKey, testJobSource } from "./actions";
@@ -55,6 +55,9 @@ export function JobSearchSection({ initial }: { initial: JobSearchSettingsView }
     apply(toastResult(await track(saveJobSource({ source: next }))));
   };
 
+  // FreeHire is listed only where this server offers it (DOSSIER_FREEHIRE).
+  const choices = view.freehire.offered ? CHOICES : CHOICES.filter((entry) => entry.value !== "FREEHIRE");
+
   const chooseHost = async (host: JSearchHost) => {
     setView((current) => ({ ...current, jsearch: { ...current.jsearch, host } }));
     changed();
@@ -93,7 +96,7 @@ export function JobSearchSection({ initial }: { initial: JobSearchSettingsView }
         onValueChange={(value) => void choose(value as Choice)}
         className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3"
       >
-        {CHOICES.map((entry) => (
+        {choices.map((entry) => (
           <RadioGroup.Item
             key={entry.value}
             value={entry.value}
@@ -156,6 +159,13 @@ export function JobSearchSection({ initial }: { initial: JobSearchSettingsView }
                   onSave={(change) => saveKey("ADZUNA", change)}
                 />
               </div>
+            )}
+            {source === "FREEHIRE" && (
+              <p className="text-sm text-muted">
+                {view.freehire.host === new URL(FREEHIRE_URL).host
+                  ? `No key needed. RolePebble searches FreeHire's public catalogue at ${view.freehire.host}.`
+                  : `No key needed. RolePebble searches your own FreeHire at ${view.freehire.host}.`}
+              </p>
             )}
 
             <div className="flex flex-wrap items-center gap-3.5 pt-1">

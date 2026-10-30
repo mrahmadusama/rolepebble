@@ -128,7 +128,8 @@ describe("profile actions", () => {
     if (!created.ok) throw new Error(created.error);
     expect(created.data).toMatchObject({ role: "", current: false, skillIds: [] });
 
-    const entry = { ...created.data, role: "Product Designer", company: "Fieldnote", startYear: 2018, startMonth: 6, endYear: 2021, endMonth: 2 };
+    expect(created.data.descriptor).toBe("");
+    const entry = { ...created.data, role: "Product Designer", company: "Fieldnote", descriptor: "Note-taking app, 20 people", startYear: 2018, startMonth: 6, endYear: 2021, endMonth: 2 };
     await saveExperience(entry);
     await prisma().experienceSkill.createMany({ data: [{ experienceId: entry.id, skillId: figma.id }, { experienceId: entry.id, skillId: research.id }] });
 
@@ -142,7 +143,12 @@ describe("profile actions", () => {
     await prisma().skill.delete({ where: { id: research.id } });
     const restored = await restoreExperience({ ...entry, skillIds: [figma.id, research.id] });
     expect(restored).toMatchObject({ ok: true, data: { id: entry.id, role: "Product Designer", skillIds: [figma.id] } });
-    expect(await prisma().experience.findUniqueOrThrow({ where: { id: entry.id } })).toMatchObject({ company: "Fieldnote", startYear: 2018, endMonth: 2 });
+    expect(await prisma().experience.findUniqueOrThrow({ where: { id: entry.id } })).toMatchObject({
+      company: "Fieldnote",
+      descriptor: "Note-taking app, 20 people",
+      startYear: 2018,
+      endMonth: 2,
+    });
   });
 
   it("rejects impossible dates", async () => {

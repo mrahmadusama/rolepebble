@@ -67,7 +67,7 @@ export function sourcesFor(profile: ProfileData, extracted: Extracted | null, po
     basics.name, basics.headline, basics.city, basics.country, basics.summary,
     ...profile.skills.map((skill) => skill.name),
     ...profile.languages.map((language) => `${language.name} ${languageLevelLabel(language.level)}`),
-    ...profile.experience.flatMap((entry) => [entry.role, entry.company, entry.location, formatDateRange(entry), entry.bullets]),
+    ...profile.experience.flatMap((entry) => [entry.role, entry.company, entry.location, entry.descriptor, formatDateRange(entry), entry.bullets]),
     ...profile.projects.flatMap((entry) => [entry.name, entry.link, formatDateRange(entry), entry.bullets]),
     ...profile.education.flatMap((entry) => [entry.degree, entry.school, formatDateRange(entry), entry.notes]),
     // The candidate's own citations back what's said about their work (#218).

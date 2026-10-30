@@ -37,6 +37,7 @@ export function SearchFields({
   onBlur?: () => void;
 }) {
   const uncovered = uncoveredCountry(source, value, countries);
+  const noRadius = source !== null && !SOURCE_INFO[source].radius;
   return (
     <>
       <Input
@@ -60,8 +61,8 @@ export function SearchFields({
       <Select
         label="Within"
         value={String(value.radiusKm)}
-        disabled={!value.place.trim()}
-        hint={value.place.trim() ? undefined : "Add a place first"}
+        disabled={noRadius || !value.place.trim()}
+        hint={noRadius ? `${SOURCE_INFO[source].name} has no distance filter` : value.place.trim() ? undefined : "Add a place first"}
         onChange={(event) => onChange({ radiusKm: Number(event.target.value) as RadiusKm })}
       >
         {RADII_KM.map((km) => (

@@ -26,6 +26,7 @@ test("fills in the profile, keeps it and shows it on the base resume", async ({ 
   await expect(page.getByLabel("Role", { exact: true })).toBeFocused();
   await page.getByLabel("Role", { exact: true }).fill("Design Lead");
   await page.getByLabel("Company", { exact: true }).fill("Acme Payments");
+  await page.getByLabel("About the company or role").fill("Payouts for online marketplaces, 60 people");
   await page.getByLabel("What you did").fill("Led the redesign of the payout flow\nSet up the design system");
   await page.getByRole("group", { name: "Skills you used here" }).getByRole("button", { name: "Accessibility" }).click();
   await page.getByLabel("What you did").blur();
@@ -40,6 +41,8 @@ test("fills in the profile, keeps it and shows it on the base resume", async ({ 
   const resume = page.getByRole("article", { name: "Resume" });
   await expect(resume).toContainText("John Doe");
   await expect(resume).toContainText("Acme Payments");
+  // The line about the company, in italics under the role's title (#257).
+  await expect(resume.getByText("Payouts for online marketplaces, 60 people")).toHaveCSS("font-style", "italic");
   await expect(resume).toContainText("Led the redesign of the payout flow");
 });
 

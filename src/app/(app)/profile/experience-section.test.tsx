@@ -36,6 +36,7 @@ const northwind: ExperienceItem = {
   role: "Senior Product Designer",
   company: "Northwind Logistics",
   location: "Rotterdam",
+  descriptor: "",
   bullets: "Led the redesign",
   startYear: 2021,
   startMonth: 3,

@@ -22,6 +22,7 @@ AienTech gave their blessing. Keep to what they asked:
 - RolePebble has **its own icon, privacy policy, and support/security contact** (support@rolepebble.com), and says visibly that it's **run by Ahmad Usama, not the Dossier project**, so users don't end up in Dossier's tracker.
 - **No Bundesagentur für Arbeit integration** (removed; its terms forbid this use).
 - Fixes that help **self-hosters** may go upstream as PRs to `AienTech/dossier`. **Accounts, billing and other multi-user changes stay in RolePebble**: Dossier is deliberately single-user.
+- **Taking Dossier's releases:** RolePebble follows them by merging the release commit (`git fetch upstream --tags`, `git merge upstream/main` on a branch, one PR per release). Conflicts come mostly from what RolePebble changed: keep RolePebble's README, PRIVACY.md and wording; keep the Bundesagentur removed; put new integrations that a hosted service can't use as-is behind a switch, off by default. Last merged: **Dossier 1.10.0** (2026-10-30).
 - Thanks go through GitHub Sponsors (`github.com/sponsors/AienTech`), not a revenue share.
 - They warned: **Adzuna's API terms allow personal job search**; ask Adzuna before using it in the paid product. Plan on JSearch first.
 
@@ -57,6 +58,7 @@ CI (`.github/workflows/ci.yml`) runs lint, typecheck, all unit and database test
 
 - **Don't rename internal identifiers** that still say `dossier`: the `dossier_session` cookie, the key-derivation strings (`dossier ${purpose} v1`), secret associated data, the `DOSSIER_*` environment variables, the export file format. Renaming them signs everyone out and makes stored API keys unreadable. User-facing text says RolePebble.
 - **Feature switches:** `DOSSIER_GOOGLE=on` (Gmail, Calendar, Inbox) and `DOSSIER_CONNECTOR=on` (Claude connector, "Write it with Claude") are **off by default** for v1 (`src/lib/features.ts`). The end-to-end tests run with both on.
+- **FreeHire** (job source from Dossier 1.10.0) is behind `DOSSIER_FREEHIRE=on`, **off by default**: its free use is for personal job search, and a hosted service like RolePebble needs one of its API plans (freehire.me/terms). While off it isn't listed in Settings, can't be saved, and a saved or environment choice of it reads as Off (`src/lib/job-search/config.ts`). Before switching it on in production: the owner buys a plan, and PRIVACY.md lists FreeHire among the job sources. The end-to-end tests run with it on.
 - **Removed from Dossier:** the usage ping and update check (their setting keys stay so old rows are still left out of exports), and the Bundesagentur source (its enum value `ARBEITSAGENTUR` stays only so old saved postings load; a saved choice of it reads as Off).
 - **Who runs it:** `src/lib/operator.ts` (operator name, support email). **Links:** `src/lib/releases.ts`.
 - **Still single-user:** sign-in is one password from `DOSSIER_PASSWORD`. Copy like "on your server" is from Dossier and gets reworded in Phase 2.

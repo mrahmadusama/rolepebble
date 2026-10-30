@@ -20,6 +20,7 @@ describe("attributionHref", () => {
 
   it("has no link for the other sources", () => {
     expect(attributionHref("JSEARCH", "https://www.adzuna.de/land/ad/1")).toBeNull();
+    expect(attributionHref("FREEHIRE", "https://boards.greenhouse.io/acme/jobs/1")).toBeNull();
   });
 });
 

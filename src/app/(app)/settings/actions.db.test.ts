@@ -158,11 +158,17 @@ describe("job search settings (E14-4)", () => {
         source: "JSEARCH",
         jsearch: { host: "openwebninja", keyState: "none" },
         adzuna: { appId: "", keyState: "none" },
+        freehire: { offered: false, host: "freehire.me" },
       },
     });
     await saveJobSource({ source: "OFF" });
     expect((await settings()).jobSource).toBe("OFF");
     expect(await saveJobSource({ source: "LINKEDIN" as never })).toMatchObject({ ok: false });
+  });
+
+  it("refuses FreeHire while the server doesn't offer it (DOSSIER_FREEHIRE)", async () => {
+    expect(await saveJobSource({ source: "FREEHIRE" })).toEqual({ ok: false, error: "FreeHire isn't available on this server." });
+    expect((await settings()).jobSource).not.toBe("FREEHIRE");
   });
 
   it("refuses a source since removed, and reads a choice of it saved before as Off", async () => {

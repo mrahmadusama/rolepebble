@@ -203,6 +203,15 @@
   white-space: nowrap;
 }
 
+/* A line about the company or the role, under its title (#257). */
+.descriptor {
+  margin-top: calc(var(--u) * 2);
+  font-size: 0.9em;
+  font-style: italic;
+  color: var(--doc-muted);
+  break-before: avoid;
+}
+
 .bullets {
   margin-top: calc(var(--u) * 3);
   padding-inline-start: 1.1em;

@@ -5,14 +5,15 @@ import { daysBetween, formatShortCalendarDate } from "@/lib/dates";
 import type { PostingFit } from "@/lib/fit";
 
 import { countryCodeFor } from "./countries";
+import { SOURCE_INFO } from "./sources";
 
 // Job search (E14): what a search asks for and what a posting looks like,
 // whichever source answers. Shared by the server and the Find jobs screen.
 // In this code "job" already means a background task (src/lib/jobs), so a
 // job ad is a "posting".
 
-/** The job sources Dossier can search (E14-1, E14-2), in the order Settings lists them; one is chosen there. */
-export const JOB_SOURCES = [PostingSource.JSEARCH, PostingSource.ADZUNA] as const;
+/** The job sources Dossier can search (E14-1, E14-2, FreeHire), in the order Settings lists them; one is chosen there. */
+export const JOB_SOURCES = [PostingSource.JSEARCH, PostingSource.ADZUNA, PostingSource.FREEHIRE] as const;
 export type JobSource = (typeof JOB_SOURCES)[number];
 
 /** Whether postings from `source` can still be searched; ones kept from a source since removed can't. */
@@ -134,9 +135,9 @@ export type PastSearchDay = {
   searches: { id: string; source: PostingSource; query: SearchQuery; found: number; time: string }[];
 };
 
-/** "product designer · Hamburg, 25 km · Remote only · Past week": a search in a line. */
-export function describeSearch(query: SearchQuery, countryName: string): string {
-  const where = query.place ? `${query.place}, ${query.radiusKm} km` : countryName;
+/** "product designer · Hamburg, 25 km · Remote only · Past week": a search in a line, without the km for a source that has no radius. */
+export function describeSearch(query: SearchQuery, countryName: string, source?: PostingSource | null): string {
+  const where = query.place ? (source && isJobSource(source) && !SOURCE_INFO[source].radius ? query.place : `${query.place}, ${query.radiusKm} km`) : countryName;
   const posted = POSTED_WITHIN.find((option) => option.value === query.postedWithin);
   return [query.keywords, where, query.remoteOnly ? "Remote only" : "", posted && posted.value !== "any" ? posted.label : ""].filter(Boolean).join(" · ");
 }

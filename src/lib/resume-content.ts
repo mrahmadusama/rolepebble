@@ -18,6 +18,8 @@ export type ResumeContent = {
     id: string;
     role: string;
     company: string;
+    /** A line about the company or the role (#257), as written; never tailored. */
+    descriptor: string;
     dates: string;
     bullets: string[];
     /** The skills used in the role (RES-6). */
@@ -108,6 +110,7 @@ export function resumeContent(
     id: entry.id,
     role: entry.role.trim(),
     company: entry.company.trim(),
+    descriptor: entry.descriptor.trim(),
     dates: formatDateRange(entry, dates),
     bullets: lines(bullets),
     skills: entry.skillIds.flatMap((id) => skillNames.get(id) ?? []),

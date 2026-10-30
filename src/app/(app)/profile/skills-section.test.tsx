@@ -27,8 +27,8 @@ const profile = (): ProfileData => ({
   ],
   languages: [{ id: "l1", name: "Dutch", level: "NATIVE" }],
   experience: [
-    { id: "e1", role: "A", company: "", location: "", bullets: "", skillIds: ["s1", "s2"], ...span },
-    { id: "e2", role: "B", company: "", location: "", bullets: "", skillIds: ["s1"], ...span },
+    { id: "e1", role: "A", company: "", location: "", descriptor: "", bullets: "", skillIds: ["s1", "s2"], ...span },
+    { id: "e2", role: "B", company: "", location: "", descriptor: "", bullets: "", skillIds: ["s1"], ...span },
   ],
   projects: [],
   education: [],

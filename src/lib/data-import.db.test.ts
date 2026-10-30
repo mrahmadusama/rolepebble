@@ -253,6 +253,22 @@ describe("importExport (E10-6)", () => {
     expect(await prisma().publication.count()).toBe(0);
   });
 
+  it("restores the line about each role's company, and reads files from before it with none (#257)", async () => {
+    const file = JSON.parse(JSON.stringify(await buildExport(prisma(), { now })));
+    const lines = async () => (await prisma().experience.findMany({ orderBy: { sort: "asc" } })).map((entry) => entry.descriptor);
+    const before = await lines();
+    expect(before).toContain("Freight platform for European carriers, 300 people");
+    await importExport(prisma(), exportSchema.parse(file));
+    expect(await lines()).toEqual(before);
+
+    // undefined: left out of the JSON, as in a file from before it.
+    const experience = file.profile.experience.map((entry: object) => ({ ...entry, descriptor: undefined }));
+    const parsed = parseExport(JSON.stringify({ ...file, schemaVersion: 5, profile: { ...file.profile, experience } }));
+    if (!parsed.ok) throw new Error(parsed.error);
+    await importExport(prisma(), parsed.data);
+    expect(await lines()).toEqual(before.map(() => ""));
+  });
+
   it("restores the photo, the themes' photo options and each application's Photo switch, and reads older files with the defaults (#224)", async () => {
     const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
     await prisma().profileField.createMany({ data: [{ key: "photo", value: png }, { key: "photoOnResumes", value: "false" }] });
