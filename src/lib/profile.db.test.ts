@@ -45,7 +45,7 @@ describe("profile schema", () => {
     });
 
     await db.skill.delete({ where: { id: figma.id } });
-    expect(await db.experienceSkill.findMany({ orderBy: { skillId: "asc" } })).toEqual([
+    expect(await db.experienceSkill.findMany({ select: { experienceId: true, skillId: true }, orderBy: { skillId: "asc" } })).toEqual([
       { experienceId: role.id, skillId: research.id },
     ]);
 

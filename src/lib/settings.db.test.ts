@@ -15,9 +15,11 @@ vi.mock("@/lib/prisma", async () => {
 
 const prisma = () => db.client!;
 
-const editorial: Prisma.ThemeCreateInput = {
+const editorial: Prisma.ThemeUncheckedCreateInput = {
   id: "editorial",
   builtIn: true,
+  // A built-in theme belongs to no one.
+  userId: null,
   name: "Editorial",
   headFont: "NEWSREADER",
   bodyFont: "GEIST",

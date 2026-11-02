@@ -9,6 +9,10 @@
 // - Text fields the user fills in are non-null and default to "", so forms can
 //   autosave partial entries without null checks.
 // - `sort` orders entries within a list; lower comes first.
+// - Every per-user table has `userId` (Phase 2): the database fills it in from
+//   the signed-in user (rp_current_user_id(), set by src/lib/db), and triggers
+//   (rp_same_owner) refuse a row that points at another user's row. Built-in
+//   themes have no owner.
 
 generator client {
   provider = "prisma-client"
@@ -17,6 +21,56 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─── Accounts (Phase 2) ──────────────────────────────────────────────────────
+
+/// A person with a RolePebble account. Every row of their data carries their
+/// id as `userId`; the database fills it in from the signed-in user
+/// (rp_current_user_id(), see src/lib/db). Until sign-in knows users, all data
+/// belongs to the built-in "owner" account the migration creates.
+model User {
+  id              String    @id @default(cuid())
+  /// Unique ignoring case.
+  email           String    @unique @db.Citext
+  /// argon2id (src/lib/auth/password-hash.ts); null until a password is set.
+  passwordHash    String?
+  emailVerifiedAt DateTime?
+  /// Raised to sign the user out everywhere: sessions carry the version they started with.
+  sessionVersion  Int       @default(0)
+  lastSignInAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  profileFields    ProfileField[]
+  skills           Skill[]
+  languages        Language[]
+  experiences      Experience[]
+  experienceSkills ExperienceSkill[]
+  projects         Project[]
+  projectSkills    ProjectSkill[]
+  educations       Education[]
+  publications     Publication[]
+  references       Reference[]
+  facts            Fact[]
+  themes           Theme[]
+  settings         Setting[]
+  applications     Application[]
+  statusEvents     StatusEvent[]
+  documents        Document[]
+  documentVersions DocumentVersion[]
+  chatMessages     ChatMessage[]
+  notes            Note[]
+  postings         Posting[]
+  claudePastes     ClaudePaste[]
+  agentCandidates  AgentCandidate[]
+  postingScores    PostingScore[]
+  postingSearches  PostingSearch[]
+  startups         Startup[]
+  startupBlocks    StartupBlock[]
+  googleAccounts   GoogleAccount[]
+  emailMessages    EmailMessage[]
+  jobs             Job[]
 }
 
 // ─── Profile (E2-1) ──────────────────────────────────────────────────────────
@@ -28,6 +82,11 @@ model ProfileField {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId    String   @default(dbgenerated("rp_current_user_id()"))
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Skill {
@@ -38,6 +97,11 @@ model Skill {
   experiences ExperienceSkill[]
   projects    ProjectSkill[]
   createdAt   DateTime          @default(now())
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId      String            @default(dbgenerated("rp_current_user_id()"))
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum LanguageLevel {
@@ -57,6 +121,11 @@ model Language {
   level     LanguageLevel
   sort      Int           @default(0)
   createdAt DateTime      @default(now())
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId    String        @default(dbgenerated("rp_current_user_id()"))
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// A role. Dates are month and year; `current` means "Present" (no end date).
@@ -79,6 +148,11 @@ model Experience {
   skills     ExperienceSkill[]
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId     String            @default(dbgenerated("rp_current_user_id()"))
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// A skill used in a role (PRO-6). Deleting either side removes the link (PRO-3).
@@ -87,9 +161,13 @@ model ExperienceSkill {
   skillId      String
   experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
   skill        Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId       String     @default(dbgenerated("rp_current_user_id()"))
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([experienceId, skillId])
   @@index([skillId])
+  @@index([userId])
 }
 
 /// A side, open-source, course or thesis project (PRO-13). Dates work as in Experience.
@@ -109,6 +187,11 @@ model Project {
   skills     ProjectSkill[]
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId     String         @default(dbgenerated("rp_current_user_id()"))
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// A skill used in a project, as ExperienceSkill is for a role.
@@ -117,9 +200,13 @@ model ProjectSkill {
   skillId   String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   skill     Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId    String  @default(dbgenerated("rp_current_user_id()"))
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([projectId, skillId])
   @@index([skillId])
+  @@index([userId])
 }
 
 /// A degree, course or certificate. Dates work as in Experience.
@@ -136,6 +223,11 @@ model Education {
   sort       Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId     String   @default(dbgenerated("rp_current_user_id()"))
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Private unless included in a document (PRO-8).
@@ -151,6 +243,11 @@ model Publication {
   sort      Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId    String   @default(dbgenerated("rp_current_user_id()"))
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Reference {
@@ -163,6 +260,11 @@ model Reference {
   sort      Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId    String   @default(dbgenerated("rp_current_user_id()"))
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Something the user tells the AI about themselves: one of the profile's
@@ -177,8 +279,12 @@ model Fact {
   sort          Int          @default(0)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId        String       @default(dbgenerated("rp_current_user_id()"))
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([applicationId, sort])
+  @@index([userId])
 }
 
 // ─── Themes and settings (E2-2) ──────────────────────────────────────────────
@@ -296,6 +402,11 @@ model Theme {
   documents     Document[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  /// Whose theme it is; null for a built-in theme, which everyone shares.
+  userId        String?       @default(dbgenerated("rp_current_user_id()"))
+  user          User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum AiProvider {
@@ -343,6 +454,11 @@ model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId    String   @default(dbgenerated("rp_current_user_id()"))
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ─── Applications (E2-3) ─────────────────────────────────────────────────────
@@ -456,9 +572,13 @@ model Application {
   jobs                Job[]
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId              String            @default(dbgenerated("rp_current_user_id()"))
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([updatedAt])
+  @@index([userId])
 }
 
 /// One status change. Keeps the application's furthestStage and sentAt from
@@ -472,8 +592,12 @@ model StatusEvent {
   at                    DateTime          @default(now())
   previousFurthestStage FunnelStage?
   previousSentAt        DateTime?
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId                String            @default(dbgenerated("rp_current_user_id()"))
+  user                  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([applicationId, at])
+  @@index([userId])
 }
 
 enum DocumentKind {
@@ -500,8 +624,12 @@ model Document {
   /// Earlier states, after each AI change and before each restore (E8-10).
   versions      DocumentVersion[]
   updatedAt     DateTime          @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId        String            @default(dbgenerated("rp_current_user_id()"))
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([applicationId, kind])
+  @@index([userId])
 }
 
 /// Why a tailored document has a version (E8-10, APP-13).
@@ -532,8 +660,12 @@ model DocumentVersion {
   /// What changed, e.g. the part's name or the chat request.
   detail     String       @default("")
   createdAt  DateTime     @default(now())
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId     String       @default(dbgenerated("rp_current_user_id()"))
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([documentId, createdAt])
+  @@index([userId])
 }
 
 enum ChatRole {
@@ -558,8 +690,12 @@ model ChatMessage {
   /// For AI messages, the prompt version that wrote it (E6-5).
   writtenWith   String?
   createdAt     DateTime    @default(now())
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId        String      @default(dbgenerated("rp_current_user_id()"))
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([applicationId, createdAt])
+  @@index([userId])
 }
 
 /// A private note or activity entry on an application (APP-14, E8-9).
@@ -571,8 +707,12 @@ model Note {
   createdAt     DateTime    @default(now())
   /// Shown as "edited" once it differs from createdAt (E8-9).
   updatedAt     DateTime    @default(now()) @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId        String      @default(dbgenerated("rp_current_user_id()"))
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([applicationId, createdAt])
+  @@index([userId])
 }
 
 // ─── Job search (E14) ────────────────────────────────────────────────────────
@@ -618,10 +758,14 @@ model Posting {
   application   Application?  @relation(fields: [applicationId], references: [id], onDelete: SetNull)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId        String        @default(dbgenerated("rp_current_user_id()"))
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([source, externalId])
   @@index([savedAt])
   @@index([dismissedAt])
+  @@index([userId])
 }
 
 /// A posting pasted into New application and handed to Claude chat (#221):
@@ -634,8 +778,12 @@ model ClaudePaste {
   url       String   @default("")
   expiresAt DateTime
   createdAt DateTime @default(now())
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId    String   @default(dbgenerated("rp_current_user_id()"))
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
+  @@index([userId])
 }
 
 // ─── Job agent (E16) ─────────────────────────────────────────────────────────
@@ -677,10 +825,14 @@ model AgentCandidate {
   dedupeKey     String               @unique
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId        String               @default(dbgenerated("rp_current_user_id()"))
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([source, externalId])
   @@index([status, score])
   @@index([createdAt])
+  @@index([userId])
 }
 
 /// How well a posting fits the profile (#208): from Score in Find jobs, or
@@ -698,8 +850,12 @@ model PostingScore {
   scoredWith String
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId     String        @default(dbgenerated("rp_current_user_id()"))
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([source, externalId])
+  @@index([userId])
 }
 
 /// A search on Find jobs, kept with what it found until the user removes it
@@ -717,8 +873,12 @@ model PostingSearch {
   next      String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId    String        @default(dbgenerated("rp_current_user_id()"))
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
+  @@index([userId])
 }
 
 // ─── Startups (#222) ─────────────────────────────────────────────────────────
@@ -782,9 +942,13 @@ model Startup {
   application        Application?  @relation(fields: [applicationId], references: [id], onDelete: SetNull)
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId             String        @default(dbgenerated("rp_current_user_id()"))
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([source, externalId])
   @@index([status, score])
+  @@index([userId])
 }
 
 /// A startup removed with "Remove and don't bring back" (#222): only a
@@ -793,6 +957,11 @@ model Startup {
 model StartupBlock {
   hash      String   @id
   createdAt DateTime @default(now())
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId    String   @default(dbgenerated("rp_current_user_id()"))
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ─── Google: Gmail and Calendar (E15) ────────────────────────────────────────
@@ -814,6 +983,11 @@ model GoogleAccount {
   syncProblem     String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId          String    @default(dbgenerated("rp_current_user_id()"))
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum EmailDirection {
@@ -875,10 +1049,14 @@ model EmailMessage {
   /// doesn't fetch it again.
   dismissedAt     DateTime?
   createdAt       DateTime           @default(now())
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId          String             @default(dbgenerated("rp_current_user_id()"))
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([threadId])
   @@index([applicationId, sentAt])
   @@index([sentAt])
+  @@index([userId])
 }
 
 // ─── Sign-in (E3-4) ──────────────────────────────────────────────────────────
@@ -930,8 +1108,12 @@ model Job {
   startedAt     DateTime?
   finishedAt    DateTime?
   updatedAt     DateTime     @updatedAt
+  /// Whose it is (src/lib/db): the signed-in user, set by the database.
+  userId        String       @default(dbgenerated("rp_current_user_id()"))
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([key, createdAt])
   @@index([status])
   @@index([applicationId])
+  @@index([userId])
 }
