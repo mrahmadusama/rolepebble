@@ -12,7 +12,10 @@ const HASH_PASSWORD = "Make one with `docker run --rm -it ghcr.io/mrahmadusama/r
 
 export const AI_PROVIDERS = ["local", "openai", "anthropic", "mistral", "lmstudio"] as const;
 export const JOB_SOURCE_NAMES = ["jsearch", "adzuna", "freehire", "off"] as const;
+export const EMAIL_TRANSPORTS = ["log", "file", "resend"] as const;
 const SWITCH = ["on", "off"] as const;
+// "hello@rolepebble.com" or "RolePebble <hello@rolepebble.com>".
+const FROM_ADDRESS = /^(?:[^<>@]*<[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+>|[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+)$/;
 
 // An empty value (`DOSSIER_AI_KEY=` in .env) counts as unset.
 const unsetIfEmpty = (value: unknown) =>
@@ -144,6 +147,26 @@ const schema = z.object({
   DOSSIER_PUBLIC_URL: optional(
     z.url({ protocol: /^https?$/, error: "DOSSIER_PUBLIC_URL must be an http:// or https:// URL." }).transform((url) => url.replace(/\/+$/, "")),
   ),
+  // How account emails (confirm your email, reset your password) go out
+  // (src/lib/email): `log` only notes them in the server log, `file` writes
+  // them to DOSSIER_DATA_DIR/mail for development and the browser tests, and
+  // `resend` sends them through Resend.
+  DOSSIER_EMAIL_TRANSPORT: z
+    .preprocess(unsetIfEmpty, z.string().trim().toLowerCase().default("log"))
+    .pipe(
+      z.enum(EMAIL_TRANSPORTS, {
+        error: (issue) =>
+          `DOSSIER_EMAIL_TRANSPORT must be one of ${EMAIL_TRANSPORTS.join(", ")} (got "${String(issue.input)}").`,
+      }),
+    ),
+  // Required with DOSSIER_EMAIL_TRANSPORT=resend, like RESEND_API_KEY.
+  DOSSIER_EMAIL_FROM: optional(
+    z.string().trim().regex(FROM_ADDRESS, {
+      error: "DOSSIER_EMAIL_FROM must be an email address, like RolePebble <hello@rolepebble.com>.",
+    }),
+  ),
+  // Never echo the value: it's an API key.
+  RESEND_API_KEY: optional(z.string().trim()),
   // For the end-to-end tests only: sends every job source's requests to
   // <url>/<source> instead, where a fake source answers (e2e/fake-jobs.mts).
   DOSSIER_JOBS_TEST_BASE_URL: optional(
@@ -155,6 +178,27 @@ const schema = z.object({
   DOSSIER_GOOGLE_TEST_BASE_URL: optional(
     z.url({ protocol: /^https?$/, error: "DOSSIER_GOOGLE_TEST_BASE_URL must be an http:// or https:// URL." }),
   ),
+}).superRefine((value, ctx) => {
+  // Sending real email needs a sender, a key, and an address for the links.
+  // (Checked once every variable on its own is valid.)
+  if (value.DOSSIER_EMAIL_TRANSPORT !== "resend") return;
+  const missing = (name: string, fix: string) =>
+    ctx.addIssue({ code: "custom", path: [name], message: `${name} is not set. ${fix}` });
+  if (!value.DOSSIER_EMAIL_FROM) {
+    missing(
+      "DOSSIER_EMAIL_FROM",
+      "Set it to the address emails come from, like RolePebble <hello@rolepebble.com>, on a domain verified in Resend.",
+    );
+  }
+  if (!value.RESEND_API_KEY) {
+    missing("RESEND_API_KEY", "Make an API key with sending access at resend.com/api-keys.");
+  }
+  if (!value.DOSSIER_PUBLIC_URL) {
+    missing(
+      "DOSSIER_PUBLIC_URL",
+      "Set it to the address RolePebble is reached at, like https://rolepebble.com, for the links in emails.",
+    );
+  }
 });
 
 export type Env = z.infer<typeof schema>;
