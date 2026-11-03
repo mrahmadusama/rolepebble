@@ -56,6 +56,10 @@ services:
       DOSSIER_GOOGLE_CLIENT_SECRET: ${DOSSIER_GOOGLE_CLIENT_SECRET:-}
       # The address RolePebble is reached at, for Google's redirect.
       DOSSIER_PUBLIC_URL: ${DOSSIER_PUBLIC_URL:-}
+      # Account emails: log (nothing sent), file or resend (see .env.example).
+      DOSSIER_EMAIL_TRANSPORT: ${DOSSIER_EMAIL_TRANSPORT:-}
+      DOSSIER_EMAIL_FROM: ${DOSSIER_EMAIL_FROM:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
     # Only on the server itself: put a reverse proxy with HTTPS in front.
     ports:
       - "127.0.0.1:${DOSSIER_PORT:-3000}:3000"

@@ -59,6 +59,9 @@ services:
       DOSSIER_FREEHIRE_URL: ${DOSSIER_FREEHIRE_URL:-}
       DOSSIER_GOOGLE_CLIENT_ID: ${DOSSIER_GOOGLE_CLIENT_ID:-}
       DOSSIER_GOOGLE_CLIENT_SECRET: ${DOSSIER_GOOGLE_CLIENT_SECRET:-}
+      DOSSIER_EMAIL_TRANSPORT: ${DOSSIER_EMAIL_TRANSPORT:-}
+      DOSSIER_EMAIL_FROM: ${DOSSIER_EMAIL_FROM:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
     # Not published: only Caddy (or the tunnel) reaches it, over the compose network.
     expose:
       - "3000"

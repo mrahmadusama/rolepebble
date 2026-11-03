@@ -87,6 +87,8 @@ The owner's **personal** Dossier (plain upstream Dossier, for their own job sear
 | 5 | Private beta from the waitlist, then public launch | Not started |
 | Later | Gmail/Calendar (needs Google verification and a CASA assessment), Google sign-in, B2B for career coaches | |
 
+**Phase 2 progress:** the email module and one-time link tokens are in (`src/lib/email`, `src/lib/auth/tokens.ts`); emails are logged or written to a file until `rolepebble.com` is verified in Resend.
+
 **Phase 1, still open:** owner registers `rolepebble.com` (Cloudflare Registrar) with Email Routing for support@, and attaches it to the Pages project; owner creates the Hetzner CX22 and shares its IP, and the agent sets up staging. The landing page's wordmark (pebble "o", in Outfit) and pebble icon are the owner's choices.
 
 ### Phase 2 plan (approved 2026-11-02)

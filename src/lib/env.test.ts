@@ -32,6 +32,7 @@ describe("parseEnv", () => {
       DOSSIER_GOOGLE: "off",
       DOSSIER_CONNECTOR: "off",
       DOSSIER_FREEHIRE: "off",
+      DOSSIER_EMAIL_TRANSPORT: "log",
     });
   });
 
@@ -174,5 +175,52 @@ describe("job search variables (E14-4)", () => {
       'DOSSIER_JOBS_SOURCE must be one of jsearch, adzuna, freehire, off (got "linkedin").',
       'DOSSIER_JSEARCH_HOST must be openwebninja or rapidapi (got "google").',
     ]);
+  });
+});
+
+describe("email variables", () => {
+  const resend = {
+    ...valid,
+    DOSSIER_EMAIL_TRANSPORT: "resend",
+    DOSSIER_EMAIL_FROM: "RolePebble <hello@rolepebble.com>",
+    RESEND_API_KEY: "re_test_key",
+    DOSSIER_PUBLIC_URL: "https://rolepebble.com",
+  };
+
+  it("logs emails until a transport is chosen", () => {
+    expect(parseEnv(valid).DOSSIER_EMAIL_TRANSPORT).toBe("log");
+    expect(parseEnv({ ...valid, DOSSIER_EMAIL_TRANSPORT: "" }).DOSSIER_EMAIL_TRANSPORT).toBe("log");
+    expect(parseEnv({ ...valid, DOSSIER_EMAIL_TRANSPORT: " File " }).DOSSIER_EMAIL_TRANSPORT).toBe("file");
+  });
+
+  it("reads Resend's sender and key", () => {
+    expect(parseEnv(resend)).toMatchObject({
+      DOSSIER_EMAIL_TRANSPORT: "resend",
+      DOSSIER_EMAIL_FROM: "RolePebble <hello@rolepebble.com>",
+      RESEND_API_KEY: "re_test_key",
+    });
+    expect(parseEnv({ ...resend, DOSSIER_EMAIL_FROM: " hello@rolepebble.com " }).DOSSIER_EMAIL_FROM).toBe("hello@rolepebble.com");
+  });
+
+  it("needs a sender, a key and the public address for Resend only", () => {
+    expect(
+      problems({ ...valid, DOSSIER_EMAIL_TRANSPORT: "resend", DOSSIER_EMAIL_FROM: "", RESEND_API_KEY: " " }),
+    ).toEqual([
+      expect.stringMatching(/^DOSSIER_EMAIL_FROM is not set\. .*verified in Resend/),
+      expect.stringMatching(/^RESEND_API_KEY is not set\. .*resend\.com\/api-keys/),
+      expect.stringMatching(/^DOSSIER_PUBLIC_URL is not set\. .*links in emails/),
+    ]);
+    expect(parseEnv({ ...valid, DOSSIER_EMAIL_TRANSPORT: "file" })).toMatchObject({ DOSSIER_EMAIL_TRANSPORT: "file" });
+  });
+
+  it("rejects transports and senders it doesn't know, without echoing the key", () => {
+    expect(
+      problems({ ...resend, DOSSIER_EMAIL_TRANSPORT: "smtp", RESEND_API_KEY: "re_secret" }),
+    ).toEqual(['DOSSIER_EMAIL_TRANSPORT must be one of log, file, resend (got "smtp").']);
+    for (const from of ["RolePebble", "hello@rolepebble", "RolePebble <hello@rolepebble.com", "a b@rolepebble.com"]) {
+      expect(problems({ ...resend, DOSSIER_EMAIL_FROM: from, RESEND_API_KEY: "re_secret" })).toEqual([
+        "DOSSIER_EMAIL_FROM must be an email address, like RolePebble <hello@rolepebble.com>.",
+      ]);
+    }
   });
 });

@@ -135,6 +135,22 @@ In server code, `getSession()` returns the session or null, and `verifySession()
 
 Failed sign-ins are rate-limited in Postgres: after 5 failures within a minute from one IP, attempts are refused for 30 seconds, then 60, 120 and so on up to 15 minutes. The IP is the last `X-Forwarded-For` entry, which is the real client behind a reverse proxy but can be faked when the app is exposed directly, so 30 failures within 10 minutes from all IPs together also trigger the backoff. If you lock yourself out while developing, clear the counters with `docker compose exec db psql -U postgres -d dossier -c 'DELETE FROM "LoginThrottle"'`.
 
+## Email
+
+Account emails (confirm your email, reset your password, and a notice to the old address when it changes) are built in `src/lib/email/messages.ts`, with links from `DOSSIER_PUBLIC_URL` (`http://localhost:3000` while it's unset), and sent with `sendEmail()` from `src/lib/email`. How they go out is set by `DOSSIER_EMAIL_TRANSPORT`:
+
+- `log`, the default: nothing is sent. The server log gets one line per email, with its subject and a masked address, never the body, since its links sign people in.
+- `file`: each email is appended as a line of JSON to `DOSSIER_DATA_DIR/mail/outbox.jsonl` (`./data/mail` in development). `readSentMail()` reads them back, for the browser tests.
+- `resend`: sent through Resend's HTTP API with `fetch`. It needs `DOSSIER_EMAIL_FROM` (on a domain verified in Resend), `RESEND_API_KEY` and `DOSSIER_PUBLIC_URL`, or the server won't start.
+
+To read the emails while developing, set `DOSSIER_EMAIL_TRANSPORT=file` in `.env`, restart, and open the newest line:
+
+```bash
+tail -n 1 data/mail/outbox.jsonl
+```
+
+The links carry one-time tokens from `src/lib/auth/tokens.ts`: 32 random bytes in base64url. Only a token's SHA-256 hash is stored, compared with `tokenMatches()` in constant time; email confirmations work for 24 hours and password resets for one.
+
 ## AI provider
 
 Dossier reads job postings and writes drafts with the model you choose in Settings → AI provider: a local model through Ollama or llama.cpp, LM Studio, any OpenAI-compatible server, Anthropic or Mistral. Until you save a choice there, the `DOSSIER_AI_*` variables decide (see `.env.example`). API keys are stored encrypted with a key derived from `DOSSIER_SECRET`, and never sent back to the browser.
