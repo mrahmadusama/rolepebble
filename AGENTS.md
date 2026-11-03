@@ -61,7 +61,8 @@ CI (`.github/workflows/ci.yml`) runs lint, typecheck, all unit and database test
 - **FreeHire** (job source from Dossier 1.10.0) is behind `DOSSIER_FREEHIRE=on`, **off by default**: its free use is for personal job search, and a hosted service like RolePebble needs one of its API plans (freehire.me/terms). While off it isn't listed in Settings, can't be saved, and a saved or environment choice of it reads as Off (`src/lib/job-search/config.ts`). Before switching it on in production: the owner buys a plan, and PRIVACY.md lists FreeHire among the job sources. The end-to-end tests run with it on.
 - **Removed from Dossier:** the usage ping and update check (their setting keys stay so old rows are still left out of exports), and the Bundesagentur source (its enum value `ARBEITSAGENTUR` stays only so old saved postings load; a saved choice of it reads as Off).
 - **Who runs it:** `src/lib/operator.ts` (operator name, support email). **Links:** `src/lib/releases.ts`.
-- **Still single-user:** sign-in is one password from `DOSSIER_PASSWORD`. Copy like "on your server" is from Dossier and gets reworded in Phase 2.
+- **Still single-user until Phase 2's switch (PR 10):** sign-in is one password from `DOSSIER_PASSWORD`. Copy like "on your server" is from Dossier and gets reworded in Phase 2.
+- **Owners (Phase 2):** every per-user table has `userId`, filled in by the database from `app.user_id` (`rp_current_user_id()`), or the built-in `owner` account (`OWNER_ID` in `prisma/seed/built-ins.ts`) until sign-in knows users. Built-in themes have `userId` null, so create them with `userId: null`. Triggers (`rp_same_owner`) refuse a row that points at another user's row. Database tests: `resetDatabase` keeps the owner account, and `createTestUser` makes another.
 - The README's old screenshots in `.github/images/` are Dossier's, left over until RolePebble has its own.
 - **The landing page** is `site/` (see [site/README.md](site/README.md)): static files, no build step, and one Cloudflare Pages Function for the waitlist. Its design follows a reference the owner liked (veltro-astro.pages.dev), above all the "How it works" steps that stick and stack as you scroll. The text on it is a draft for the owner to change. Keep it honest: no made-up numbers, reviews or customers.
 
@@ -80,13 +81,34 @@ The owner's **personal** Dossier (plain upstream Dossier, for their own job sear
 |---|---|---|
 | 0 | Validate: domain, waitlist, talk to job seekers, choose payments (Stripe isn't available to sellers in Pakistan: use a merchant of record like Paddle or Lemon Squeezy, after checking payouts to Pakistan) | In progress (owner) |
 | 1 | Fork preparation: name, icon, policies, contact, AGPL links, remove calls home and the Bundesagentur, hide Gmail/Calendar and the connector, repo pages, staging, landing page | Code done (PRs #1, #3, #4); landing page live at rolepebble.pages.dev (PR #6). Waiting on the domain and the Hetzner server for staging |
-| 2 | Multi-tenancy: accounts (email + password, verification, reset), `userId` on every per-user model, a user-scoped Prisma client plus Postgres row-level security, isolation tests, per-user background jobs, `pg_dump` backups | Not started. The biggest piece: no model has an owner, ~430 queries, six schedulers |
+| 2 | Multi-tenancy: accounts (email + password, verification, reset), `userId` on every per-user model, a user-scoped Prisma client plus Postgres row-level security, isolation tests, per-user background jobs, `pg_dump` backups | In progress, in 14 PRs (below) |
 | 3 | Billing and AI limits: included AI with monthly credits on a cheap model, plus bring-your-own-key; JSearch first | Not started |
 | 4 | Infrastructure, legal (privacy policy reviewed by a lawyer, terms), security review of the isolation layer | Not started |
 | 5 | Private beta from the waitlist, then public launch | Not started |
 | Later | Gmail/Calendar (needs Google verification and a CASA assessment), Google sign-in, B2B for career coaches | |
 
 **Phase 1, still open:** owner registers `rolepebble.com` (Cloudflare Registrar) with Email Routing for support@, and attaches it to the Pages project; owner creates the Hetzner CX22 and shares its IP, and the agent sets up staging. The landing page's wordmark (pebble "o", in Outfit) and pebble icon are the owner's choices.
+
+### Phase 2 plan (approved 2026-11-02)
+
+Owner decisions: open sign-up behind `DOSSIER_SIGNUP` (keep production on invite/closed until Phase 3 limits exist); AI is the platform key by default plus each user's own key; local AI (Ollama, LM Studio, custom addresses) hidden for users; per-user nightly backups replaced by platform database backups (Phase 4), "Export my data" stays; email confirmation required; Startups and the job agent stay, per user; Gmail, Calendar and the Claude connector stay off. Until PR 10, everything belongs to the `owner` account and the app behaves as before.
+
+| PR | What | Status |
+|---|---|---|
+| 1 | `User`, the owner account, `userId` on every per-user table, `rp_same_owner` triggers | Open |
+| 2 | Scoped client `src/lib/db/` (`userDb()`, `runAsUser`), `action()`/`route()` pass it, audit test against raw `prisma` imports | |
+| 3 | Profile, facts, themes, settings on the scoped client; per-user uniques | |
+| 4 | Applications, documents, status, PDFs, print tokens and held PDFs by owner | |
+| 5 | Find jobs, job agent, Startups; per-user uniques | |
+| 6 | Job queue per user with fair turns; schedulers loop over users; caches and downloads by user | |
+| 7 | `InstallSetting` split; per-user AI config with platform fallback; local/custom AI refused; a no-op AI hook for Phase 3 credits | |
+| 8 | Export/import per user (import remaps ids); "Delete everything" only deletes your data; in-app nightly backups off | |
+| 9 | Email module `src/lib/email/` (log, file, Resend) and one-time link tokens | Can run in its own session |
+| 10 | The switch: email sign-in, sessions with `sub`/`ver`, throttle by IP and email, `DOSSIER_PASSWORD` retired, demo user, e2e as it | |
+| 11 | Sign-up, email confirmation, forgot/reset password | |
+| 12 | Account page: change password/email, sign out everywhere, delete account | |
+| 13 | Isolation test suite (every table, operation and id route, two users) | |
+| 14 | Postgres row-level security on (fallback if it misbehaves: layers 1–2 plus the suite, RLS in Phase 4) | |
 
 ## For the next session
 
