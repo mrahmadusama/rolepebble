@@ -50,6 +50,7 @@ COREPACK_ENABLE_DOWNLOAD_PROMPT=0 yarn install --immutable && yarn prisma genera
 yarn lint
 yarn typecheck
 yarn vitest run --project node --project dom
+yarn build   # catches what only the production build sees, e.g. a server-only import reaching the Edge bundle
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, all unit and database tests with coverage thresholds, and the Playwright end-to-end tests on every PR. On `main` it publishes the image `ghcr.io/mrahmadusama/rolepebble:main` (public).
