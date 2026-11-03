@@ -5,7 +5,7 @@ import { addDays, dayOf } from "@/lib/calendar-view";
 import { zonedTime } from "@/lib/google/slots";
 import { findUnfinishedJobs, startJob } from "@/lib/jobs/runner";
 import { logServerError } from "@/lib/log";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import type { AgentRun } from "@/lib/settings";
 import { loadSettings } from "@/lib/settings-data";
 import { lastKnownTimeZone } from "@/lib/time-zone";
@@ -56,7 +56,7 @@ export async function startDueRun(now = new Date()): Promise<string | null> {
 
 /** After a restart, a candidate left DRAFTING has no job to finish it. */
 export async function resetInterruptedDrafts(): Promise<number> {
-  const { count } = await prisma.agentCandidate.updateMany({
+  const { count } = await (await userDb()).agentCandidate.updateMany({
     where: { status: AgentCandidateStatus.DRAFTING },
     data: { status: AgentCandidateStatus.SCORED, error: "Drafting was interrupted. Try again." },
   });

@@ -770,7 +770,7 @@ model Posting {
   userId        String        @default(dbgenerated("rp_current_user_id()"))
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([source, externalId])
+  @@unique([userId, source, externalId])
   @@index([savedAt])
   @@index([dismissedAt])
   @@index([userId])
@@ -830,14 +830,15 @@ model AgentCandidate {
   application   Application?         @relation(fields: [applicationId], references: [id], onDelete: SetNull)
   /// A hash of the link without tracking parameters, else of company, title
   /// and place: the same job from another source or a later run matches.
-  dedupeKey     String               @unique
+  dedupeKey     String
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   /// Whose it is (src/lib/db): the signed-in user, set by the database.
   userId        String               @default(dbgenerated("rp_current_user_id()"))
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([source, externalId])
+  @@unique([userId, source, externalId])
+  @@unique([userId, dedupeKey])
   @@index([status, score])
   @@index([createdAt])
   @@index([userId])
@@ -862,7 +863,7 @@ model PostingScore {
   userId     String        @default(dbgenerated("rp_current_user_id()"))
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([source, externalId])
+  @@id([userId, source, externalId])
   @@index([userId])
 }
 
@@ -954,7 +955,7 @@ model Startup {
   userId             String        @default(dbgenerated("rp_current_user_id()"))
   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([source, externalId])
+  @@unique([userId, source, externalId])
   @@index([status, score])
   @@index([userId])
 }
@@ -963,12 +964,13 @@ model Startup {
 /// SHA-256 hash of its post, its site's domain or its name, so a refresh
 /// leaves it out without keeping anything about it.
 model StartupBlock {
-  hash      String   @id
+  hash      String
   createdAt DateTime @default(now())
   /// Whose it is (src/lib/db): the signed-in user, set by the database.
   userId    String   @default(dbgenerated("rp_current_user_id()"))
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@id([userId, hash])
   @@index([userId])
 }
 

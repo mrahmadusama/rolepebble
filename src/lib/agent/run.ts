@@ -17,7 +17,7 @@ import { startJob, type JobContext } from "@/lib/jobs/runner";
 import { logServerError } from "@/lib/log";
 import { saveScore } from "@/lib/posting-scores";
 import { postingStates } from "@/lib/postings";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadProfile } from "@/lib/profile-data";
 import { loadSettings } from "@/lib/settings-data";
 
@@ -72,7 +72,7 @@ export async function newPostings(postings: readonly FoundPosting[]): Promise<Fo
     return !state?.saved && !state?.dismissed && !state?.applicationId;
   });
   const keys = unseen.map(agentDedupeKey);
-  const known = await prisma.agentCandidate.findMany({
+  const known = await (await userDb()).agentCandidate.findMany({
     where: { OR: [...unseen.map(({ source, externalId }) => ({ source, externalId })), { dedupeKey: { in: keys } }] },
     select: { source: true, externalId: true, dedupeKey: true },
   });
@@ -140,7 +140,7 @@ export async function runAgentScan({ manual }: { manual: boolean }, context: Job
         { posting: postingText(posting), title: posting.title, company: posting.company, place: posting.place, remote: posting.remote, salary: posting.salary, profile },
         { ...options, signal: context.signal },
       );
-      const candidate = await prisma.agentCandidate.create({ data: candidateData(posting, data), select: { id: true } });
+      const candidate = await (await userDb()).agentCandidate.create({ data: candidateData(posting, data), select: { id: true } });
       // Find jobs shows it too (#208).
       await saveScore(posting, data, promptVersion);
       kept.push(candidate.id);
@@ -158,7 +158,7 @@ export async function runAgentScan({ manual }: { manual: boolean }, context: Job
   // Auto-draft (#197, off by default): the best of this run's, one job each.
   let drafted = 0;
   if (settings.agentAutoDraft && settings.agentMaxDrafts > 0 && !context.signal.aborted) {
-    const best = await prisma.agentCandidate.findMany({
+    const best = await (await userDb()).agentCandidate.findMany({
       where: { id: { in: kept }, status: AgentCandidateStatus.SCORED, score: { gte: settings.agentMinScore } },
       orderBy: { score: "desc" },
       take: settings.agentMaxDrafts,

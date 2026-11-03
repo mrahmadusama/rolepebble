@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PostingSource } from "@/generated/prisma/enums";
+import { OWNER_ID } from "@/lib/db/owner";
 import { JOB_SOURCES, type FoundPosting } from "@/lib/job-search/search";
 import { createTestClient, resetDatabase } from "@/test/db";
 
@@ -93,7 +94,7 @@ describe("the Saved and Dismissed views (E14-7)", () => {
   it("lists saved and dismissed postings, newest first, and counts them", async () => {
     const application = await prisma().application.create({ data: { title: "From Find jobs" } });
     await savePosting({ ...found, externalId: "older", title: "Older" });
-    await prisma().posting.update({ where: { source_externalId: { source: "JSEARCH", externalId: "older" } }, data: { savedAt: new Date("2026-09-01"), applicationId: application.id } });
+    await prisma().posting.update({ where: { userId_source_externalId: { userId: OWNER_ID, source: "JSEARCH", externalId: "older" } }, data: { savedAt: new Date("2026-09-01"), applicationId: application.id } });
     await savePosting({ ...found, externalId: "newer", title: "Newer" });
     await dismissPosting({ ...found, externalId: "gone", title: "Not for me" });
 
@@ -115,7 +116,7 @@ describe("postingStates", () => {
     const application = await prisma().application.create({ data: { title: "From Find jobs" } });
     await savePosting(found);
     await dismissPosting(other);
-    await prisma().posting.update({ where: { source_externalId: ref }, data: { applicationId: application.id } });
+    await prisma().posting.update({ where: { userId_source_externalId: { userId: OWNER_ID, ...ref } }, data: { applicationId: application.id } });
 
     const states = await postingStates([found, other, third]);
     expect(states.get("JSEARCH:job-1")).toEqual({ postingId: expect.any(String), saved: true, dismissed: false, applicationId: application.id, score: null });

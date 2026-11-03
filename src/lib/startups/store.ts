@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import type { Prisma, Startup } from "@/generated/prisma/client";
 import { ApplicationStatus, StartupStatus } from "@/generated/prisma/enums";
 import type { ProfileData } from "@/lib/profile";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadProfile } from "@/lib/profile-data";
 
 import { lookUpSite, rankEmails } from "./emails";
@@ -85,13 +85,14 @@ async function scoring(): Promise<{ profile: ProfileData; place: Place }> {
  */
 export async function upsertStartups(found: readonly FoundStartup[], now = new Date()): Promise<number> {
   const { profile, place } = await scoring();
-  const blocked = new Set((await prisma.startupBlock.findMany({ select: { hash: true } })).map((row) => row.hash));
+  const db = await userDb();
+  const blocked = new Set((await db.startupBlock.findMany({ select: { hash: true } })).map((row) => row.hash));
   const existing = new Map(
-    (await prisma.startup.findMany({ select: { source: true, externalId: true, emails: true, website: true } })).map((row) => [`${row.source}:${row.externalId}`, row]),
+    (await db.startup.findMany({ select: { source: true, externalId: true, emails: true, website: true } })).map((row) => [`${row.source}:${row.externalId}`, row]),
   );
   const seen = new Set<string>();
   const creates: Prisma.StartupCreateManyInput[] = [];
-  const updates: Prisma.PrismaPromise<unknown>[] = [];
+  const updates: { externalId: string; source: string; data: Prisma.StartupUpdateInput }[] = [];
   for (const startup of found) {
     const key = `${startup.source}:${startup.externalId}`;
     if (seen.has(key)) continue;
@@ -117,14 +118,18 @@ export async function upsertStartups(found: readonly FoundStartup[], now = new D
       reasons: fit.reasons,
       scoredWith: MATCH_VERSION,
     };
-    if (known) updates.push(prisma.startup.update({ where: { source_externalId: { source: startup.source, externalId: startup.externalId } }, data: fields }));
+    if (known) updates.push({ source: startup.source, externalId: startup.externalId, data: fields });
     else creates.push({ source: startup.source, externalId: startup.externalId, ...fields });
   }
   for (let index = 0; index < creates.length; index += 200) {
-    await prisma.startup.createMany({ data: creates.slice(index, index + 200), skipDuplicates: true });
+    await db.startup.createMany({ data: creates.slice(index, index + 200), skipDuplicates: true });
   }
   for (let index = 0; index < updates.length; index += 50) {
-    await prisma.$transaction(updates.slice(index, index + 50));
+    await db.$userTransaction(async (tx) => {
+      for (const { source, externalId, data } of updates.slice(index, index + 50)) {
+        await tx.startup.update({ where: { userId_source_externalId: { userId: db.$userId, source, externalId } }, data });
+      }
+    });
   }
   return creates.length;
 }
@@ -132,17 +137,18 @@ export async function upsertStartups(found: readonly FoundStartup[], now = new D
 /** Scores every startup again, e.g. after the profile changed. */
 export async function rescoreStartups(now = new Date()): Promise<void> {
   const { profile, place } = await scoring();
-  for (const row of await prisma.startup.findMany({ where: { status: { not: StartupStatus.DISMISSED } } })) {
+  const db = await userDb();
+  for (const row of await db.startup.findMany({ where: { status: { not: StartupStatus.DISMISSED } } })) {
     const fit = matchStartup(startupView(row), profile, place, now);
     if (fit.score !== row.score || JSON.stringify(fit.reasons) !== JSON.stringify(row.reasons)) {
-      await prisma.startup.update({ where: { id: row.id }, data: { score: fit.score, reasons: fit.reasons, scoredWith: MATCH_VERSION } });
+      await db.startup.update({ where: { id: row.id }, data: { score: fit.score, reasons: fit.reasons, scoredWith: MATCH_VERSION } });
     }
   }
 }
 
 /** Startups whose application went out count as contacted. */
 export async function markSentAsContacted(): Promise<number> {
-  const { count } = await prisma.startup.updateMany({
+  const { count } = await (await userDb()).startup.updateMany({
     where: { status: { in: [StartupStatus.NEW, StartupStatus.SAVED] }, application: { status: { not: ApplicationStatus.DRAFT } } },
     data: { status: StartupStatus.CONTACTED },
   });
@@ -155,7 +161,8 @@ export async function markSentAsContacted(): Promise<number> {
  * "no unsolicited applications", and scores it again.
  */
 export async function lookUpStartup(id: string, { people = false, now = new Date() }: { people?: boolean; now?: Date } = {}): Promise<StartupView | null> {
-  const row = await prisma.startup.findUnique({ where: { id } });
+  const db = await userDb();
+  const row = await db.startup.findUnique({ where: { id } });
   if (!row) return null;
   const view = startupView(row);
   if (!view.website) return view;
@@ -164,7 +171,7 @@ export async function lookUpStartup(id: string, { people = false, now = new Date
   const { profile, place } = await scoring();
   const fit = matchStartup({ ...view, emails }, profile, place, now);
   return startupView(
-    await prisma.startup.update({
+    await db.startup.update({
       where: { id },
       data: {
         emails,
@@ -193,8 +200,9 @@ function inPlace(startup: StartupView, filter: StartupFilter["place"], place: Pl
 /** The startups a filter asks for, best match or newest first, at most `limit`. */
 export async function listStartups(filter: StartupFilter, place: Place, { limit = 100 }: { limit?: number } = {}): Promise<StartupList> {
   await markSentAsContacted();
+  const db = await userDb();
   const [rows, grouped] = await Promise.all([
-    prisma.startup.findMany({
+    db.startup.findMany({
       where: {
         status: filter.status,
         ...(filter.source ? { source: filter.source } : {}),
@@ -202,7 +210,7 @@ export async function listStartups(filter: StartupFilter, place: Place, { limit 
       },
       orderBy: filter.sort === "newest" ? [{ postedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }] : [{ score: "desc" }, { postedAt: { sort: "desc", nulls: "last" } }],
     }),
-    prisma.startup.groupBy({ by: ["status"], _count: { _all: true } }),
+    db.startup.groupBy({ by: ["status"], _count: { _all: true } }),
   ]);
   const words = filter.q.toLowerCase().split(/\s+/).filter(Boolean);
   const matching = rows.map(startupView).filter((startup) => {
@@ -218,7 +226,7 @@ export async function listStartups(filter: StartupFilter, place: Place, { limit 
 }
 
 export async function getStartup(id: string): Promise<StartupView | null> {
-  const row = await prisma.startup.findUnique({ where: { id } });
+  const row = await (await userDb()).startup.findUnique({ where: { id } });
   return row ? startupView(row) : null;
 }
 
@@ -227,18 +235,19 @@ export async function updateStartup(id: string, change: { status?: StartupStatus
   const data: Prisma.StartupUpdateInput = {};
   if (change.status) data.status = change.status;
   if (change.notes !== undefined) data.notes = change.notes.slice(0, 5_000);
-  const { count } = await prisma.startup.updateMany({ where: { id }, data });
+  const { count } = await (await userDb()).startup.updateMany({ where: { id }, data });
   return count > 0 ? getStartup(id) : null;
 }
 
 /** "Remove and don't bring back": deletes the startup, keeping only hashes so a refresh leaves it out. An application made from it stays. */
 export async function removeStartup(id: string): Promise<boolean> {
-  const row = await prisma.startup.findUnique({ where: { id } });
+  const db = await userDb();
+  const row = await db.startup.findUnique({ where: { id } });
   if (!row) return false;
-  await prisma.$transaction([
-    prisma.startupBlock.createMany({ data: blockHashes(startupView(row)).map((entry) => ({ hash: entry })), skipDuplicates: true }),
-    prisma.startup.delete({ where: { id } }),
-  ]);
+  await db.$userTransaction(async (tx) => {
+    await tx.startupBlock.createMany({ data: blockHashes(startupView(row)).map((entry) => ({ hash: entry })), skipDuplicates: true });
+    await tx.startup.delete({ where: { id } });
+  });
   return true;
 }
 
@@ -248,17 +257,18 @@ export async function removeStartup(id: string): Promise<boolean> {
  * up over PEOPLE_DAYS ago from startups nobody wrote to.
  */
 export async function sweepStartups(now = new Date()): Promise<{ removed: number; addressesDropped: number }> {
-  const { count: removed } = await prisma.startup.deleteMany({
+  const db = await userDb();
+  const { count: removed } = await db.startup.deleteMany({
     where: { status: { in: [StartupStatus.NEW, StartupStatus.DISMISSED] }, applicationId: null, seenAt: { lt: new Date(now.getTime() - STALE_DAYS * DAY_MS) } },
   });
   const cutoff = now.getTime() - PEOPLE_DAYS * DAY_MS;
   let addressesDropped = 0;
-  for (const row of await prisma.startup.findMany({ where: { applicationId: null, peopleCheckedAt: { not: null } }, select: { id: true, emails: true } })) {
+  for (const row of await db.startup.findMany({ where: { applicationId: null, peopleCheckedAt: { not: null } }, select: { id: true, emails: true } })) {
     const emails = emailsOf(row.emails);
     const kept = emails.filter((email) => !email.onRequest || !(Date.parse(email.foundAt) < cutoff));
     if (kept.length === emails.length) continue;
     addressesDropped += emails.length - kept.length;
-    await prisma.startup.update({ where: { id: row.id }, data: { emails: kept, ...(kept.some((email) => email.onRequest) ? {} : { peopleCheckedAt: null }) } });
+    await db.startup.update({ where: { id: row.id }, data: { emails: kept, ...(kept.some((email) => email.onRequest) ? {} : { peopleCheckedAt: null }) } });
   }
   return { removed, addressesDropped };
 }

@@ -15,7 +15,7 @@ import { cancelJob, defineJob, findUnfinishedJobs, type JobContext } from "@/lib
 import { writeDocumentsJob } from "@/lib/jobs/write-documents";
 import { logServerError } from "@/lib/log";
 import { dismissPosting, storePosting, unmarkPosting } from "@/lib/postings";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadSettings } from "@/lib/settings-data";
 
 import { DISMISSED_TRIM } from "./candidates";
@@ -64,10 +64,11 @@ function detailsFrom(extracted: Extracted): ApplicationDetails {
  * sends it back to SCORED with the error to show. Returns the application.
  */
 export async function draftCandidate(candidateId: string, context: JobContext): Promise<string> {
-  const candidate = await prisma.agentCandidate.findUnique({ where: { id: candidateId } });
+  const db = await userDb();
+  const candidate = await db.agentCandidate.findUnique({ where: { id: candidateId } });
   if (!candidate) throw new ActionError("That posting is no longer in the agent's queue.");
   if (candidate.status === AgentCandidateStatus.DRAFTED && candidate.applicationId) return candidate.applicationId;
-  const { count } = await prisma.agentCandidate.updateMany({
+  const { count } = await db.agentCandidate.updateMany({
     where: { id: candidateId, status: AgentCandidateStatus.SCORED },
     data: { status: AgentCandidateStatus.DRAFTING, error: null },
   });
@@ -91,7 +92,7 @@ export async function draftCandidate(candidateId: string, context: JobContext): 
     );
     // Keep the whole text, so a retry doesn't fetch it again.
     if (!candidate.complete && description !== candidate.description) {
-      await prisma.agentCandidate.update({ where: { id: candidateId }, data: { description, complete: true } });
+      await db.agentCandidate.update({ where: { id: candidateId }, data: { description, complete: true } });
     }
 
     const applicationId = await createApplicationFromDocuments({
@@ -105,12 +106,12 @@ export async function draftCandidate(candidateId: string, context: JobContext): 
       claim: { kind: "agent", candidateId, score: candidate.score },
     });
     // The job holds nothing of the draft, but goes with it all the same.
-    await prisma.job.updateMany({ where: { id: context.id }, data: { applicationId } });
+    await db.job.updateMany({ where: { id: context.id }, data: { applicationId } });
     return applicationId;
   } catch (error) {
     const known = error instanceof AiError || error instanceof ActionError;
     const message = context.signal.aborted ? "Cancelled." : known ? error.message : "The draft couldn't be prepared. Try again.";
-    await prisma.agentCandidate.updateMany({ where: { id: candidateId, status: AgentCandidateStatus.DRAFTING }, data: { status: AgentCandidateStatus.SCORED, error: message } });
+    await db.agentCandidate.updateMany({ where: { id: candidateId, status: AgentCandidateStatus.DRAFTING }, data: { status: AgentCandidateStatus.SCORED, error: message } });
     if (!known && !context.signal.aborted) logServerError("job agent draft", error);
     throw error;
   }
@@ -129,18 +130,19 @@ export const agentDraftJob = defineJob({
  * and its posting shows as applied for in Find jobs. Nothing is sent.
  */
 export async function approveCandidate(candidateId: string): Promise<string> {
-  const candidate = await prisma.agentCandidate.findUnique({ where: { id: candidateId } });
+  const db = await userDb();
+  const candidate = await db.agentCandidate.findUnique({ where: { id: candidateId } });
   if (!candidate || candidate.status !== AgentCandidateStatus.DRAFTED || !candidate.applicationId) {
     throw new ActionError("That draft isn't ready to approve.");
   }
   const applicationId = candidate.applicationId;
   const posting = await storePosting(foundFromCandidate(candidate));
-  await prisma.$transaction([
-    prisma.agentCandidate.update({ where: { id: candidateId }, data: { status: AgentCandidateStatus.APPROVED } }),
-    prisma.application.update({ where: { id: applicationId }, data: { awaitingReview: false } }),
+  await db.$userTransaction(async (tx) => {
+    await tx.agentCandidate.update({ where: { id: candidateId }, data: { status: AgentCandidateStatus.APPROVED } });
+    await tx.application.update({ where: { id: applicationId }, data: { awaitingReview: false } });
     // One already linked to another application keeps it.
-    prisma.posting.updateMany({ where: { id: posting.id, applicationId: null }, data: { applicationId } }),
-  ]);
+    await tx.posting.updateMany({ where: { id: posting.id, applicationId: null }, data: { applicationId } });
+  });
   return applicationId;
 }
 
@@ -157,7 +159,8 @@ export type DismissedCandidate = Pick<
  * needs. Returns what was trimmed, for Undo while there was no draft.
  */
 export async function dismissCandidate(candidateId: string): Promise<{ undo: DismissedCandidate | null }> {
-  const candidate = await prisma.agentCandidate.findUnique({ where: { id: candidateId } });
+  const db = await userDb();
+  const candidate = await db.agentCandidate.findUnique({ where: { id: candidateId } });
   if (!candidate) throw new ActionError("That posting is no longer in the agent's queue.");
   if (candidate.status === AgentCandidateStatus.DISMISSED) return { undo: null };
   if (candidate.status === AgentCandidateStatus.APPROVED) throw new ActionError("That draft was approved: it's in Applications now.");
@@ -165,9 +168,10 @@ export async function dismissCandidate(candidateId: string): Promise<{ undo: Dis
   for (const job of await findUnfinishedJobs(draftJobKey(candidateId))) await cancelJob(job.id);
   const hadDraft = Boolean(candidate.applicationId) || candidate.status !== AgentCandidateStatus.SCORED;
   await dismissPosting(foundFromCandidate(candidate));
-  await prisma.$transaction(async (tx) => {
+  await db.$userTransaction(async (tx) => {
     // Locked, so a draft that's just being created either lands first and is deleted here, or finds it dismissed and isn't made.
-    await tx.$queryRaw`SELECT 1 FROM "AgentCandidate" WHERE id = ${candidateId} FOR UPDATE`;
+    // Raw SQL isn't limited to the user like the models are, so it says whose.
+    await tx.$queryRaw`SELECT 1 FROM "AgentCandidate" WHERE id = ${candidateId} AND "userId" = ${db.$userId} FOR UPDATE`;
     const current = await tx.agentCandidate.findUniqueOrThrow({ where: { id: candidateId }, select: { applicationId: true } });
     if (current.applicationId) await tx.application.deleteMany({ where: { id: current.applicationId } });
     await tx.agentCandidate.update({ where: { id: candidateId }, data: { status: AgentCandidateStatus.DISMISSED, ...DISMISSED_TRIM } });
@@ -178,10 +182,11 @@ export async function dismissCandidate(candidateId: string): Promise<{ undo: Dis
 
 /** Undo on a dismissed posting's toast: back in the queue as it was, and out of Find jobs' Dismissed. */
 export async function restoreCandidate(saved: DismissedCandidate): Promise<void> {
-  const candidate = await prisma.agentCandidate.findUnique({ where: { id: saved.id } });
+  const db = await userDb();
+  const candidate = await db.agentCandidate.findUnique({ where: { id: saved.id } });
   if (candidate?.status !== AgentCandidateStatus.DISMISSED) return;
   const { id, ...fields } = saved;
-  await prisma.agentCandidate.update({
+  await db.agentCandidate.update({
     where: { id },
     data: {
       ...fields,
