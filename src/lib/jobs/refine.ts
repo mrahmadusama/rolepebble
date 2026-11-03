@@ -9,7 +9,7 @@ import { refineChat, type ChatTurn } from "@/lib/ai/tasks";
 import { extractedOf, unitsSchema, type Unit, type UnitEdit } from "@/lib/application-data";
 import { updateDocuments } from "@/lib/document-units";
 import { withoutPrivateParts } from "@/lib/letter-frame";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadFactTexts, loadProfile } from "@/lib/profile-data";
 import { unitName } from "@/lib/unit-text";
 
@@ -49,7 +49,7 @@ export const refineJob = defineJob({
   }),
   async run({ applicationId, messageId, request, target, viewing }, { step, signal }) {
     await step("Thinking");
-    const application = await prisma.application.findUniqueOrThrow({
+    const application = await (await userDb()).application.findUniqueOrThrow({
       where: { id: applicationId },
       include: { documents: true, messages: { orderBy: { createdAt: "asc" } } },
     });

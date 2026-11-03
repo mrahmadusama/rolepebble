@@ -4,7 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import type { DocumentKind } from "@/generated/prisma/enums";
 import { unitsSchema, type Unit } from "@/lib/application-data";
 import { saveVersion, type VersionNote } from "@/lib/document-versions";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 
 // Changes to a tailored document's units: an edit by hand (E8-3), a
 // regenerated unit (E8-4), the refine chat's edits and their undo (E8-5,
@@ -33,7 +33,7 @@ export async function updateDocuments<T>(
 ): Promise<T> {
   for (let attempt = 1; ; attempt++) {
     try {
-      return await prisma.$transaction(async (tx) => {
+      return await (await userDb()).$userTransaction(async (tx) => {
         const rows = await tx.document.findMany({ where: { applicationId } });
         const documents: DocumentUnits = {};
         for (const row of rows) documents[row.kind] = unitsSchema.parse(row.units);

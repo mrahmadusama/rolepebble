@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { DocumentKind } from "@/generated/prisma/enums";
+import { userDb } from "@/lib/db";
 import { resolveFileName } from "@/lib/file-name";
 import { holdPdf, pdfDownload } from "@/lib/pdf/downloads";
 import { renderPdf } from "@/lib/pdf/render";
-import { prisma } from "@/lib/prisma";
 import { loadProfileName } from "@/lib/profile-data";
 import { loadSettings } from "@/lib/settings-data";
 import { route } from "@/lib/route";
@@ -36,7 +36,7 @@ export const GET = route(async (request) => {
 export const POST = route(async (request) => {
   const rendered = await renderRequested(request);
   if (rendered instanceof Response) return rendered;
-  return NextResponse.json({ url: `/api/pdf/${holdPdf(rendered.pdf, rendered.fileName)}` });
+  return NextResponse.json({ url: `/api/pdf/${holdPdf(rendered.pdf, rendered.fileName, (await userDb()).$userId)}` });
 });
 
 /** The PDF and file name of the document the query asks for, or a 404 response. */
@@ -56,7 +56,7 @@ async function renderRequested(request: NextRequest): Promise<{ pdf: Uint8Array;
   if (doc !== "resume" && doc !== "letter") return notFound("There's no such document to download.");
   const id = params.get("application") ?? "";
   const application = APPLICATION_ID.test(id)
-    ? await prisma.application.findUnique({
+    ? await (await userDb()).application.findUnique({
         where: { id },
         select: { company: true, role: true, documents: { where: { kind: TAILORED[doc] }, select: { id: true } } },
       })

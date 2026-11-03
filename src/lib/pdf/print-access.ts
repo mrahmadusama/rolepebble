@@ -3,7 +3,7 @@ import "server-only";
 import { headers } from "next/headers";
 
 import { verifySession } from "@/lib/auth/session";
-import { OWNER_ID, sessionUserId } from "@/lib/db";
+import { sessionUserId } from "@/lib/db";
 
 import { PRINT_TOKEN_HEADER, verifyPrintToken } from "./print-token";
 
@@ -15,7 +15,7 @@ import { PRINT_TOKEN_HEADER, verifyPrintToken } from "./print-token";
  */
 export async function verifyPrintAccess(path: string): Promise<string> {
   const token = (await headers()).get(PRINT_TOKEN_HEADER);
-  // The token will name its user once sign-in knows users (Phase 2, PR 4).
-  if (await verifyPrintToken(token, path)) return OWNER_ID;
+  const printing = await verifyPrintToken(token, path);
+  if (printing) return printing;
   return sessionUserId(await verifySession());
 }

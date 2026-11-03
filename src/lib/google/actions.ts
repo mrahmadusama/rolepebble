@@ -10,6 +10,7 @@ import { isAiConfigured } from "@/lib/ai/config";
 import { requireGoogle } from "@/lib/features";
 import { draftReplyJob, replyJobKey } from "@/lib/jobs/draft-reply";
 import { findUnfinishedJobs, startJob } from "@/lib/jobs/runner";
+import { userDb } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { applySecretChange, GOOGLE_CLIENT_SECRET } from "@/lib/secrets";
 import { loadSettings, saveSettings } from "@/lib/settings-data";
@@ -245,7 +246,7 @@ export const applySuggestedStatus = action(z.object({ emailId: z.string().min(1)
   if (!email) throw new ActionError("That email is no longer in RolePebble.");
   await prisma.emailMessage.update({ where: { id: emailId }, data: { suggestedStatus: null } });
   if (!accept || !email.applicationId || !email.suggestedStatus) return { eventId: null };
-  const result = await applyStatusChange(prisma, email.applicationId, email.suggestedStatus);
+  const result = await applyStatusChange(await userDb(), email.applicationId, email.suggestedStatus);
   refreshEverything();
   if (result.outcome !== "changed") return { eventId: null };
   toast(statusInfo(email.suggestedStatus).toast);
@@ -271,7 +272,7 @@ export const confirmInterview = action(
     const { eventLink } = await google(() => scheduleInterview(email.applicationId!, new Date(start)));
     let eventId: string | null = null;
     if (moveToInterview) {
-      const result = await applyStatusChange(prisma, email.applicationId, ApplicationStatus.INTERVIEW);
+      const result = await applyStatusChange(await userDb(), email.applicationId, ApplicationStatus.INTERVIEW);
       if (result.outcome === "changed") eventId = result.event.id;
     }
     await prisma.emailMessage.update({ where: { id: emailId }, data: { confirmedAt: null, suggestedStatus: null } });

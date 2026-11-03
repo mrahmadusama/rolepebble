@@ -19,6 +19,7 @@ import { fetchPosting } from "@/lib/posting-fetch";
 import { saveScore } from "@/lib/posting-scores";
 import { loadSearch, runSearch, showMoreFor } from "@/lib/posting-searches";
 import { foundFromPosting, storePosting } from "@/lib/postings";
+import { userDb } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { loadProfile } from "@/lib/profile-data";
 import { statusInfo } from "@/lib/status";
@@ -466,7 +467,7 @@ export function createDossierServer(origin: string): McpServer {
         const pending = await prisma.agentCandidate.findFirst({ where: { applicationId: id, application: { awaitingReview: true } }, select: { id: true } });
         if (pending) await approveCandidate(pending.id);
       }
-      const result = await applyStatusChange(prisma, id, status);
+      const result = await applyStatusChange(await userDb(), id, status);
       if (result.outcome === "not-found") return failure("That application no longer exists.");
       return text({ id, status: statusInfo(status).label, changed: result.outcome !== "unchanged" });
     },

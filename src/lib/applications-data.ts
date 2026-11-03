@@ -4,7 +4,7 @@ import type { ApplicationStatus } from "@/generated/prisma/enums";
 import { matchSchema, matchScore } from "@/lib/application-data";
 import { sortRows, updatedAgo, type Sort } from "@/lib/applications-list";
 import { formatCalendarDate, formatShortDate } from "@/lib/dates";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 
 /** An application as the board and the table show it (E9-2, E9-3). */
 export type ApplicationRow = {
@@ -29,7 +29,7 @@ export type ApplicationRow = {
 
 /** Every application, archived ones only when asked for, sorted for the table; agent drafts once approved (#195). */
 export async function loadApplicationRows({ archived, sort }: { archived: boolean; sort: Sort }, now = new Date()) {
-  const applications = await prisma.application.findMany({
+  const applications = await (await userDb()).application.findMany({
     where: { awaitingReview: false, ...(archived ? {} : { archivedAt: null }) },
     select: {
       id: true,

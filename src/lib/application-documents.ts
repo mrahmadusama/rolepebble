@@ -9,7 +9,7 @@ import type { z } from "zod";
 
 import { DocumentKind } from "@/generated/prisma/enums";
 import { extractedSchema, trimmedSchema, unitsSchema, type Trimmed, type Unit } from "@/lib/application-data";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadProfile } from "@/lib/profile-data";
 import { loadSettings } from "@/lib/settings-data";
 import { loadTheme, THEME_FIELDS } from "@/lib/theme-data";
@@ -21,7 +21,7 @@ import { BUILT_IN_THEMES, type ThemeData } from "@/lib/themes";
  * page and its metadata share it.
  */
 export const loadApplication = cache(async (id: string) => {
-  const application = await prisma.application.findUnique({
+  const application = await (await userDb()).application.findUnique({
     where: { id },
     include: {
       documents: { include: { theme: { select: THEME_FIELDS } } },

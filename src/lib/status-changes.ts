@@ -1,12 +1,14 @@
 import "server-only";
 
-import type { PrismaClient, StatusEvent } from "@/generated/prisma/client";
+import type { StatusEvent } from "@/generated/prisma/client";
 import type { ApplicationStatus } from "@/generated/prisma/enums";
+import type { ScopedDb } from "@/lib/db";
 
 import { advance, undoChange } from "./status";
 
 // Database side of the status model: every status change is written here, in
-// a transaction, together with its StatusEvent.
+// a transaction, together with its StatusEvent, and only to `db`'s user's
+// applications.
 
 export type StatusChangeResult =
   | { outcome: "changed"; event: StatusEvent }
@@ -15,14 +17,15 @@ export type StatusChangeResult =
 
 /** Moves an application to `to` and records the change. */
 export async function applyStatusChange(
-  db: PrismaClient,
+  db: ScopedDb,
   applicationId: string,
   to: ApplicationStatus,
   now = new Date(),
 ): Promise<StatusChangeResult> {
-  return db.$transaction(async (tx) => {
+  return db.$userTransaction(async (tx) => {
     // Lock the row so two changes to the same application can't interleave.
-    await tx.$queryRaw`SELECT 1 FROM "Application" WHERE id = ${applicationId} FOR UPDATE`;
+    // Raw SQL isn't limited to the user like the models are, so it says whose.
+    await tx.$queryRaw`SELECT 1 FROM "Application" WHERE id = ${applicationId} AND "userId" = ${db.$userId} FOR UPDATE`;
     const application = await tx.application.findUnique({
       where: { id: applicationId },
       select: { status: true, furthestStage: true, sentAt: true },
@@ -48,12 +51,12 @@ export type UndoResult =
  * from before it and deletes its event. Only the application's latest change
  * can be undone; after a newer one, the result is "superseded".
  */
-export async function undoStatusChange(db: PrismaClient, eventId: string): Promise<UndoResult> {
-  return db.$transaction(async (tx) => {
+export async function undoStatusChange(db: ScopedDb, eventId: string): Promise<UndoResult> {
+  return db.$userTransaction(async (tx) => {
     const event = await tx.statusEvent.findUnique({ where: { id: eventId } });
     if (!event) return { outcome: "not-found" };
 
-    await tx.$queryRaw`SELECT 1 FROM "Application" WHERE id = ${event.applicationId} FOR UPDATE`;
+    await tx.$queryRaw`SELECT 1 FROM "Application" WHERE id = ${event.applicationId} AND "userId" = ${db.$userId} FOR UPDATE`;
     const latest = await tx.statusEvent.findFirst({
       where: { applicationId: event.applicationId },
       orderBy: [{ at: "desc" }, { id: "desc" }],
