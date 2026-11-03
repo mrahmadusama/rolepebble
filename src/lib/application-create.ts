@@ -11,7 +11,7 @@ import type { WriteDocumentsResult } from "@/lib/jobs/write-documents";
 import { newFrame, withFrame } from "@/lib/letter-frame";
 import { logServerError } from "@/lib/log";
 import { describeTrim, fitResumeToPages } from "@/lib/page-limit";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadProfile } from "@/lib/profile-data";
 import { maxPages } from "@/lib/settings";
 import { loadSettings } from "@/lib/settings-data";
@@ -100,7 +100,8 @@ export async function createApplicationFromDocuments({ reading, documents, match
     showChanges: settings.showDiff,
   });
 
-  const created = await prisma.$transaction(async (tx) => {
+  const db = await userDb();
+  const created = await db.$userTransaction(async (tx) => {
     if (claim.kind === "manual") {
       // Claim the job first: a second click waits here, then finds it taken.
       const { count } = await tx.job.updateMany({ where: { id: claim.writeJobId, key: null }, data: { key: `${CLAIMED}pending` } });
@@ -192,7 +193,7 @@ export async function createApplicationFromDocuments({ reading, documents, match
       const { trimmed, fits } = await fitResumeToPages(created.id, profile, limit);
       if (trimmed.length > 0 && settings.showDiff) {
         const text = summaryText({ ...summary, list: [...summary.list, ...describeTrim(trimmed, profile, fits, limit)] });
-        await prisma.chatMessage.updateMany({ where: { applicationId: created.id, role: "AI", writtenWith: null }, data: { text } });
+        await db.chatMessage.updateMany({ where: { applicationId: created.id, role: "AI", writtenWith: null }, data: { text } });
       }
     } catch (error) {
       logServerError("one-page trimming", error);

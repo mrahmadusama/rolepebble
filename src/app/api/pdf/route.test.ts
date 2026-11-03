@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSession } from "@/lib/auth/session";
 import { renderPdf } from "@/lib/pdf/render";
-import { prisma } from "@/lib/prisma";
 import { loadProfileName } from "@/lib/profile-data";
 import { settingsFromRows } from "@/lib/settings";
 import { loadSettings } from "@/lib/settings-data";
@@ -15,7 +14,13 @@ vi.mock("@/lib/auth/session", () => ({ getSession: vi.fn() }));
 vi.mock("@/lib/pdf/render", () => ({ renderPdf: vi.fn() }));
 vi.mock("@/lib/profile-data", () => ({ loadProfileName: vi.fn() }));
 vi.mock("@/lib/settings-data", () => ({ loadSettings: vi.fn() }));
-vi.mock("@/lib/prisma", () => ({ prisma: { application: { findUnique: vi.fn() } } }));
+// The signed-in user's data, as userDb() gives it.
+const userData = vi.hoisted(() => ({ $userId: "owner", application: { findUnique: vi.fn() } }));
+vi.mock("@/lib/db", () => ({
+  runAsUser: (_userId: string, fn: () => unknown) => fn(),
+  sessionUserId: () => "owner",
+  userDb: async () => userData,
+}));
 
 const get = (query: string) => GET(new NextRequest(`http://localhost:3000/api/pdf${query}`), undefined);
 const post = (query: string) =>
@@ -36,7 +41,7 @@ beforeEach(() => {
   vi.mocked(loadSettings).mockResolvedValue(settingsFromRows([]));
   vi.mocked(renderPdf).mockClear();
   // An application with both documents.
-  vi.mocked(prisma.application.findUnique).mockReset().mockResolvedValue({
+  userData.application.findUnique.mockReset().mockResolvedValue({
     company: "Ledgerly",
     role: "Senior Product Designer",
     documents: [{ id: "doc-1" }],
@@ -83,13 +88,13 @@ describe("GET /api/pdf", () => {
     const letter = await get("?doc=letter&application=app1");
     expect(renderPdf).toHaveBeenLastCalledWith("/print/letter/app1");
     expect(letter.headers.get("content-disposition")).toContain("Ledgerly%20%E2%80%93%20Cover%20letter.pdf");
-    expect(prisma.application.findUnique).toHaveBeenLastCalledWith(
+    expect(userData.application.findUnique).toHaveBeenLastCalledWith(
       expect.objectContaining({ where: { id: "app1" }, select: expect.objectContaining({ documents: { where: { kind: "COVER_LETTER" }, select: { id: true } } }) }),
     );
   });
 
   it("says which document an application doesn't have", async () => {
-    vi.mocked(prisma.application.findUnique).mockResolvedValue({ company: "Ledgerly", role: "", documents: [] } as never);
+    userData.application.findUnique.mockResolvedValue({ company: "Ledgerly", role: "", documents: [] } as never);
     const response = await get("?doc=letter&application=app1");
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: "This application has no cover letter." });
@@ -97,7 +102,7 @@ describe("GET /api/pdf", () => {
   });
 
   it("never prints for an application that isn't there, or an id that isn't one", async () => {
-    vi.mocked(prisma.application.findUnique).mockResolvedValue(null);
+    userData.application.findUnique.mockResolvedValue(null);
     expect((await get("?doc=resume&application=gone")).status).toBe(404);
     expect((await get("?doc=resume&application=..%2Fbase")).status).toBe(404);
     expect((await get("?doc=resume")).status).toBe(404);
@@ -124,7 +129,7 @@ describe("POST /api/pdf, then GET /api/pdf/{id}", () => {
   });
 
   it("answers with the same errors as a direct download", async () => {
-    vi.mocked(prisma.application.findUnique).mockResolvedValue(null);
+    userData.application.findUnique.mockResolvedValue(null);
     const response = await post("?doc=letter&application=gone");
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: "That application no longer exists." });

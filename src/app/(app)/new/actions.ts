@@ -12,7 +12,7 @@ import { readPostingJob } from "@/lib/jobs/read-posting";
 import { startJob } from "@/lib/jobs/runner";
 import { writeDocumentsJob } from "@/lib/jobs/write-documents";
 import { fetchPosting } from "@/lib/posting-fetch";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 
 /** "Read the posting →": starts reading it in the background and returns the job's id (E7-2). */
 export const startReadingPosting = action(
@@ -51,7 +51,7 @@ const STALE = "That reading of the posting is no longer available. Read the post
 
 /** The finished job that read the posting, with its input and result. */
 async function finishedReading(id: string) {
-  const job = await prisma.job.findUnique({ where: { id } });
+  const job = await (await userDb()).job.findUnique({ where: { id } });
   if (!job || job.type !== readPostingJob.type || job.status !== JobStatus.DONE) throw new ActionError(STALE);
   return { input: readPostingJob.input.parse(job.input), result: readPostingJob.result.parse(job.result) };
 }
@@ -131,7 +131,7 @@ export const createApplication = action(
     startupId: z.string().min(1).max(100).nullish(),
   }),
   async ({ writeJobId, details, postingUrl, postingId, startupId }) => {
-    const job = await prisma.job.findUnique({ where: { id: writeJobId } });
+    const job = await (await userDb()).job.findUnique({ where: { id: writeJobId } });
     if (!job || job.type !== writeDocumentsJob.type || job.status !== JobStatus.DONE) {
       throw new ActionError("Those documents aren't ready. Try creating the application again.");
     }

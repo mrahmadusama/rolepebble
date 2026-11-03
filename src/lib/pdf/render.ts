@@ -2,6 +2,8 @@ import "server-only";
 
 import { chromium, type Browser } from "playwright-core";
 
+import { currentUserId } from "@/lib/db";
+
 import { PRINT_TOKEN_HEADER, signPrintToken } from "./print-token";
 
 // PDFs are printed by headless Chromium from the app's own print pages, so
@@ -85,15 +87,18 @@ function release(): void {
 
 /**
  * Prints an app page (e.g. "/print/base") to a PDF at the page size its
- * print CSS sets. Chromium may only talk to the app: anything else is
- * blocked, so fonts come from the bundle and nothing leaves the server.
+ * print CSS sets, with the current user's data (`runAsUser`). Chromium may
+ * only talk to the app: anything else is blocked, so fonts come from the
+ * bundle and nothing leaves the server.
  */
 export async function renderPdf(path: string): Promise<Uint8Array> {
+  const userId = currentUserId();
+  if (!userId) throw new Error("A PDF is printed for a user: call renderPdf inside runAsUser.");
   await acquire();
   try {
     const origin = appOrigin();
     const context = await (await browser()).newContext({
-      extraHTTPHeaders: { [PRINT_TOKEN_HEADER]: await signPrintToken(path) },
+      extraHTTPHeaders: { [PRINT_TOKEN_HEADER]: await signPrintToken(path, userId) },
     });
     try {
       await context.route("**/*", (route) =>

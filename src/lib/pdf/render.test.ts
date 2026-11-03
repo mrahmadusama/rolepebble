@@ -50,6 +50,10 @@ vi.mock("playwright-core", () => ({ chromium: { launch: fake.launch } }));
 vi.mock("@/lib/env", () => ({ env: { DOSSIER_SECRET: "a".repeat(32) } }));
 
 const { MAX_CONCURRENT_RENDERS, renderPdf } = await import("./render");
+const { runAsUser } = await import("@/lib/db");
+
+/** Prints `path` for the owner, as the PDF routes and jobs do. */
+const print = (path: string) => runAsUser("owner", () => renderPdf(path));
 
 /** Lets the pages that are printing finish, one tick at a time. */
 async function settle() {
@@ -65,8 +69,12 @@ beforeEach(() => {
 });
 
 describe("renderPdf", () => {
+  it("prints only for a named user", async () => {
+    await expect(renderPdf("/print/base")).rejects.toThrow("A PDF is printed for a user");
+  });
+
   it("prints a page to PDF, letting Chromium reach only the app", async () => {
-    const rendering = renderPdf("/print/base");
+    const rendering = print("/print/base");
     await settle();
     expect(await rendering).toEqual(new Uint8Array([37, 80, 68, 70]));
     expect(fake.state.routes).toEqual([
@@ -77,7 +85,7 @@ describe("renderPdf", () => {
 
   it("reuses one browser and prints at most two pages at once, queueing the rest", async () => {
     const launches = fake.state.launches;
-    const renders = Array.from({ length: 5 }, () => renderPdf("/print/base"));
+    const renders = Array.from({ length: 5 }, () => print("/print/base"));
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(fake.state.printing).toBe(MAX_CONCURRENT_RENDERS);
     await settle();
@@ -89,7 +97,7 @@ describe("renderPdf", () => {
   it("starts a new browser after the old one crashed", async () => {
     const launches = fake.state.launches;
     fake.state.disconnect?.();
-    const rendering = renderPdf("/print/base");
+    const rendering = print("/print/base");
     await settle();
     await rendering;
     expect(fake.state.launches).toBe(launches + 1);

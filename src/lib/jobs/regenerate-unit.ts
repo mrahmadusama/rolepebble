@@ -9,7 +9,7 @@ import { regenerateUnit } from "@/lib/ai/tasks";
 import { extractedOf, unitSchema, unitsSchema } from "@/lib/application-data";
 import { updateDocuments } from "@/lib/document-units";
 import { withoutPrivateParts } from "@/lib/letter-frame";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadFactTexts, loadProfile } from "@/lib/profile-data";
 
 import { defineJob } from "./runner";
@@ -39,7 +39,7 @@ export const regenerateUnitJob = defineJob({
   ]),
   async run({ applicationId, document, unitId, from }, { step, signal }) {
     await step("Rewriting");
-    const application = await prisma.application.findUnique({
+    const application = await (await userDb()).application.findUnique({
       where: { id: applicationId },
       include: { documents: { where: { kind: document } } },
     });

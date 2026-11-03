@@ -131,19 +131,19 @@ describe("proxy", () => {
   });
 
   it("lets the PDF renderer open a print page with a token for that page", async () => {
-    const token = await signPrintToken("/print/base");
+    const token = await signPrintToken("/print/base", "owner");
     const response = await proxy(request("/print/base", { headers: { [PRINT_TOKEN_HEADER]: token } }));
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
   it("refuses print tokens for another page, forged ones and tokens outside /print", async () => {
-    const other = await signPrintToken("/print/resume/1");
-    const forged = await signPrintToken("/print/base", "b".repeat(32));
+    const other = await signPrintToken("/print/resume/1", "owner");
+    const forged = await signPrintToken("/print/base", "owner", "b".repeat(32));
     for (const token of [other, forged, "garbage"]) {
       const response = await proxy(request("/print/base", { headers: { [PRINT_TOKEN_HEADER]: token } }));
       expect(getRedirectUrl(response)).toContain("/login");
     }
-    const profileToken = await signPrintToken("/profile");
+    const profileToken = await signPrintToken("/profile", "owner");
     const response = await proxy(request("/profile", { headers: { [PRINT_TOKEN_HEADER]: profileToken } }));
     expect(getRedirectUrl(response)).toContain("/login");
   });

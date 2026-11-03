@@ -12,7 +12,7 @@ import { emailParts } from "@/lib/application-email";
 import { updateDocuments } from "@/lib/document-units";
 import { saveVersion } from "@/lib/document-versions";
 import { isParagraph } from "@/lib/letter-frame";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadFactTexts, loadProfile } from "@/lib/profile-data";
 import { startupAddress } from "@/lib/startups/types";
 
@@ -40,7 +40,8 @@ export const writeEmailJob = defineJob({
   }),
   async run({ applicationId }, { step, signal }) {
     await step("Writing the email");
-    const application = await prisma.application.findUniqueOrThrow({ where: { id: applicationId }, include: { documents: true, startup: { select: { emails: true } } } });
+    const db = await userDb();
+    const application = await db.application.findUniqueOrThrow({ where: { id: applicationId }, include: { documents: true, startup: { select: { emails: true } } } });
     const unitsOf = (kind: DocumentKind): Unit[] | null => {
       const parsed = unitsSchema.safeParse(application.documents.find((document) => document.kind === kind)?.units);
       return parsed.success ? parsed.data : null;
@@ -70,7 +71,7 @@ export const writeEmailJob = defineJob({
 
     if (!unitsOf(DocumentKind.EMAIL)) {
       try {
-        await prisma.$transaction(async (tx) => {
+        await db.$userTransaction(async (tx) => {
           const document = await tx.document.create({ data: { applicationId, kind: DocumentKind.EMAIL, units: withTo(data), writtenWith: promptVersion } });
           await saveVersion(tx, document.id, withTo(data), { cause: VersionCause.WRITTEN });
         });
@@ -91,7 +92,7 @@ export const writeEmailJob = defineJob({
       },
       { version: { cause: VersionCause.WRITTEN } },
     );
-    await prisma.document.updateMany({ where: { applicationId, kind: DocumentKind.EMAIL }, data: { writtenWith: promptVersion } });
+    await db.document.updateMany({ where: { applicationId, kind: DocumentKind.EMAIL }, data: { writtenWith: promptVersion } });
     return written;
   },
 });

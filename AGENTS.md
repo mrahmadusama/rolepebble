@@ -98,10 +98,10 @@ Owner decisions: open sign-up behind `DOSSIER_SIGNUP` (keep production on invite
 |---|---|---|
 | 1 | `User`, the owner account, `userId` on every per-user table, `rp_same_owner` triggers | Merged (#13) |
 | 2 | Scoped client `src/lib/db/` (`userDb()`, `runAsUser`), `action()`/`route()` pass it, audit test against raw `prisma` imports | Merged (#14) |
-| 3 | Profile, facts, themes, settings on the scoped client; per-user uniques | Open |
-| 4 | Applications, documents, status, PDFs, print tokens and held PDFs by owner | |
+| 3 | Profile, facts, themes, settings on the scoped client; per-user uniques | Merged (#15) |
+| 4 | Applications, documents, status, PDFs, print tokens and held PDFs by owner | Open |
 | 5 | Find jobs, job agent, Startups; per-user uniques | |
-| 6 | Job queue per user with fair turns; schedulers loop over users; caches and downloads by user | |
+| 6 | Job queue per user with fair turns (`startJob` creates jobs as their user: today it uses the raw client, so jobs default to the owner); schedulers loop over users; caches and downloads by user, including the "all PDFs" zip (`zip-pdfs.ts` still lists every user's applications) | |
 | 7 | `InstallSetting` split; per-user AI config with platform fallback; local/custom AI refused; a no-op AI hook for Phase 3 credits | |
 | 8 | Export/import per user (import remaps ids); "Delete everything" only deletes your data; in-app nightly backups off | |
 | 9 | Email module `src/lib/email/` (log, file, Resend) and one-time link tokens | Open (#12) |

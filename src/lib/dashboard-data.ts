@@ -1,7 +1,7 @@
 import "server-only";
 
 import { dashboardFigures, type DashboardFigures, type DashboardOptions } from "@/lib/dashboard";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 
 /**
  * Every dashboard figure, from all applications, archived ones included
@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
  */
 export async function loadDashboard(options: DashboardOptions = {}, now = new Date()): Promise<DashboardFigures> {
   // Agent drafts count once they're approved (#195).
-  const applications = await prisma.application.findMany({
+  const applications = await (await userDb()).application.findMany({
     where: { awaitingReview: false },
     select: {
       id: true,

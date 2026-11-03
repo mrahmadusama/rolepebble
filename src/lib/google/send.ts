@@ -5,7 +5,7 @@ import { unitsSchema } from "@/lib/application-data";
 import { emailAddresses, emailParts } from "@/lib/application-email";
 import { resolveFileName } from "@/lib/file-name";
 import { renderPdf } from "@/lib/pdf/render";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadProfileName } from "@/lib/profile-data";
 import { loadSettings } from "@/lib/settings-data";
 import { applyStatusChange } from "@/lib/status-changes";
@@ -40,7 +40,8 @@ export type SentApplication = { threadId: string; eventId: string | null; attach
 export async function sendApplicationEmail(applicationId: string): Promise<SentApplication> {
   const account = await loadGoogleAccount();
   if (!account) throw new GoogleError("not-connected", "Connect your Google account in Settings → Google first.");
-  const application = await prisma.application.findUnique({ where: { id: applicationId }, include: { documents: { select: { kind: true, units: true } } } });
+  const db = await userDb();
+  const application = await db.application.findUnique({ where: { id: applicationId }, include: { documents: { select: { kind: true, units: true } } } });
   if (!application) throw new GoogleError("unavailable", "That application no longer exists.");
 
   const units = unitsSchema.safeParse(application.documents.find((document) => document.kind === DocumentKind.EMAIL)?.units);
@@ -62,9 +63,9 @@ export async function sendApplicationEmail(applicationId: string): Promise<SentA
 
   const from = await sender(account.email);
   const sent = await sendMail({ from, to, subject, body, attachments });
-  await prisma.$transaction([
-    prisma.application.update({ where: { id: applicationId }, data: { emailThreadId: sent.threadId } }),
-    prisma.emailMessage.upsert({
+  await db.$userTransaction(async (tx) => {
+    await tx.application.update({ where: { id: applicationId }, data: { emailThreadId: sent.threadId } });
+    await tx.emailMessage.upsert({
       where: { gmailId: sent.id },
       create: {
         gmailId: sent.id,
@@ -80,12 +81,12 @@ export async function sendApplicationEmail(applicationId: string): Promise<SentA
         handledAt: new Date(),
       },
       update: {},
-    }),
-  ]);
+    });
+  });
 
   let eventId: string | null = null;
   if (application.status === ApplicationStatus.DRAFT) {
-    const change = await applyStatusChange(prisma, applicationId, ApplicationStatus.SENT);
+    const change = await applyStatusChange(db, applicationId, ApplicationStatus.SENT);
     if (change.outcome === "changed") eventId = change.event.id;
   }
   return { threadId: sent.threadId, eventId, attachments: attachments.map((file) => file.fileName) };
@@ -98,7 +99,8 @@ export const replySubject = (subject: string) => (/^\s*(re|aw|sv|antw)\s*:/i.tes
 export async function sendReply(emailId: string, body: string): Promise<{ applicationId: string | null }> {
   const account = await loadGoogleAccount();
   if (!account) throw new GoogleError("not-connected", "Connect your Google account in Settings → Google first.");
-  const email = await prisma.emailMessage.findUnique({ where: { id: emailId } });
+  const db = await userDb();
+  const email = await db.emailMessage.findUnique({ where: { id: emailId } });
   if (!email) throw new GoogleError("unavailable", "That email is no longer in RolePebble.");
   if (!body.trim()) throw new GoogleError("unavailable", "Write the answer first.");
   if (/\[…\]|\[\.\.\.\]/.test(body)) throw new GoogleError("unavailable", "Fill in the parts marked […] first.");
@@ -109,16 +111,17 @@ export async function sendReply(emailId: string, body: string): Promise<{ applic
     { from: await sender(account.email), to, subject, body, inReplyTo: email.messageId || undefined },
     { threadId: email.threadId },
   );
-  await prisma.$transaction([
-    prisma.emailMessage.update({ where: { id: emailId }, data: { handledAt: new Date(), replyDraft: "", replyGaps: [] } }),
-    prisma.emailMessage.upsert({
+  const fromName = (await loadProfileName()).trim();
+  await db.$userTransaction(async (tx) => {
+    await tx.emailMessage.update({ where: { id: emailId }, data: { handledAt: new Date(), replyDraft: "", replyGaps: [] } });
+    await tx.emailMessage.upsert({
       where: { gmailId: sent.id },
       create: {
         gmailId: sent.id,
         threadId: sent.threadId,
         applicationId: email.applicationId,
         direction: EmailDirection.OUTGOING,
-        fromName: (await loadProfileName()).trim(),
+        fromName,
         fromAddress: account.email.toLowerCase(),
         toAddress: to,
         subject,
@@ -127,7 +130,7 @@ export async function sendReply(emailId: string, body: string): Promise<{ applic
         handledAt: new Date(),
       },
       update: {},
-    }),
-  ]);
+    });
+  });
   return { applicationId: email.applicationId };
 }

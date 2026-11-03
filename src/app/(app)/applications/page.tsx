@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { listSummary, resolveListParams, statusesIn } from "@/lib/applications-list";
 import { loadApplicationRows } from "@/lib/applications-data";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadSettings } from "@/lib/settings-data";
 
 import { ApplicationsScreen } from "./applications-screen";
@@ -16,7 +16,7 @@ export default async function ApplicationsPage({ searchParams }: PageProps<"/app
 
   const [all, archived] = await Promise.all([
     loadApplicationRows({ archived: params.archived, sort: params.sort }),
-    prisma.application.count({ where: { archivedAt: { not: null }, awaitingReview: false } }),
+    (await userDb()).application.count({ where: { archivedAt: { not: null }, awaitingReview: false } }),
   ]);
   const q = params.q.toLocaleLowerCase();
   const found = q ? all.filter((row) => `${row.company} ${row.role}`.toLocaleLowerCase().includes(q)) : all;

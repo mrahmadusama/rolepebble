@@ -6,7 +6,7 @@ import { updateDocuments } from "@/lib/document-units";
 import { saveVersion } from "@/lib/document-versions";
 import { countPdfPages } from "@/lib/pdf/pages";
 import { renderPdf } from "@/lib/pdf/render";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import type { ProfileData } from "@/lib/profile";
 import { pagesInWords } from "@/lib/settings";
 import { bulletLines, isPublicationUnit } from "@/lib/unit-text";
@@ -89,6 +89,8 @@ export async function fitResumeToPages(
   let trimmed: Trimmed = [];
   if (await fits()) return { trimmed, fits: true };
 
+  const db = await userDb();
+
   for (let cuts = 0; cuts < MAX_CUTS; cuts++) {
     const cut = await updateDocuments(applicationId, async (documents) => {
       const units = documents[DocumentKind.RESUME];
@@ -99,7 +101,7 @@ export async function fitResumeToPages(
     });
     if (!cut) break;
     trimmed = merge(trimmed, cut);
-    await prisma.document.updateMany({
+    await db.document.updateMany({
       where: { applicationId, kind: DocumentKind.RESUME },
       data: { trimmed: trimmedSchema.parse(trimmed) },
     });
@@ -111,7 +113,7 @@ export async function fitResumeToPages(
 /** Once trimming is done, the resume as it is now becomes a version (E8-10), so the untrimmed draft stays one click away. */
 async function saveTrimmed(applicationId: string, trimmed: Trimmed, fits: boolean): Promise<{ trimmed: Trimmed; fits: boolean }> {
   if (trimmed.length > 0) {
-    await prisma.$transaction(async (tx) => {
+    await (await userDb()).$userTransaction(async (tx) => {
       const resume = await tx.document.findUnique({ where: { applicationId_kind: { applicationId, kind: DocumentKind.RESUME } } });
       if (resume) await saveVersion(tx, resume.id, unitsSchema.parse(resume.units), { cause: VersionCause.TRIMMED });
     });
