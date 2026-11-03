@@ -98,7 +98,7 @@ Owner decisions: open sign-up behind `DOSSIER_SIGNUP` (keep production on invite
 |---|---|---|
 | 1 | `User`, the owner account, `userId` on every per-user table, `rp_same_owner` triggers | Merged (#13) |
 | 2 | Scoped client `src/lib/db/` (`userDb()`, `runAsUser`), `action()`/`route()` pass it, audit test against raw `prisma` imports | Merged (#14) |
-| 3 | Profile, facts, themes, settings on the scoped client; per-user uniques | Open |
+| 3 | Profile, facts, themes, settings on the scoped client; per-user uniques | Merged (#15) |
 | 4 | Applications, documents, status, PDFs, print tokens and held PDFs by owner | Open |
 | 5 | Find jobs, job agent, Startups; per-user uniques | |
 | 6 | Job queue per user with fair turns; schedulers loop over users; caches and downloads by user | |
