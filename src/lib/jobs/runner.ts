@@ -4,11 +4,9 @@ import type { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
 import { JobStatus } from "@/generated/prisma/enums";
-import { loadAiConfig } from "@/lib/ai/config";
 import { AiError } from "@/lib/ai/errors";
-import { providerOption } from "@/lib/ai/provider-options";
+import { runAsUser, userDb } from "@/lib/db";
 import { logServerError } from "@/lib/log";
-import { runAsUser } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 
 // Long AI tasks run as background jobs (E6-7): the request that starts one
@@ -16,6 +14,11 @@ import { prisma } from "@/lib/prisma";
 // page follows its named steps (/api/jobs/[id]/events). Progress lives in
 // the Job table, so a reloaded page can pick the job up again. Dossier runs
 // as a single instance, so an in-process queue is enough.
+//
+// Every job is its user's (Phase 2): it's created, read, retried and
+// cancelled through their client, and runs as them. The queue itself works
+// on every user's jobs, by id, with the system client; it takes turns, so
+// one person's jobs never hold up everyone else's.
 
 export type JobContext = {
   /** The job's own id, e.g. to link it to the application it makes. */
@@ -53,18 +56,19 @@ export const JOB_MESSAGES = {
   cancelled: "Cancelled.",
 } as const;
 
-/** Jobs at once: local models do best with one request at a time (PRD §11). */
-const LOCAL_CONCURRENCY = 1;
-const HOSTED_CONCURRENCY = 3;
+/** Jobs running at once, for everyone together. */
+const MAX_RUNNING = 3;
+/** Jobs running at once for one user: a fair share, and one request at a time suits local models (PRD §11). */
+const MAX_RUNNING_PER_USER = 1;
 
 type Listener = (job: JobView) => void;
 
 type RunnerState = {
   definitions: Map<string, JobDefinition<unknown, unknown>>;
-  queue: string[];
-  running: Map<string, AbortController>;
+  /** Waiting jobs, oldest first, with whose they are. */
+  queue: { id: string; userId: string }[];
+  running: Map<string, { controller: AbortController; userId: string }>;
   listeners: Map<string, Set<Listener>>;
-  pumping: boolean;
 };
 
 // On globalThis, so the dev server's hot reloads keep one queue.
@@ -74,7 +78,6 @@ const state: RunnerState = (globalForJobs.jobRunner ??= {
   queue: [],
   running: new Map(),
   listeners: new Map(),
-  pumping: false,
 });
 
 /** Registers a job type; call at module level where the job is defined. */
@@ -85,18 +88,22 @@ export function defineJob<I, R>(definition: JobDefinition<I, R>): JobDefinition<
 
 const VIEW_FIELDS = { id: true, type: true, status: true, step: true, error: true, result: true } as const;
 
+/** One of the current user's jobs, or null when there's none of theirs with that id. */
 export async function getJob(id: string): Promise<JobView | null> {
-  return prisma.job.findUnique({ where: { id }, select: VIEW_FIELDS });
+  return (await userDb()).job.findUnique({ where: { id }, select: VIEW_FIELDS });
 }
+
+/** A job whoever's it is, for the queue's own listeners. */
+const readJob = (id: string): Promise<JobView | null> => prisma.job.findUnique({ where: { id }, select: VIEW_FIELDS });
 
 /** The newest job for something on screen, e.g. "application:<id>", to reattach after a reload. */
 export async function findLatestJob(key: string): Promise<JobView | null> {
-  return prisma.job.findFirst({ where: { key }, orderBy: { createdAt: "desc" }, select: VIEW_FIELDS });
+  return (await userDb()).job.findFirst({ where: { key }, orderBy: { createdAt: "desc" }, select: VIEW_FIELDS });
 }
 
 /** Jobs for something on screen that are still queued or running, oldest first, with their input. */
 export async function findUnfinishedJobs(key: string): Promise<{ id: string; type: string; input: unknown }[]> {
-  return prisma.job.findMany({
+  return (await userDb()).job.findMany({
     where: { key, status: { in: [JobStatus.QUEUED, JobStatus.RUNNING] } },
     orderBy: { createdAt: "asc" },
     select: { id: true, type: true, input: true },
@@ -108,8 +115,9 @@ export function isFinished(job: Pick<JobView, "status">): boolean {
 }
 
 /**
- * Queues a job and returns its id right away. A job that works on an
- * application names it, so deleting the application deletes the job too.
+ * Queues a job for the current user and returns its id right away. A job
+ * that works on an application names it, so deleting the application deletes
+ * the job too.
  */
 export async function startJob<I, R>(
   definition: JobDefinition<I, R>,
@@ -117,7 +125,8 @@ export async function startJob<I, R>(
   options: { key?: string; applicationId?: string } = {},
 ): Promise<string> {
   defineJob(definition);
-  const job = await prisma.job.create({
+  const db = await userDb();
+  const job = await db.job.create({
     data: {
       type: definition.type,
       key: options.key,
@@ -126,36 +135,38 @@ export async function startJob<I, R>(
     },
     select: { id: true },
   });
-  enqueue(job.id);
+  enqueue(job.id, db.$userId);
   return job.id;
 }
 
-/** Runs a failed job again, as the same job with the same input. */
+/** Runs one of the current user's failed jobs again, as the same job with the same input. */
 export async function retryJob(id: string): Promise<boolean> {
-  const { count } = await prisma.job.updateMany({
+  const db = await userDb();
+  const { count } = await db.job.updateMany({
     where: { id, status: JobStatus.FAILED },
     data: { status: JobStatus.QUEUED, step: null, error: null, result: Prisma.DbNull, startedAt: null, finishedAt: null },
   });
   if (count === 0) return false;
   await notify(id);
-  enqueue(id);
+  enqueue(id, db.$userId);
   return true;
 }
 
-/** Stops a queued or running job; it ends as failed with "Cancelled.". */
+/** Stops one of the current user's queued or running jobs; it ends as failed with "Cancelled.". */
 export async function cancelJob(id: string): Promise<void> {
-  const queued = state.queue.indexOf(id);
+  if (!(await (await userDb()).job.count({ where: { id } }))) return;
+  const queued = state.queue.findIndex((entry) => entry.id === id);
   if (queued >= 0) {
     state.queue.splice(queued, 1);
     await finish(id, { status: JobStatus.FAILED, error: JOB_MESSAGES.cancelled });
     return;
   }
-  state.running.get(id)?.abort();
+  state.running.get(id)?.controller.abort();
 }
 
-/** Stops every queued or running job that works on an application, e.g. before it's deleted. */
+/** Stops every queued or running job of the current user's that works on an application, e.g. before it's deleted. */
 export async function cancelApplicationJobs(applicationId: string): Promise<void> {
-  const unfinished = await prisma.job.findMany({
+  const unfinished = await (await userDb()).job.findMany({
     where: { applicationId, status: { in: [JobStatus.QUEUED, JobStatus.RUNNING] } },
     select: { id: true },
   });
@@ -176,7 +187,7 @@ export function subscribeJob(id: string, listener: Listener): () => void {
 async function notify(id: string): Promise<void> {
   const listeners = state.listeners.get(id);
   if (!listeners?.size) return;
-  const job = await getJob(id);
+  const job = await readJob(id);
   if (job) for (const listener of listeners) listener(job);
 }
 
@@ -189,35 +200,28 @@ async function finish(
   if (count > 0) await notify(id);
 }
 
-function enqueue(id: string): void {
-  if (!state.queue.includes(id)) state.queue.push(id);
-  void pump();
+function enqueue(id: string, userId: string): void {
+  if (!state.queue.some((entry) => entry.id === id)) state.queue.push({ id, userId });
+  pump();
 }
 
-async function concurrency(): Promise<number> {
-  try {
-    return providerOption((await loadAiConfig()).provider).local ? LOCAL_CONCURRENCY : HOSTED_CONCURRENCY;
-  } catch {
-    return LOCAL_CONCURRENCY;
-  }
-}
+/** How many jobs `userId` has running now. */
+const runningFor = (userId: string) => [...state.running.values()].filter((job) => job.userId === userId).length;
 
-async function pump(): Promise<void> {
-  if (state.pumping) return;
-  state.pumping = true;
-  try {
-    const limit = await concurrency();
-    while (state.queue.length > 0 && state.running.size < limit) {
-      const id = state.queue.shift()!;
-      const controller = new AbortController();
-      state.running.set(id, controller);
-      void execute(id, controller).finally(() => {
-        state.running.delete(id);
-        void pump();
-      });
-    }
-  } finally {
-    state.pumping = false;
+/** The oldest waiting job of a user below their share; others' jobs go ahead of a busy user's. */
+const nextJob = () => state.queue.find((entry) => runningFor(entry.userId) < MAX_RUNNING_PER_USER);
+
+/** Starts waiting jobs while there's room. */
+function pump(): void {
+  for (let next = nextJob(); next && state.running.size < MAX_RUNNING; next = nextJob()) {
+    const { id, userId } = next;
+    state.queue.splice(state.queue.indexOf(next), 1);
+    const controller = new AbortController();
+    state.running.set(id, { controller, userId });
+    void execute(id, controller).finally(() => {
+      state.running.delete(id);
+      pump();
+    });
   }
 }
 
@@ -259,8 +263,9 @@ async function execute(id: string, controller: AbortController): Promise<void> {
 }
 
 /**
- * Called once at startup: jobs a previous process left queued or running
- * can't finish, so they're marked failed and the page offers Retry.
+ * Called once at startup, for every user: jobs a previous process left
+ * queued or running can't finish, so they're marked failed and the page
+ * offers Retry.
  */
 export async function recoverInterruptedJobs(): Promise<number> {
   const { count } = await prisma.job.updateMany({

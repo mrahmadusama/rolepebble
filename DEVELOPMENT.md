@@ -70,7 +70,9 @@ const applications = await db.application.findMany(); // only theirs
 - **Where the user comes from:**
   - Server Actions and `route()` handlers run as the signed-in user: an action also gets the client as `db` in its context.
   - Pages call `userDb()`.
-  - Work outside a request (the job runner, the schedulers) names the user with `runAsUser(userId, () => …)`. Without a user, `userDb()` throws rather than guess.
+  - Work outside a request names the user with `runAsUser(userId, () => …)`. Without a user, `userDb()` throws rather than guess.
+  - Background jobs are their user's: `startJob` records whose a job is, the runner runs it as them, and `getJob`, `retryJob` and `cancelJob` only find the current user's. The queue runs one job per user at a time and three in all, so one person's jobs never hold up everyone else's.
+  - Timers go through every user with `forEachUser(label, fn)` (`src/lib/db/users.ts`); one user's failure is logged and the rest carry on.
 - **Interactive transactions:** use `db.$userTransaction(async (tx) => …)`. Never `$transaction` on a user's client: each of its queries already runs in a transaction, and Postgres can't nest them.
 - **The raw client** (`import { prisma } from "@/lib/prisma"`) sees everyone's data. `src/lib/db-audit.test.ts` keeps it to a short list of files, each with its reason, plus the files not moved over yet.
 - **Tables:** `src/lib/db/owned-models.ts` lists which tables are a user's data, and a test checks the list against the schema. A new table either gets a `userId` or goes on the system list.

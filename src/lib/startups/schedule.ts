@@ -1,5 +1,6 @@
 import "server-only";
 
+import { forEachUser } from "@/lib/db";
 import { findUnfinishedJobs } from "@/lib/jobs/runner";
 import { logServerError } from "@/lib/log";
 import type { SettingsData } from "@/lib/settings";
@@ -35,10 +36,11 @@ export async function startDueStartupsRefresh(now = new Date()): Promise<string 
 
 const globalForStartups = globalThis as unknown as { startupsTimer?: ReturnType<typeof setInterval> };
 
-/** Starts the timer, once per process (dev reloads keep the one they have). */
+/** Starts the timer, once per process (dev reloads keep the one they have); each check goes through every user. */
 export function startStartupsSchedule(): void {
   if (globalForStartups.startupsTimer) return;
-  const check = () => void startDueStartupsRefresh().catch((error: unknown) => logServerError("startups schedule", error));
+  const check = () =>
+    void forEachUser("startups schedule", () => startDueStartupsRefresh()).catch((error: unknown) => logServerError("startups schedule", error));
   globalForStartups.startupsTimer = setInterval(check, EVERY_MS);
   // Don't keep the process alive just for this.
   globalForStartups.startupsTimer.unref?.();

@@ -4,10 +4,11 @@ import path from "node:path";
 
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { runAsUser } from "@/lib/db";
 import { saveSettings } from "@/lib/settings-data";
-import { createTestClient, resetDatabase } from "@/test/db";
+import { createTestClient, createTestUser, resetDatabase } from "@/test/db";
 
-import { sweepFinishedJobs } from "./retention";
+import { sweepEverything, sweepFinishedJobs } from "./retention";
 
 const db = vi.hoisted(() => ({ client: undefined as ReturnType<typeof createTestClient> | undefined }));
 vi.mock("@/lib/prisma", async () => {
@@ -61,14 +62,29 @@ describe("sweepFinishedJobs", () => {
     expect(await left()).not.toContain("no-end");
   });
 
-  it("removes zips nobody downloaded", async () => {
-    const downloads = path.join(dataDir.path, "downloads");
-    await mkdir(downloads, { recursive: true });
-    await writeFile(path.join(downloads, "old.zip"), "zip");
-    await writeFile(path.join(downloads, "new.zip"), "zip");
-    await utimes(path.join(downloads, "old.zip"), hoursAgo(2), hoursAgo(2));
-    await utimes(path.join(downloads, "new.zip"), now, now);
+  it("goes through every user's jobs, each by their own setting", async () => {
+    const other = await createTestUser(prisma());
+    await runAsUser(other, async () => {
+      await saveSettings({ jobRetentionHours: 1 });
+      await prisma().job.create({ data: { id: "theirs-recent", type: "read-posting", status: "DONE", finishedAt: hoursAgo(2), input: {}, userId: other } });
+    });
+    // The owner's sweep leaves theirs alone.
     await sweepFinishedJobs(now);
-    expect(await readdir(downloads)).toEqual(["new.zip"]);
+    expect(await left()).toContain("theirs-recent");
+    await sweepEverything(now);
+    expect(await left()).toEqual(["queued", "running", "write-recent"]);
+  });
+
+  it("removes zips nobody downloaded, in every user's folder", async () => {
+    const downloads = path.join(dataDir.path, "downloads");
+    const owners = path.join(downloads, "owner");
+    await mkdir(owners, { recursive: true });
+    for (const file of [path.join(downloads, "old.zip"), path.join(owners, "old.zip"), path.join(owners, "new.zip")]) await writeFile(file, "zip");
+    await utimes(path.join(downloads, "old.zip"), hoursAgo(2), hoursAgo(2));
+    await utimes(path.join(owners, "old.zip"), hoursAgo(2), hoursAgo(2));
+    await utimes(path.join(owners, "new.zip"), now, now);
+    await sweepEverything(now);
+    expect(await readdir(downloads)).toEqual(["owner"]);
+    expect(await readdir(owners)).toEqual(["new.zip"]);
   });
 });

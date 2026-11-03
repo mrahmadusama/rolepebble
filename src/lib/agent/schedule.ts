@@ -5,7 +5,7 @@ import { addDays, dayOf } from "@/lib/calendar-view";
 import { zonedTime } from "@/lib/google/slots";
 import { findUnfinishedJobs, startJob } from "@/lib/jobs/runner";
 import { logServerError } from "@/lib/log";
-import { userDb } from "@/lib/db";
+import { forEachUser, userDb } from "@/lib/db";
 import type { AgentRun } from "@/lib/settings";
 import { loadSettings } from "@/lib/settings-data";
 import { lastKnownTimeZone } from "@/lib/time-zone";
@@ -65,11 +65,11 @@ export async function resetInterruptedDrafts(): Promise<number> {
 
 const globalForAgent = globalThis as unknown as { agentTimer?: ReturnType<typeof setInterval> };
 
-/** Starts the timer, once per process (dev reloads keep the one they have). */
+/** Starts the timer, once per process (dev reloads keep the one they have); each check goes through every user. */
 export function startAgentSchedule(): void {
   if (globalForAgent.agentTimer) return;
-  void resetInterruptedDrafts().catch((error: unknown) => logServerError("job agent", error));
-  const check = () => void startDueRun().catch((error: unknown) => logServerError("job agent schedule", error));
+  void forEachUser("job agent", resetInterruptedDrafts).catch((error: unknown) => logServerError("job agent", error));
+  const check = () => void forEachUser("job agent schedule", () => startDueRun()).catch((error: unknown) => logServerError("job agent schedule", error));
   globalForAgent.agentTimer = setInterval(check, EVERY_MS);
   // Don't keep the process alive just for this.
   globalForAgent.agentTimer.unref?.();
