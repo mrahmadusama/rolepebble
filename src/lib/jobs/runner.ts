@@ -8,6 +8,7 @@ import { loadAiConfig } from "@/lib/ai/config";
 import { AiError } from "@/lib/ai/errors";
 import { providerOption } from "@/lib/ai/provider-options";
 import { logServerError } from "@/lib/log";
+import { runAsUser } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 
 // Long AI tasks run as background jobs (E6-7): the request that starts one
@@ -225,7 +226,7 @@ async function execute(id: string, controller: AbortController): Promise<void> {
     const job = await prisma.job.update({
       where: { id },
       data: { status: JobStatus.RUNNING, startedAt: new Date() },
-      select: { type: true, input: true },
+      select: { type: true, input: true, userId: true },
     });
     await notify(id);
     // Job types register when their module loads; make sure they all have.
@@ -233,7 +234,8 @@ async function execute(id: string, controller: AbortController): Promise<void> {
     const definition = state.definitions.get(job.type);
     if (!definition) throw new Error(`No job type "${job.type}" is defined.`);
 
-    const result = await definition.run(definition.input.parse(job.input), {
+    // A job works on its owner's data, whoever's request started the queue.
+    const result = await runAsUser(job.userId, () => definition.run(definition.input.parse(job.input), {
       id,
       signal: controller.signal,
       step: async (name) => {
@@ -242,7 +244,7 @@ async function execute(id: string, controller: AbortController): Promise<void> {
         if (count === 0) controller.abort();
         else await notify(id);
       },
-    });
+    }));
     await finish(id, { status: JobStatus.DONE, result: definition.result.parse(result) as Prisma.InputJsonValue });
   } catch (error) {
     // AI failures already say what to do; anything else is logged and kept vague.

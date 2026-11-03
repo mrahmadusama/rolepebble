@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { action, ActionError } from "@/lib/action";
-import { prisma } from "@/lib/prisma";
+import { userDbSync } from "@/lib/db";
 import { DEFAULT_BASE_THEME } from "@/lib/settings";
 import { loadSettings, saveSettings } from "@/lib/settings-data";
 import { THEME_FIELDS } from "@/lib/theme-data";
@@ -13,9 +13,12 @@ import type { ThemeData } from "@/lib/themes";
 
 const THEME_GONE = "That theme doesn't exist anymore. Reload the page to see your themes.";
 
+/** The signed-in user's data: every handler here runs inside action(), which names them. */
+const db = () => userDbSync();
+
 /** Makes a theme the base resume theme (RES-2). */
 export const setBaseTheme = action(z.object({ id: z.string().min(1) }), async ({ id }) => {
-  const theme = await prisma.theme.findUnique({ where: { id }, select: { id: true } });
+  const theme = await db().theme.findUnique({ where: { id }, select: { id: true } });
   if (!theme) throw new ActionError(THEME_GONE);
   await saveSettings({ baseThemeId: id });
   revalidatePath("/resume");
@@ -30,7 +33,7 @@ export const setBaseTheme = action(z.object({ id: z.string().min(1) }), async ({
 export const saveTheme = action(
   themeFieldsSchema.extend({ id: z.string().min(1).nullable() }),
   async ({ id, ...fields }, { toast }): Promise<ThemeData> => {
-    const theme = await prisma.$transaction(async (tx) => {
+    const theme = await db().$userTransaction(async (tx) => {
       let saved: ThemeData;
       if (id) {
         const existing = await tx.theme.findUnique({ where: { id }, select: { builtIn: true } });
@@ -53,9 +56,9 @@ export const saveTheme = action(
 
 /** A copy of any theme, built-in or custom, as a new custom theme; it becomes the base theme. */
 export const duplicateTheme = action(z.object({ id: z.string().min(1) }), async ({ id }, { toast }): Promise<ThemeData> => {
-  const original = await prisma.theme.findUnique({ where: { id }, select: { ...THEME_FIELDS, id: false, builtIn: false } });
+  const original = await db().theme.findUnique({ where: { id }, select: { ...THEME_FIELDS, id: false, builtIn: false } });
   if (!original) throw new ActionError(THEME_GONE);
-  const copy = await prisma.$transaction(async (tx) => {
+  const copy = await db().$userTransaction(async (tx) => {
     const created = await tx.theme.create({ data: { ...original, name: `${original.name} copy`.slice(0, 60) }, select: THEME_FIELDS });
     await saveSettings({ baseThemeId: created.id }, tx);
     return created;
@@ -71,10 +74,10 @@ export const duplicateTheme = action(z.object({ id: z.string().min(1) }), async 
  * Editorial takes over. Answers with the base theme after.
  */
 export const deleteTheme = action(z.object({ id: z.string().min(1) }), async ({ id }, { toast }) => {
-  const theme = await prisma.theme.findUnique({ where: { id }, select: { name: true, builtIn: true } });
+  const theme = await db().theme.findUnique({ where: { id }, select: { name: true, builtIn: true } });
   if (!theme) throw new ActionError(THEME_GONE);
   if (theme.builtIn) throw new ActionError("Built-in themes can't be deleted.");
-  const baseThemeId = await prisma.$transaction(async (tx) => {
+  const baseThemeId = await db().$userTransaction(async (tx) => {
     let base = (await loadSettings()).baseThemeId;
     if (base === id) {
       base = DEFAULT_BASE_THEME;
@@ -92,7 +95,7 @@ export const deleteTheme = action(z.object({ id: z.string().min(1) }), async ({ 
 export const importTheme = action(z.object({ file: z.unknown() }), async ({ file }, { toast }): Promise<ThemeData> => {
   const read = parseThemeFile(file);
   if (!read.ok) throw new ActionError(read.error);
-  const theme = await prisma.$transaction(async (tx) => {
+  const theme = await db().$userTransaction(async (tx) => {
     const created = await tx.theme.create({ data: read.theme, select: THEME_FIELDS });
     await saveSettings({ baseThemeId: created.id }, tx);
     return created;

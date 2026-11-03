@@ -50,6 +50,7 @@ COREPACK_ENABLE_DOWNLOAD_PROMPT=0 yarn install --immutable && yarn prisma genera
 yarn lint
 yarn typecheck
 yarn vitest run --project node --project dom
+yarn build   # catches what only the production build sees, e.g. a server-only import reaching the Edge bundle
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, all unit and database tests with coverage thresholds, and the Playwright end-to-end tests on every PR. On `main` it publishes the image `ghcr.io/mrahmadusama/rolepebble:main` (public).
@@ -62,7 +63,7 @@ CI (`.github/workflows/ci.yml`) runs lint, typecheck, all unit and database test
 - **Removed from Dossier:** the usage ping and update check (their setting keys stay so old rows are still left out of exports), and the Bundesagentur source (its enum value `ARBEITSAGENTUR` stays only so old saved postings load; a saved choice of it reads as Off).
 - **Who runs it:** `src/lib/operator.ts` (operator name, support email). **Links:** `src/lib/releases.ts`.
 - **Still single-user until Phase 2's switch (PR 10):** sign-in is one password from `DOSSIER_PASSWORD`. Copy like "on your server" is from Dossier and gets reworded in Phase 2.
-- **Owners (Phase 2):** every per-user table has `userId`, filled in by the database from `app.user_id` (`rp_current_user_id()`), or the built-in `owner` account (`OWNER_ID` in `src/lib/db/owner.ts`) until sign-in knows users. **Reach a user's data through `userDb()` (`src/lib/db`), never `@/lib/prisma`:** see "Whose data" in DEVELOPMENT.md; `src/lib/db-audit.test.ts` holds the list of files not moved over yet, which PRs 3–8 shrink to the few system ones. Built-in themes have `userId` null, so create them with `userId: null`. Triggers (`rp_same_owner`) refuse a row that points at another user's row. Database tests: `resetDatabase` keeps the owner account, and `createTestUser` makes another.
+- **Owners (Phase 2):** every per-user table has `userId`, filled in by the database from `app.user_id` (`rp_current_user_id()`), or the built-in `owner` account (`OWNER_ID` in `src/lib/db/owner.ts`) until sign-in knows users. **Reach a user's data through `userDb()` (`src/lib/db`), never `@/lib/prisma`:** see "Whose data" in DEVELOPMENT.md; `src/lib/db-audit.test.ts` holds the list of files not moved over yet, which PRs 3–8 shrink to the few system ones. Built-in themes have `userId` null, so create them with `userId: null`. Triggers (`rp_same_owner`) refuse a row that points at another user's row. Database tests run as the signed-in owner (`src/test/db-setup.ts`); `resetDatabase` keeps the owner account, `createTestUser` makes another, and `runAsUser` acts as them. Code that runs without a request (the job runner, the schedulers, print pages, the Claude connector) names its user with `runAsUser`.
 - The README's old screenshots in `.github/images/` are Dossier's, left over until RolePebble has its own.
 - **The landing page** is `site/` (see [site/README.md](site/README.md)): static files, no build step, and one Cloudflare Pages Function for the waitlist. Its design follows a reference the owner liked (veltro-astro.pages.dev), above all the "How it works" steps that stick and stack as you scroll. The text on it is a draft for the owner to change. Keep it honest: no made-up numbers, reviews or customers.
 
@@ -96,8 +97,8 @@ Owner decisions: open sign-up behind `DOSSIER_SIGNUP` (keep production on invite
 | PR | What | Status |
 |---|---|---|
 | 1 | `User`, the owner account, `userId` on every per-user table, `rp_same_owner` triggers | Merged (#13) |
-| 2 | Scoped client `src/lib/db/` (`userDb()`, `runAsUser`), `action()`/`route()` pass it, audit test against raw `prisma` imports | Open |
-| 3 | Profile, facts, themes, settings on the scoped client; per-user uniques | |
+| 2 | Scoped client `src/lib/db/` (`userDb()`, `runAsUser`), `action()`/`route()` pass it, audit test against raw `prisma` imports | Merged (#14) |
+| 3 | Profile, facts, themes, settings on the scoped client; per-user uniques | Open |
 | 4 | Applications, documents, status, PDFs, print tokens and held PDFs by owner | |
 | 5 | Find jobs, job agent, Startups; per-user uniques | |
 | 6 | Job queue per user with fair turns; schedulers loop over users; caches and downloads by user | |

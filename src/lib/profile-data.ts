@@ -1,31 +1,33 @@
 import "server-only";
 
 import { photoFromFields } from "@/lib/photo";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { basicsFromFields, factTexts, inEntryOrder, type FactItem, type ProfileData } from "@/lib/profile";
 import { loadSettings } from "@/lib/settings-data";
 
-/** The profile's name, "" without one: for the sidebar, the sign-in greeting and file names. */
+/** The current user's name, "" without one: for the sidebar, the sign-in greeting and file names. */
 export async function loadProfileName(): Promise<string> {
-  const field = await prisma.profileField.findUnique({ where: { key: "name" } });
+  const db = await userDb();
+  const field = await db.profileField.findUnique({ where: { userId_key: { userId: db.$userId, key: "name" } } });
   return field?.value ?? "";
 }
 
 /**
- * The whole profile for the editor. Experience, projects and education are
+ * The current user's whole profile, for the editor. Experience, projects and education are
  * newest first by start date, or in the order set by hand (E4-9);
  * publications are always in the order set by hand (#218).
  */
 export async function loadProfile(): Promise<ProfileData> {
+  const db = await userDb();
   const [fields, skills, languages, experience, projects, education, publications, references, facts, settings] = await Promise.all([
-    prisma.profileField.findMany(),
-    prisma.skill.findMany({ orderBy: [{ sort: "asc" }, { createdAt: "asc" }] }),
-    prisma.language.findMany({ orderBy: [{ sort: "asc" }, { createdAt: "asc" }] }),
-    prisma.experience.findMany({ include: { skills: { select: { skillId: true } } } }),
-    prisma.project.findMany({ include: { skills: { select: { skillId: true } } } }),
-    prisma.education.findMany(),
-    prisma.publication.findMany({ orderBy: [{ sort: "asc" }, { createdAt: "asc" }] }),
-    prisma.reference.findMany({ orderBy: [{ sort: "asc" }, { createdAt: "asc" }] }),
+    db.profileField.findMany(),
+    db.skill.findMany({ orderBy: [{ sort: "asc" }, { createdAt: "asc" }] }),
+    db.language.findMany({ orderBy: [{ sort: "asc" }, { createdAt: "asc" }] }),
+    db.experience.findMany({ include: { skills: { select: { skillId: true } } } }),
+    db.project.findMany({ include: { skills: { select: { skillId: true } } } }),
+    db.education.findMany(),
+    db.publication.findMany({ orderBy: [{ sort: "asc" }, { createdAt: "asc" }] }),
+    db.reference.findMany({ orderBy: [{ sort: "asc" }, { createdAt: "asc" }] }),
     loadFacts(null),
     loadSettings(),
   ]);
@@ -92,7 +94,7 @@ export async function loadFactTexts(applicationId: string): Promise<string[]> {
 
 /** The profile's facts (null), or one application's, in the order they were added. */
 export async function loadFacts(applicationId: string | null): Promise<FactItem[]> {
-  return prisma.fact.findMany({
+  return (await userDb()).fact.findMany({
     where: { applicationId },
     select: { id: true, text: true },
     orderBy: [{ sort: "asc" }, { createdAt: "asc" }],

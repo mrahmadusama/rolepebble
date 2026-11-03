@@ -8,6 +8,7 @@ import { createTestClient, resetDatabase } from "@/test/db";
 
 import { seedBuiltIns } from "./built-ins";
 import { DemoRefused, seedDemo } from "./demo";
+import { OWNER_ID } from "@/lib/db/owner";
 
 const db = createTestClient();
 const now = new Date("2026-10-10T08:00:00Z");
@@ -41,7 +42,7 @@ describe("built-in seed", () => {
     await seedBuiltIns(db);
 
     expect((await basics()).name).toBe("Me");
-    expect((await db.setting.findUniqueOrThrow({ where: { key: "paper" } })).value).toBe("LETTER");
+    expect((await db.setting.findUniqueOrThrow({ where: { userId_key: { userId: OWNER_ID, key: "paper" } } })).value).toBe("LETTER");
     expect(await db.theme.count()).toBe(13);
     expect(await db.theme.findUniqueOrThrow({ where: { id: "classic" } })).toMatchObject({ accent: "#1d1c1a", headerStyle: "PLAIN", dateStyle: "INLINE" });
   });

@@ -19,9 +19,10 @@ vi.mock("next/headers", () => ({
 }));
 
 import { lastKnownTimeZone, rememberBrowserTimeZone, serverTimeZone, userTimeZone } from "./time-zone";
+import { OWNER_ID } from "@/lib/db/owner";
 
 const prisma = () => db.client!;
-const saved = async () => (await prisma().setting.findUnique({ where: { key: "browserTimeZone" } }))?.value;
+const saved = async () => (await prisma().setting.findUnique({ where: { userId_key: { userId: OWNER_ID, key: "browserTimeZone" } } }))?.value;
 
 beforeEach(async () => {
   await resetDatabase(prisma());
@@ -43,9 +44,9 @@ describe("the user's time zone", () => {
     expect(await saved()).toBeUndefined();
     await rememberBrowserTimeZone("Europe/Berlin");
     expect(await saved()).toBe("Europe/Berlin");
-    const { updatedAt } = await prisma().setting.findUniqueOrThrow({ where: { key: "browserTimeZone" } });
+    const { updatedAt } = await prisma().setting.findUniqueOrThrow({ where: { userId_key: { userId: OWNER_ID, key: "browserTimeZone" } } });
     await rememberBrowserTimeZone("Europe/Berlin");
-    expect((await prisma().setting.findUniqueOrThrow({ where: { key: "browserTimeZone" } })).updatedAt).toEqual(updatedAt);
+    expect((await prisma().setting.findUniqueOrThrow({ where: { userId_key: { userId: OWNER_ID, key: "browserTimeZone" } } })).updatedAt).toEqual(updatedAt);
   });
 
   it("uses the request's zone, else the remembered one, else the server's", async () => {

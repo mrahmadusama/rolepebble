@@ -5,6 +5,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { jwtVerify, SignJWT } from "jose";
 
 import { passwordFingerprint } from "@/lib/auth/session";
+import { OWNER_ID, runAsUser } from "@/lib/db";
 import { connectorEnabled } from "@/lib/features";
 import { deriveKey } from "@/lib/keys";
 import { loadSettings } from "@/lib/settings-data";
@@ -40,7 +41,9 @@ const key = (kind: TokenKind) => deriveKey(`connector-${kind}`);
  */
 export async function connectorSince(): Promise<string | null> {
   if (!connectorEnabled()) return null;
-  return (await loadSettings()).connectorEnabledAt;
+  // Claude calls without a session. The switch is the install's, kept in the
+  // owner's settings until install-wide settings get a table (Phase 2, PR 7).
+  return (await runAsUser(OWNER_ID, () => loadSettings())).connectorEnabledAt;
 }
 
 /**

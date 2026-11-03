@@ -48,6 +48,7 @@ import {
   startDraftingReply,
 } from "./actions";
 import { inboxCount, loadConversation, loadInbox, waitingByApplication } from "./inbox-data";
+import { OWNER_ID } from "@/lib/db/owner";
 
 const prisma = () => db.client!;
 const scopes = [
@@ -211,7 +212,7 @@ describe("Settings → Google (E15-1)", () => {
       ok: true,
       data: { id: "client", idState: "set", secretState: "set" },
     });
-    const stored = await prisma().setting.findUnique({ where: { key: "googleClientSecretEnc" } });
+    const stored = await prisma().setting.findUnique({ where: { userId_key: { userId: OWNER_ID, key: "googleClientSecretEnc" } } });
     expect(stored?.value).toMatch(/^v1\./);
     expect(stored?.value).not.toContain("new-secret");
     // Same client ID, new secret: the account stays connected.
