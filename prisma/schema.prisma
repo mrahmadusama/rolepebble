@@ -79,20 +79,22 @@ model User {
 /// per filled-in field. The keys and how each value is written are in
 /// src/lib/profile.ts (PROFILE_KEYS); a missing key means empty.
 model ProfileField {
-  key       String   @id
+  key       String
   value     String
   updatedAt DateTime @updatedAt
   /// Whose it is (src/lib/db): the signed-in user, set by the database.
   userId    String   @default(dbgenerated("rp_current_user_id()"))
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// One value per key for each user.
+  @@id([userId, key])
   @@index([userId])
 }
 
 model Skill {
   id          String            @id @default(cuid())
-  /// Unique ignoring case ("Figma" and "figma" are the same skill).
-  name        String            @unique @db.Citext
+  /// Unique per user, ignoring case ("Figma" and "figma" are the same skill).
+  name        String            @db.Citext
   sort        Int               @default(0)
   experiences ExperienceSkill[]
   projects    ProjectSkill[]
@@ -101,6 +103,8 @@ model Skill {
   userId      String            @default(dbgenerated("rp_current_user_id()"))
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// Unique per user, ignoring case.
+  @@unique([userId, name])
   @@index([userId])
 }
 
@@ -116,8 +120,8 @@ enum LanguageLevel {
 
 model Language {
   id        String        @id @default(cuid())
-  /// Unique ignoring case; adding an existing language updates its level (PRO-4).
-  name      String        @unique @db.Citext
+  /// Unique per user, ignoring case; adding an existing language updates its level (PRO-4).
+  name      String        @db.Citext
   level     LanguageLevel
   sort      Int           @default(0)
   createdAt DateTime      @default(now())
@@ -125,6 +129,8 @@ model Language {
   userId    String        @default(dbgenerated("rp_current_user_id()"))
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// Unique per user, ignoring case.
+  @@unique([userId, name])
   @@index([userId])
 }
 
@@ -451,13 +457,15 @@ enum Tone {
 /// The keys, their types and defaults are in src/lib/settings.ts
 /// (settingsSchema); the enums above type its values.
 model Setting {
-  key       String   @id
+  key       String
   value     String
   updatedAt DateTime @updatedAt
   /// Whose it is (src/lib/db): the signed-in user, set by the database.
   userId    String   @default(dbgenerated("rp_current_user_id()"))
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// One value per key for each user.
+  @@id([userId, key])
   @@index([userId])
 }
 

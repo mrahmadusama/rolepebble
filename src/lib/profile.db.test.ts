@@ -2,6 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
 import { Prisma } from "@/generated/prisma/client";
 import { createTestClient, resetDatabase } from "@/test/db";
+import { OWNER_ID } from "@/lib/db/owner";
 
 const db = createTestClient();
 
@@ -21,7 +22,7 @@ describe("profile schema", () => {
     await expect(db.skill.create({ data: { name: "figma" } })).rejects.toSatisfy(
       (error) => error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002",
     );
-    expect(await db.skill.findUnique({ where: { name: "FIGMA" } })).toMatchObject({
+    expect(await db.skill.findUnique({ where: { userId_name: { userId: OWNER_ID, name: "FIGMA" } } })).toMatchObject({
       name: "Figma",
     });
 

@@ -11,6 +11,7 @@ import { safeNextPath } from "@/lib/auth/next-path";
 import { passwordMatches, startSession } from "@/lib/auth/session";
 import { tooManyAttemptsMessage } from "@/lib/auth/throttle";
 import { prisma } from "@/lib/prisma";
+import { OWNER_ID, runAsUser } from "@/lib/db";
 import { loadProfileName } from "@/lib/profile-data";
 
 import { loginMessages } from "./messages";
@@ -39,7 +40,9 @@ export const signIn = publicAction(
     await recordLoginSuccess(prisma, ip);
 
     await startSession({ persistent: remember });
-    const firstName = (await loadProfileName()).trim().split(/\s+/)[0] || "there";
+    // The new session isn't readable until the next request, so the greeting
+    // names whose profile it reads: the owner's, until sign-in knows users.
+    const firstName = (await runAsUser(OWNER_ID, () => loadProfileName())).trim().split(/\s+/)[0] || "there";
     toast(`Welcome back, ${firstName}.`);
     return { redirectTo: safeNextPath(next) };
   },

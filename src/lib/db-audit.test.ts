@@ -27,8 +27,6 @@ const NOT_MOVED_YET = new Set([
   "src/app/(app)/jobs/page.tsx",
   "src/app/(app)/new/actions.ts",
   "src/app/(app)/new/page.tsx",
-  "src/app/(app)/profile/actions.ts",
-  "src/app/(app)/resume/actions.ts",
   "src/app/(app)/settings/actions.ts",
   "src/app/(app)/settings/page.tsx",
   "src/app/api/export/route.ts",
@@ -49,7 +47,6 @@ const NOT_MOVED_YET = new Set([
   "src/lib/connector/tools.ts",
   "src/lib/dashboard-data.ts",
   "src/lib/document-units.ts",
-  "src/lib/fact-actions.ts",
   "src/lib/google/account.ts",
   "src/lib/google/actions.ts",
   "src/lib/google/availability.ts",
@@ -69,13 +66,9 @@ const NOT_MOVED_YET = new Set([
   "src/lib/posting-scores.ts",
   "src/lib/posting-searches.ts",
   "src/lib/postings.ts",
-  "src/lib/profile-data.ts",
-  "src/lib/profile-entries.ts",
-  "src/lib/settings-data.ts",
   "src/lib/startups/refresh.ts",
   "src/lib/startups/store.ts",
   "src/lib/status-actions.ts",
-  "src/lib/theme-data.ts",
 ]);
 
 const sources = globSync("src/**/*.{ts,tsx}").filter(

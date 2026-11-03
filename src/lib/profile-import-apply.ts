@@ -1,7 +1,8 @@
 import "server-only";
 
-import type { Prisma, PrismaClient } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { citationText } from "@/lib/citation";
+import type { ScopedDb } from "@/lib/db";
 import { BASICS_FIELDS, sameName } from "@/lib/profile";
 import type { ImportedProfile, ImportMode } from "@/lib/profile-import";
 import { settingsFromRows } from "@/lib/settings";
@@ -16,10 +17,12 @@ type Tx = Prisma.TransactionClient;
  * (the same role and company, project name, degree and school, citation, or
  * reference name) takes
  * what the file says; what the file leaves out is kept. Everything else is
- * added, first in a section ordered by hand, else by date.
+ * added, first in a section ordered by hand, else by date. Only `db`'s
+ * user's profile changes.
  */
-export async function applyImportedProfile(db: PrismaClient, profile: ImportedProfile, mode: ImportMode): Promise<void> {
-  await db.$transaction(
+export async function applyImportedProfile(db: ScopedDb, profile: ImportedProfile, mode: ImportMode): Promise<void> {
+  const userId = db.$userId;
+  await db.$userTransaction(
     async (tx) => {
       if (mode === "replace") {
         await tx.experience.deleteMany();
@@ -37,11 +40,11 @@ export async function applyImportedProfile(db: PrismaClient, profile: ImportedPr
       );
 
       for (const [key, value] of Object.entries(profile.basics)) {
-        await tx.profileField.upsert({ where: { key }, create: { key, value }, update: { value } });
+        await tx.profileField.upsert({ where: { userId_key: { userId, key } }, create: { key, value }, update: { value } });
       }
 
-      const skillIds = await applySkills(tx, profile);
-      await applyLanguages(tx, profile);
+      const skillIds = await applySkills(tx, userId, profile);
+      await applyLanguages(tx, userId, profile);
 
       const nextExperienceSort = await sorter(tx, "experience", order.experienceOrder === "manual");
       const roles = await tx.experience.findMany({ include: { skills: { select: { skillId: true } } } });
@@ -108,21 +111,22 @@ export async function applyImportedProfile(db: PrismaClient, profile: ImportedPr
 }
 
 /** Finds or creates each skill (names ignore case); answers with the ids by lower-case name. */
-async function applySkills(tx: Tx, profile: ImportedProfile): Promise<Map<string, string>> {
+async function applySkills(tx: Tx, userId: string, profile: ImportedProfile): Promise<Map<string, string>> {
   const ids = new Map<string, string>();
   let sort = ((await tx.skill.aggregate({ _max: { sort: true } }))._max.sort ?? -1) + 1;
   for (const { name } of profile.skills) {
-    const skill = (await tx.skill.findUnique({ where: { name } })) ?? (await tx.skill.create({ data: { name, sort: sort++ } }));
+    const skill =
+      (await tx.skill.findUnique({ where: { userId_name: { userId, name } } })) ?? (await tx.skill.create({ data: { name, sort: sort++ } }));
     ids.set(name.toLowerCase(), skill.id);
   }
   return ids;
 }
 
 /** Adds languages; the file's level wins, unless it didn't give one. */
-async function applyLanguages(tx: Tx, profile: ImportedProfile): Promise<void> {
+async function applyLanguages(tx: Tx, userId: string, profile: ImportedProfile): Promise<void> {
   let sort = ((await tx.language.aggregate({ _max: { sort: true } }))._max.sort ?? -1) + 1;
   for (const { name, level, levelGiven } of profile.languages) {
-    const existing = await tx.language.findUnique({ where: { name } });
+    const existing = await tx.language.findUnique({ where: { userId_name: { userId, name } } });
     if (!existing) await tx.language.create({ data: { name, level, sort: sort++ } });
     else if (levelGiven) await tx.language.update({ where: { id: existing.id }, data: { level } });
   }

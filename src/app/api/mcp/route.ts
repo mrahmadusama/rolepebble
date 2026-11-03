@@ -1,6 +1,7 @@
 import { createMcpHandler } from "@modelcontextprotocol/server";
 
 import { connectorSince, mcpUrl, SCOPE, verifyAccessToken } from "@/lib/connector/oauth";
+import { OWNER_ID, runAsUser } from "@/lib/db";
 import { createDossierServer } from "@/lib/connector/tools";
 import { publicOrigin } from "@/lib/google/origin";
 import { logServerError } from "@/lib/log";
@@ -32,7 +33,11 @@ async function handle(request: Request): Promise<Response> {
   const access = await verifyAccessToken(token);
   if (!access) return unauthorized(origin);
   try {
-    return await handler.fetch(request, { authInfo: { token: token!, clientId: access.clientId, scopes: [SCOPE], extra: { origin } } });
+    // The tools work on the owner's data until the connector's tokens name
+    // their user (Phase 2, PR 10).
+    return await runAsUser(OWNER_ID, () =>
+      handler.fetch(request, { authInfo: { token: token!, clientId: access.clientId, scopes: [SCOPE], extra: { origin } } }),
+    );
   } catch (error) {
     logServerError(`Claude connector ${mcpUrl(origin)}`, error);
     return Response.json({ jsonrpc: "2.0", error: { code: -32603, message: "RolePebble couldn't answer that." }, id: null }, { status: 500 });

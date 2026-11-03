@@ -1,6 +1,6 @@
 import "server-only";
 
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 
 // Helpers for adding to the profile's lists, shared by the profile editor
 // and the application page ("+ Add to profile").
@@ -21,10 +21,11 @@ export async function firstSort(model: {
   return (_min.sort ?? 1) - 1;
 }
 
-/** Finds a skill by name, ignoring case (citext), or creates it. */
+/** Finds one of the current user's skills by name, ignoring case (citext), or creates it. */
 export async function findOrCreateSkill(name: string) {
-  const existing = await prisma.skill.findUnique({ where: { name } });
+  const db = await userDb();
+  const existing = await db.skill.findUnique({ where: { userId_name: { userId: db.$userId, name } } });
   if (existing) return { skill: { id: existing.id, name: existing.name }, added: false };
-  const created = await prisma.skill.create({ data: { name, sort: await nextSort(prisma.skill) } });
+  const created = await db.skill.create({ data: { name, sort: await nextSort(db.skill) } });
   return { skill: { id: created.id, name: created.name }, added: true };
 }

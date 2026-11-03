@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { TailoredLetter, TailoredResume } from "@/components/documents/tailored-documents";
 import { loadDocuments } from "@/lib/application-documents";
+import { runAsUser } from "@/lib/db";
 import { verifyPrintAccess } from "@/lib/pdf/print-access";
 import { printCss } from "@/lib/themes";
 
@@ -15,8 +16,8 @@ export const metadata: Metadata = { title: "Tailored document", robots: { index:
 export default async function PrintTailoredDocumentPage({ params }: PageProps<"/print/[doc]/[id]">) {
   const { doc, id } = await params;
   if (doc !== "resume" && doc !== "letter") notFound();
-  await verifyPrintAccess(`/print/${doc}/${id}`);
-  const { application, profile, settings, resume, letter, includeReferences, letterDate } = await loadDocuments(id);
+  const userId = await verifyPrintAccess(`/print/${doc}/${id}`);
+  const { application, profile, settings, resume, letter, includeReferences, letterDate } = await runAsUser(userId, () => loadDocuments(id));
   const document = doc === "resume" ? resume : letter;
   if (!document) notFound();
 

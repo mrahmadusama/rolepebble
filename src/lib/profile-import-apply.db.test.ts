@@ -5,6 +5,8 @@ import type { ImportedProfile } from "@/lib/profile-import";
 import { createTestClient, resetDatabase } from "@/test/db";
 
 import { applyImportedProfile } from "./profile-import-apply";
+import { OWNER_ID } from "@/lib/db/owner";
+import { scopedDb } from "@/lib/db/scoped";
 
 const db = vi.hoisted(() => ({ client: undefined as ReturnType<typeof createTestClient> | undefined }));
 vi.mock("@/lib/prisma", async () => {
@@ -61,7 +63,7 @@ async function existingProfile() {
 describe("applyImportedProfile (E4-10)", () => {
   it("merges: the file wins where it says something, the rest is kept and the new is added", async () => {
     await existingProfile();
-    await applyImportedProfile(prisma(), imported, "merge");
+    await applyImportedProfile(scopedDb(OWNER_ID, prisma()), imported, "merge");
 
     const fields = Object.fromEntries((await prisma().profileField.findMany()).map((field) => [field.key, field.value]));
     expect(fields).toEqual({ name: "John Doe", email: "john@example.com", city: "Utrecht" });
@@ -106,7 +108,7 @@ describe("applyImportedProfile (E4-10)", () => {
   it("puts new entries first in a section ordered by hand", async () => {
     await existingProfile();
     await prisma().setting.create({ data: { key: "experienceOrder", value: "manual" } });
-    await applyImportedProfile(prisma(), imported, "merge");
+    await applyImportedProfile(scopedDb(OWNER_ID, prisma()), imported, "merge");
     const roles = await prisma().experience.findMany({ orderBy: { sort: "asc" } });
     expect(roles.map((role) => role.company)).toEqual(["Acme Payments", "fieldnote"]);
   });
@@ -118,15 +120,15 @@ describe("applyImportedProfile (E4-10)", () => {
     await prisma().profileField.create({ data: { key: "showAge", value: "false" } });
     // A resume's text has no photo, so the profile's stays (#224).
     await prisma().profileField.createMany({ data: [{ key: "photo", value: "data:image/png;base64,iVBORw0KGgo=" }, { key: "photoOnResumes", value: "false" }] });
-    await applyImportedProfile(prisma(), imported, "replace");
+    await applyImportedProfile(scopedDb(OWNER_ID, prisma()), imported, "replace");
 
     const fields = Object.fromEntries((await prisma().profileField.findMany()).map((field) => [field.key, field.value]));
     expect(fields).toEqual({ name: "John Doe", city: "Utrecht", showAge: "false", photo: "data:image/png;base64,iVBORw0KGgo=", photoOnResumes: "false" });
     expect((await prisma().skill.findMany()).map((skill) => skill.name).sort()).toEqual(["User research", "figma"]);
     expect((await prisma().experience.findMany()).map((role) => role.company).sort()).toEqual(["Acme Payments", "fieldnote"]);
-    expect((await prisma().setting.findUnique({ where: { key: "experienceOrder" } }))?.value).toBe("date");
+    expect((await prisma().setting.findUnique({ where: { userId_key: { userId: OWNER_ID, key: "experienceOrder" } } }))?.value).toBe("date");
     expect((await prisma().project.findMany()).map((project) => project.name).sort()).toEqual(["Design tokens CLI", "payout simulator"]);
-    expect((await prisma().setting.findUnique({ where: { key: "projectOrder" } }))?.value).toBe("date");
+    expect((await prisma().setting.findUnique({ where: { userId_key: { userId: OWNER_ID, key: "projectOrder" } } }))?.value).toBe("date");
     expect((await prisma().publication.findMany({ orderBy: { sort: "asc" } })).map((entry) => entry.citation)).toEqual([
       "Doe, J. (2024). Calm payouts.",
       "Doe, J. (2025). A new one.",
