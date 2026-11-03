@@ -3,7 +3,7 @@ import "server-only";
 import { fullText } from "@/lib/job-search/find";
 import type { FoundPosting } from "@/lib/job-search/search";
 import { storePosting } from "@/lib/postings";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 
 import { connectorSince } from "./oauth";
 
@@ -56,7 +56,7 @@ export async function handOffFoundPosting(posting: FoundPosting, kind: Handoff):
 
 /** For a posting pasted into New application: keeps its text for Claude to read, and gives the chat to open. */
 export async function handOffPastedPosting({ text, url }: { text: string; url: string }, now = new Date()): Promise<string> {
-  const paste = await prisma.claudePaste.create({
+  const paste = await (await userDb()).claudePaste.create({
     data: { text, url, expiresAt: new Date(now.getTime() + PASTE_DAYS * 24 * 60 * 60 * 1000) },
     select: { id: true },
   });
@@ -66,6 +66,6 @@ export async function handOffPastedPosting({ text, url }: { text: string; url: s
 /** A pasted posting kept for Claude, or null once it's gone or expired. */
 export async function readPastedPosting(id: string, now = new Date()): Promise<{ text: string; url: string } | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const paste = await prisma.claudePaste.findUnique({ where: { id }, select: { text: true, url: true, expiresAt: true } });
+  const paste = await (await userDb()).claudePaste.findUnique({ where: { id }, select: { text: true, url: true, expiresAt: true } });
   return paste && paste.expiresAt > now ? { text: paste.text, url: paste.url } : null;
 }

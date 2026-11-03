@@ -6,7 +6,7 @@ import { loadJobSearchConfig } from "@/lib/job-search/config";
 import { countryName } from "@/lib/job-search/countries";
 import { describeSearch, postedAgo, type JobSource } from "@/lib/job-search/search";
 import { SOURCE_INFO, sourceName } from "@/lib/job-search/sources";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadSettings } from "@/lib/settings-data";
 import { lastKnownTimeZone } from "@/lib/time-zone";
 
@@ -68,7 +68,7 @@ export type AgentView = {
 /** The Agent item's badge (E16-6): what's waiting for a look. */
 export async function countAgentQueue(): Promise<number> {
   const { agentMinScore } = await loadSettings();
-  return prisma.agentCandidate.count({
+  return (await userDb()).agentCandidate.count({
     where: {
       OR: [
         { status: AgentCandidateStatus.SCORED, score: { gte: agentMinScore } },
@@ -85,19 +85,20 @@ const sectionOf = (problem: string): AgentView["setupSection"] =>
   problem.includes("AI provider") ? "ai" : problem.includes("Job search") ? "jobs" : "agent";
 
 export async function loadAgentView(now = new Date()): Promise<AgentView> {
+  const db = await userDb();
   const [settings, config, timeZone, candidates, draftJobs, runJobs] = await Promise.all([
     loadSettings(),
     loadJobSearchConfig(),
     lastKnownTimeZone(),
-    prisma.agentCandidate.findMany({
+    db.agentCandidate.findMany({
       where: { status: { in: [AgentCandidateStatus.SCORED, AgentCandidateStatus.DRAFTING, AgentCandidateStatus.DRAFTED] } },
       orderBy: [{ score: "desc" }, { createdAt: "desc" }],
     }),
-    prisma.job.findMany({
+    db.job.findMany({
       where: { type: "agent-draft", status: { in: [JobStatus.QUEUED, JobStatus.RUNNING] } },
       select: { id: true, key: true },
     }),
-    prisma.job.findMany({ where: { key: AGENT_JOB_KEY, status: { in: [JobStatus.QUEUED, JobStatus.RUNNING] } }, select: { id: true }, take: 1 }),
+    db.job.findMany({ where: { key: AGENT_JOB_KEY, status: { in: [JobStatus.QUEUED, JobStatus.RUNNING] } }, select: { id: true }, take: 1 }),
   ]);
   const draftJob = new Map(draftJobs.map((job) => [job.key?.replace(/^agent-candidate:/, ""), job.id]));
 

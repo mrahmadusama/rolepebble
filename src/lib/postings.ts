@@ -3,7 +3,7 @@ import "server-only";
 import type { Posting, PostingSource } from "@/generated/prisma/client";
 import { linkKey, postingKey, type FoundPosting, type PostingState, type ShownPosting } from "@/lib/job-search/search";
 import { stringsOf } from "@/lib/agent/candidates";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 
 // Postings kept from Find jobs (E14-5): saved, dismissed, or started an
 // application from. Nothing else from a search is stored, and a posting
@@ -13,7 +13,7 @@ export type { PostingState };
 
 type PostingRef = { source: PostingSource; externalId: string };
 
-const whereRef = ({ source, externalId }: PostingRef) => ({ source_externalId: { source, externalId } });
+const whereRef = (userId: string, { source, externalId }: PostingRef) => ({ userId_source_externalId: { userId, source, externalId } });
 
 function fieldsOf(found: FoundPosting) {
   return {
@@ -54,8 +54,9 @@ export function foundFromPosting(posting: Posting): FoundPosting {
  * only change when `marks` says so.
  */
 export async function storePosting(found: FoundPosting, marks: { savedAt?: Date | null; dismissedAt?: Date | null } = {}): Promise<Posting> {
-  return prisma.$transaction(async (tx) => {
-    const where = whereRef(found);
+  const db = await userDb();
+  return db.$userTransaction(async (tx) => {
+    const where = whereRef(db.$userId, found);
     const existing = await tx.posting.findUnique({ where, select: { complete: true } });
     const { description, complete, ...rest } = fieldsOf(found);
     const text = existing?.complete && !complete ? {} : { description, complete };
@@ -72,7 +73,8 @@ export const savePosting = (found: FoundPosting) => storePosting(found, { savedA
 
 /** Dismiss: out of later searches, and out of Saved. Says whether it was saved, for Undo. */
 export async function dismissPosting(found: FoundPosting): Promise<{ wasSaved: boolean }> {
-  const before = await prisma.posting.findUnique({ where: whereRef(found), select: { savedAt: true } });
+  const db = await userDb();
+  const before = await db.posting.findUnique({ where: whereRef(db.$userId, found), select: { savedAt: true } });
   await storePosting(found, { dismissedAt: new Date(), savedAt: null });
   return { wasSaved: Boolean(before?.savedAt) };
 }
@@ -82,8 +84,9 @@ export async function dismissPosting(found: FoundPosting): Promise<{ wasSaved: b
  * in Saved too, to undo a Dismiss). One left with no reason to be kept goes.
  */
 export async function unmarkPosting(ref: PostingRef, mark: "saved" | "dismissed", { saved = false }: { saved?: boolean } = {}): Promise<void> {
-  await prisma.$transaction(async (tx) => {
-    const where = whereRef(ref);
+  const db = await userDb();
+  await db.$userTransaction(async (tx) => {
+    const where = whereRef(db.$userId, ref);
     if (!(await tx.posting.findUnique({ where, select: { id: true } }))) return;
     const posting = await tx.posting.update({
       where,
@@ -95,7 +98,7 @@ export async function unmarkPosting(ref: PostingRef, mark: "saved" | "dismissed"
 
 /** The Saved or Dismissed view (E14-7): newest first, with where each stands. */
 export async function listPostings(view: "saved" | "dismissed"): Promise<ShownPosting[]> {
-  const rows = await prisma.posting.findMany({
+  const rows = await (await userDb()).posting.findMany({
     where: view === "saved" ? { savedAt: { not: null } } : { dismissedAt: { not: null } },
     orderBy: view === "saved" ? { savedAt: "desc" } : { dismissedAt: "desc" },
   });
@@ -108,9 +111,10 @@ export async function listPostings(view: "saved" | "dismissed"): Promise<ShownPo
 
 /** How many postings are saved and dismissed, for the views' tabs. */
 export async function countPostings(): Promise<{ saved: number; dismissed: number }> {
+  const db = await userDb();
   const [saved, dismissed] = await Promise.all([
-    prisma.posting.count({ where: { savedAt: { not: null } } }),
-    prisma.posting.count({ where: { dismissedAt: { not: null } } }),
+    db.posting.count({ where: { savedAt: { not: null } } }),
+    db.posting.count({ where: { dismissedAt: { not: null } } }),
   ]);
   return { saved, dismissed };
 }
@@ -123,14 +127,15 @@ export async function countPostings(): Promise<{ saved: number; dismissed: numbe
 export async function postingStates(found: readonly (PostingRef & { url: string })[]): Promise<Map<string, PostingState>> {
   if (found.length === 0) return new Map();
   const refs = found.map(({ source, externalId }) => ({ source, externalId }));
+  const db = await userDb();
   const [stored, applications, scores] = await Promise.all([
-    prisma.posting.findMany({
+    db.posting.findMany({
       where: { OR: found.map(({ source, externalId }) => ({ source, externalId })) },
       select: { id: true, source: true, externalId: true, savedAt: true, dismissedAt: true, applicationId: true },
     }),
     // An agent draft waiting for review isn't applied for yet (#195).
-    prisma.application.findMany({ where: { postingUrl: { not: "" }, awaitingReview: false }, select: { id: true, postingUrl: true }, orderBy: { createdAt: "asc" } }),
-    prisma.postingScore.findMany({ where: { OR: refs } }),
+    db.application.findMany({ where: { postingUrl: { not: "" }, awaitingReview: false }, select: { id: true, postingUrl: true }, orderBy: { createdAt: "asc" } }),
+    db.postingScore.findMany({ where: { OR: refs } }),
   ]);
   const scoreOf = new Map(scores.map((row) => [postingKey(row), { score: row.score, reasons: stringsOf(row.reasons), redFlags: stringsOf(row.redFlags) }]));
   const byKey = new Map(stored.map((posting) => [postingKey(posting), posting]));

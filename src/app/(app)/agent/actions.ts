@@ -11,7 +11,7 @@ import { runLimitProblem } from "@/lib/agent/runs";
 import { action, ActionError } from "@/lib/action";
 import { safeLink, searchQuerySchema } from "@/lib/job-search/search";
 import { findUnfinishedJobs, startJob } from "@/lib/jobs/runner";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadSettings, saveSettings } from "@/lib/settings-data";
 
 // The Agent screen's actions (E16). Nothing here ever sends anything:
@@ -85,7 +85,7 @@ function revalidateAgent() {
  * draft under way is reused, and one already made is answered with.
  */
 export const prepareAgentDraft = action(z.object({ candidateId }), async ({ candidateId }) => {
-  const candidate = await prisma.agentCandidate.findUnique({ where: { id: candidateId }, select: { status: true, applicationId: true } });
+  const candidate = await (await userDb()).agentCandidate.findUnique({ where: { id: candidateId }, select: { status: true, applicationId: true } });
   if (!candidate) throw new ActionError("That posting is no longer in the agent's queue.");
   if (candidate.status === AgentCandidateStatus.DRAFTED && candidate.applicationId) return { jobId: null, applicationId: candidate.applicationId };
   const [unfinished] = await findUnfinishedJobs(draftJobKey(candidateId));

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { defineJob, findUnfinishedJobs, startJob } from "@/lib/jobs/runner";
 import { logServerError } from "@/lib/log";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { loadProfile } from "@/lib/profile-data";
 import { saveSettings } from "@/lib/settings-data";
 
@@ -57,7 +57,7 @@ export async function refreshStartups(
   await sweepStartups(now);
 
   await step("Looking for application addresses on their own sites");
-  const toCheck = await prisma.startup.findMany({
+  const toCheck = await (await userDb()).startup.findMany({
     where: { status: { in: ["NEW", "SAVED"] }, emailsCheckedAt: null, website: { not: "" }, noApplicationsFrom: "" },
     orderBy: { score: "desc" },
     take: SITE_LOOKUPS,

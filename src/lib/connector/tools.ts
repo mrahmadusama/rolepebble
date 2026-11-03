@@ -20,7 +20,6 @@ import { saveScore } from "@/lib/posting-scores";
 import { loadSearch, runSearch, showMoreFor } from "@/lib/posting-searches";
 import { foundFromPosting, storePosting } from "@/lib/postings";
 import { userDb } from "@/lib/db";
-import { prisma } from "@/lib/prisma";
 import { loadProfile } from "@/lib/profile-data";
 import { statusInfo } from "@/lib/status";
 import { applyStatusChange } from "@/lib/status-changes";
@@ -87,7 +86,7 @@ type ResolvedPosting = { text: string; url: string; postingId: string | null; ti
 /** The whole text of a posting from a search, one handed over, a link or pasted text, or what's wrong. */
 async function resolvePosting(source: PostingSource): Promise<ResolvedPosting | { error: string }> {
   if (source.posting_id) {
-    const row = await prisma.posting.findUnique({ where: { id: source.posting_id } });
+    const row = await (await userDb()).posting.findUnique({ where: { id: source.posting_id } });
     if (!row) return { error: "That posting is no longer in RolePebble. Open it again from Find jobs." };
     const found = foundFromPosting(row);
     const description = found.complete ? found.description : ((await fullText(found)) ?? found.description);
@@ -100,7 +99,7 @@ async function resolvePosting(source: PostingSource): Promise<ResolvedPosting | 
     return { text: pasted.text, url: pasted.url, postingId: null };
   }
   if (source.search_id) {
-    const search = await prisma.postingSearch.findUnique({ where: { id: source.search_id }, select: { postings: true } });
+    const search = await (await userDb()).postingSearch.findUnique({ where: { id: source.search_id }, select: { postings: true } });
     const kept = foundPostingSchema.array().catch([]).parse(search?.postings ?? []);
     const found = source.number ? kept[source.number - 1] : undefined;
     if (!found) return { error: "There's no such posting in that search. Use a number from search_jobs." };
@@ -206,7 +205,7 @@ export function createDossierServer(origin: string): McpServer {
       annotations: { readOnlyHint: false, openWorldHint: true },
     },
     async ({ search_id }) => {
-      const before = await prisma.postingSearch.findUnique({ where: { id: search_id }, select: { found: true } });
+      const before = await (await userDb()).postingSearch.findUnique({ where: { id: search_id }, select: { found: true } });
       if (!before) return failure("That search is no longer kept. Search again.");
       const more = await showMoreFor(search_id);
       if (!more.ok) return failure(more.message);
@@ -248,13 +247,14 @@ export function createDossierServer(origin: string): McpServer {
       annotations: { readOnlyHint: false, idempotentHint: true },
     },
     async ({ search_id, scores }) => {
-      const search = search_id ? await prisma.postingSearch.findUnique({ where: { id: search_id }, select: { postings: true } }) : null;
+      const db = await userDb();
+      const search = search_id ? await db.postingSearch.findUnique({ where: { id: search_id }, select: { postings: true } }) : null;
       if (search_id && !search) return failure("That search is no longer kept. Search again.");
       const kept = foundPostingSchema.array().catch([]).parse(search?.postings ?? []);
       const saved: { number?: number; posting_id?: string; title: string; score: number; band: string }[] = [];
       const missing: (number | string)[] = [];
       for (const entry of scores) {
-        const row = entry.posting_id ? await prisma.posting.findUnique({ where: { id: entry.posting_id } }) : null;
+        const row = entry.posting_id ? await db.posting.findUnique({ where: { id: entry.posting_id } }) : null;
         const posting = row ? foundFromPosting(row) : entry.number ? kept[entry.number - 1] : undefined;
         if (!posting) {
           missing.push(entry.posting_id ?? entry.number ?? "?");
@@ -281,7 +281,7 @@ export function createDossierServer(origin: string): McpServer {
       annotations: { readOnlyHint: true },
     },
     async ({ status, include_archived, limit }) => {
-      const rows = await prisma.application.findMany({
+      const rows = await (await userDb()).application.findMany({
         where: { awaitingReview: false, ...(status ? { status } : {}), ...(include_archived ? {} : { archivedAt: null }) },
         orderBy: { updatedAt: "desc" },
         take: limit ?? 30,
@@ -312,7 +312,7 @@ export function createDossierServer(origin: string): McpServer {
       annotations: { readOnlyHint: true },
     },
     async ({ id }) => {
-      const application = await prisma.application.findUnique({
+      const application = await (await userDb()).application.findUnique({
         where: { id, awaitingReview: false },
         select: {
           id: true,
@@ -462,12 +462,13 @@ export function createDossierServer(origin: string): McpServer {
       annotations: { readOnlyHint: false, idempotentHint: true },
     },
     async ({ id, status }) => {
+      const db = await userDb();
       // A job agent draft waiting for review is approved first, as moving it on the Agent screen does.
       if (status !== ApplicationStatus.DRAFT) {
-        const pending = await prisma.agentCandidate.findFirst({ where: { applicationId: id, application: { awaitingReview: true } }, select: { id: true } });
+        const pending = await db.agentCandidate.findFirst({ where: { applicationId: id, application: { awaitingReview: true } }, select: { id: true } });
         if (pending) await approveCandidate(pending.id);
       }
-      const result = await applyStatusChange(await userDb(), id, status);
+      const result = await applyStatusChange(db, id, status);
       if (result.outcome === "not-found") return failure("That application no longer exists.");
       return text({ id, status: statusInfo(status).label, changed: result.outcome !== "unchanged" });
     },

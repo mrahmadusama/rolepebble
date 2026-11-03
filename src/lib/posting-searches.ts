@@ -16,8 +16,8 @@ import {
   type ShownPosting,
   type StoredSearch,
 } from "@/lib/job-search/search";
+import { userDb } from "@/lib/db";
 import { postingStates } from "@/lib/postings";
-import { prisma } from "@/lib/prisma";
 
 // Searches kept with what they found (E14-10), until the user removes them,
 // so going back to one costs no searches from the source's plan.
@@ -50,7 +50,7 @@ function ranAtLabel(date: Date, timeZone?: string, now = new Date()): string {
 export async function runSearch(query: SearchQuery): Promise<{ ok: true; id: string } | SearchProblem> {
   const answer = await askSource(query);
   if (!answer.ok) return answer;
-  const search = await prisma.postingSearch.create({
+  const search = await (await userDb()).postingSearch.create({
     data: { source: answer.source, query, postings: answer.postings, found: answer.postings.length, next: answer.next },
     select: { id: true },
   });
@@ -59,9 +59,8 @@ export async function runSearch(query: SearchQuery): Promise<{ ok: true; id: str
 
 /** A kept search, the latest one without an id; null when there's none. */
 export async function loadSearch(id?: string, { timeZone, now = new Date() }: { timeZone?: string; now?: Date } = {}): Promise<StoredSearch | null> {
-  const search = id
-    ? await prisma.postingSearch.findUnique({ where: { id } })
-    : await prisma.postingSearch.findFirst({ orderBy: { createdAt: "desc" } });
+  const db = await userDb();
+  const search = id ? await db.postingSearch.findUnique({ where: { id } }) : await db.postingSearch.findFirst({ orderBy: { createdAt: "desc" } });
   if (!search) return null;
   return {
     id: search.id,
@@ -76,7 +75,8 @@ export async function loadSearch(id?: string, { timeZone, now = new Date() }: { 
 
 /** "Show more": the next page from the search's own source, added to the kept search. */
 export async function showMoreFor(id: string): Promise<{ ok: true; postings: ShownPosting[]; next: string | null } | SearchProblem> {
-  const search = await prisma.postingSearch.findUnique({ where: { id } });
+  const db = await userDb();
+  const search = await db.postingSearch.findUnique({ where: { id } });
   if (!search) return { ok: false, problem: "changed", message: "That search is no longer kept. Search again." };
   if (!search.next || !isJobSource(search.source)) return { ok: true, postings: [], next: null };
   const answer = await askSource(queryOf(search.query), { source: search.source, next: search.next });
@@ -85,13 +85,13 @@ export async function showMoreFor(id: string): Promise<{ ok: true; postings: Sho
   const seen = new Set(kept.map(postingKey));
   const added = answer.postings.filter((posting) => !seen.has(postingKey(posting)));
   const postings = [...kept, ...added];
-  await prisma.postingSearch.update({ where: { id }, data: { postings, found: postings.length, next: answer.next } });
+  await db.postingSearch.update({ where: { id }, data: { postings, found: postings.length, next: answer.next } });
   return { ok: true, postings: await withStates(added), next: answer.next };
 }
 
 /** Every kept search, newest first, grouped by the day it ran in the user's time zone. */
 export async function listSearches({ timeZone, now = new Date() }: { timeZone?: string; now?: Date } = {}): Promise<PastSearchDay[]> {
-  const searches = await prisma.postingSearch.findMany({
+  const searches = await (await userDb()).postingSearch.findMany({
     select: { id: true, source: true, query: true, found: true, createdAt: true },
     orderBy: { createdAt: "desc" },
   });
@@ -105,8 +105,8 @@ export async function listSearches({ timeZone, now = new Date() }: { timeZone?: 
   return days;
 }
 
-export const countSearches = () => prisma.postingSearch.count();
+export const countSearches = async () => (await userDb()).postingSearch.count();
 
 export async function removeSearch(id: string): Promise<void> {
-  await prisma.postingSearch.deleteMany({ where: { id } });
+  await (await userDb()).postingSearch.deleteMany({ where: { id } });
 }

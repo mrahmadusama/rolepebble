@@ -4,8 +4,9 @@ const env = vi.hoisted(() => ({ DOSSIER_SECRET: "s".repeat(40), DOSSIER_PASSWORD
 vi.mock("@/lib/env", () => ({ env }));
 const settings = vi.hoisted(() => ({ connectorEnabledAt: "2026-10-23T09:00:00.000Z" as string | null }));
 vi.mock("@/lib/settings-data", () => ({ loadSettings: async () => settings }));
-const db = vi.hoisted(() => ({ postingSearch: { findUnique: vi.fn() }, postingScore: { upsert: vi.fn() } }));
-vi.mock("@/lib/prisma", () => ({ prisma: db }));
+// The owner's data, as userDb() gives it.
+const db = vi.hoisted(() => ({ $userId: "owner", postingSearch: { findUnique: vi.fn() }, postingScore: { upsert: vi.fn() } }));
+vi.mock("@/lib/db", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/db")>()), userDb: async () => db }));
 vi.mock("@/lib/ai/config", () => ({ isAiUsable: async () => false }));
 vi.mock("@/lib/profile-data", async () => {
   const { demoProfile } = await import("@/lib/demo-profile");

@@ -7,7 +7,7 @@ import { COUNTRIES } from "@/lib/job-search/countries";
 import { defaultSearch, latestRole, queryFromParams, viewFromParams } from "@/lib/job-search/search";
 import { countSearches, listSearches, loadSearch } from "@/lib/posting-searches";
 import { countPostings, listPostings } from "@/lib/postings";
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
 import { userTimeZone } from "@/lib/time-zone";
 
 import { JobsScreen } from "./jobs-screen";
@@ -66,9 +66,10 @@ async function latestQuery() {
 
 /** The first search: the current or latest role, in the profile's city and country. */
 async function profileSearch() {
+  const db = await userDb();
   const [fields, experience] = await Promise.all([
-    prisma.profileField.findMany({ where: { key: { in: ["city", "country"] } } }),
-    prisma.experience.findMany({ select: { role: true, current: true, startYear: true, startMonth: true, endYear: true, endMonth: true } }),
+    db.profileField.findMany({ where: { key: { in: ["city", "country"] } } }),
+    db.experience.findMany({ select: { role: true, current: true, startYear: true, startMonth: true, endYear: true, endMonth: true } }),
   ]);
   const field = (key: string) => fields.find((entry) => entry.key === key)?.value ?? "";
   return defaultSearch({ role: latestRole(experience), city: field("city"), country: field("country") });

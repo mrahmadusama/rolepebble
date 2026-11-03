@@ -20,22 +20,14 @@ const SYSTEM_CLIENT: Record<string, string> = {
  * does, so the list stays true.
  */
 const NOT_MOVED_YET = new Set([
-  "src/app/(app)/agent/actions.ts",
   "src/app/(app)/inbox/page.tsx",
-  "src/app/(app)/jobs/page.tsx",
   "src/app/(app)/settings/actions.ts",
   "src/app/(app)/settings/page.tsx",
   "src/app/api/export/route.ts",
   "src/app/api/import/route.ts",
   "src/app/dev/documents/page.tsx",
   "src/app/dev/ui/page.tsx",
-  "src/lib/agent/draft.ts",
-  "src/lib/agent/run.ts",
-  "src/lib/agent/schedule.ts",
-  "src/lib/agent/view.ts",
   "src/lib/backups.ts",
-  "src/lib/connector/handoff.ts",
-  "src/lib/connector/tools.ts",
   "src/lib/google/account.ts",
   "src/lib/google/actions.ts",
   "src/lib/google/availability.ts",
@@ -47,11 +39,6 @@ const NOT_MOVED_YET = new Set([
   "src/lib/jobs/retention.ts",
   "src/lib/jobs/runner.ts",
   "src/lib/jobs/zip-pdfs.ts",
-  "src/lib/posting-scores.ts",
-  "src/lib/posting-searches.ts",
-  "src/lib/postings.ts",
-  "src/lib/startups/refresh.ts",
-  "src/lib/startups/store.ts",
 ]);
 
 const sources = globSync("src/**/*.{ts,tsx}").filter(
