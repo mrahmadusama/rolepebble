@@ -15,13 +15,14 @@ export const metadata: Metadata = { title: "New application" };
 /** Posting → details and match → tailored documents (PRD §6.4). Nothing is created until the last step. */
 export default async function NewApplicationPage({ searchParams }: PageProps<"/new">) {
   const { fresh, posting, startup: startupId } = await searchParams;
+  const db = await userDb();
   const [aiReady, writeInClaude, applications, settings, fromFindJobs, startup] = await Promise.all([
     isAiConfigured(),
     isAiUsable().then(handsOffToClaude),
-    (await userDb()).application.count({ where: { awaitingReview: false } }),
+    db.application.count({ where: { awaitingReview: false } }),
     loadSettings(),
     // "Start application" on Find jobs (E14-8).
-    typeof posting === "string" ? (await userDb()).posting.findUnique({ where: { id: posting } }) : null,
+    typeof posting === "string" ? db.posting.findUnique({ where: { id: posting } }) : null,
     // "Write to them" on Startups (#222): what's known about the startup, without its addresses.
     typeof startupId === "string" ? getStartup(startupId) : null,
   ]);

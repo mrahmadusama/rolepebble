@@ -1,8 +1,24 @@
 import { NextRequest } from "next/server";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { addNote, deleteNote, setApplicationTheme, updateNote } from "@/app/(app)/applications/[id]/actions";
+import {
+  addNote,
+  deleteNote,
+  leaveOutUnit,
+  listVersions,
+  loadVersion,
+  putBackTrimmed,
+  restoreVersion,
+  saveUnit,
+  sendMessage,
+  setApplicationTheme,
+  startRegenerating,
+  undoMessage,
+  updateNote,
+} from "@/app/(app)/applications/[id]/actions";
+import { GET as downloadHeldPdf } from "@/app/api/pdf/[id]/route";
 import { GET as downloadPdf } from "@/app/api/pdf/route";
+import { ChatRole, DocumentKind, VersionCause } from "@/generated/prisma/enums";
 import { deleteApplication, setArchived } from "@/lib/application-actions";
 import { loadApplication } from "@/lib/application-documents";
 import { loadApplicationRows } from "@/lib/applications-data";
@@ -10,7 +26,9 @@ import { loadDashboard } from "@/lib/dashboard-data";
 import { runAsUser } from "@/lib/db";
 import { OWNER_ID } from "@/lib/db/owner";
 import { scopedDb } from "@/lib/db/scoped";
-import { setStatus } from "@/lib/status-actions";
+import { holdPdf } from "@/lib/pdf/downloads";
+import { setStatus, undoStatus } from "@/lib/status-actions";
+import { applyStatusChange } from "@/lib/status-changes";
 import { createTestClient, createTestUser, resetDatabase } from "@/test/db";
 
 import { seedBuiltIns } from "../../prisma/seed/built-ins";
@@ -50,7 +68,10 @@ vi.mock("@/lib/db/context", async (importOriginal) => ({
 
 const prisma = () => db.client!;
 let other: string;
-let ids: { application: string; note: string; theme: string; job: string };
+let ids: { application: string; note: string; theme: string; job: string; version: string; message: string };
+
+const SUMMARY = { id: "summary", label: "Summary", text: "Product designer" };
+const LEFT_OUT = [{ kind: "unit" as const, unit: { id: "projects", label: "Projects", text: "Ledger app" }, index: 1 }];
 
 beforeEach(async () => {
   await resetDatabase(prisma());
@@ -66,13 +87,32 @@ beforeEach(async () => {
       company: "Ledgerly",
       role: "Product Designer",
       notes: { create: [{ body: "Call back Monday" }] },
-      documents: { create: [{ kind: "RESUME", units: [] }] },
+      documents: { create: [{ kind: DocumentKind.RESUME, units: [SUMMARY], trimmed: LEFT_OUT }] },
+      messages: {
+        create: [
+          {
+            role: ChatRole.AI,
+            text: "Tightened the summary.",
+            edits: [{ document: DocumentKind.RESUME, unitId: "summary", text: SUMMARY.text, previousText: "Designer" }],
+          },
+        ],
+      },
     },
-    include: { notes: true },
+    include: { notes: true, documents: true, messages: true },
+  });
+  const version = await owner.documentVersion.create({
+    data: { documentId: application.documents[0].id, units: [{ ...SUMMARY, text: "Designer" }], cause: VersionCause.WRITTEN },
   });
   const theme = await owner.theme.create({ data: { name: "Mine", headFont: "NEWSREADER", bodyFont: "GEIST", accent: "#7a3b2e" } });
   const job = await owner.job.create({ data: { type: "write-documents", applicationId: application.id, input: {} } });
-  ids = { application: application.id, note: application.notes[0].id, theme: theme.id, job: job.id };
+  ids = {
+    application: application.id,
+    note: application.notes[0].id,
+    theme: theme.id,
+    job: job.id,
+    version: version.id,
+    message: application.messages[0].id,
+  };
 });
 afterAll(() => prisma().$disconnect());
 
@@ -105,6 +145,47 @@ describe("another user's applications", () => {
     // Deleting someone else's application didn't cancel its work either.
     expect(runner.cancelApplicationJobs).not.toHaveBeenCalled();
     expect(await prisma().job.findUniqueOrThrow({ where: { id: ids.job } })).toMatchObject({ status: "QUEUED" });
+  });
+
+  it("changes nothing of the owner's documents, chat or versions", async () => {
+    signedIn.userId = other;
+    const resume = { id: ids.application, document: DocumentKind.RESUME, unitId: "summary" };
+    expect(await saveUnit({ ...resume, text: "Taken", expected: SUMMARY.text })).toMatchObject({ ok: false });
+    expect(await startRegenerating(resume)).toMatchObject({ ok: false });
+    expect(await leaveOutUnit({ id: ids.application, unitId: "summary" })).toMatchObject({ ok: false });
+    expect(await putBackTrimmed({ id: ids.application, index: 0 })).toMatchObject({ ok: false });
+    expect(await sendMessage({ id: ids.application, text: "Make it shorter", viewing: DocumentKind.RESUME, target: null })).toMatchObject({ ok: false });
+    expect(await undoMessage({ id: ids.application, messageId: ids.message })).toMatchObject({ ok: false });
+    expect(await listVersions({ id: ids.application, document: DocumentKind.RESUME })).toEqual({ ok: true, data: [] });
+    expect(await loadVersion({ id: ids.application, versionId: ids.version })).toMatchObject({ ok: false });
+    expect(await restoreVersion({ id: ids.application, versionId: ids.version })).toMatchObject({ ok: false });
+
+    const document = await prisma().document.findFirstOrThrow({ where: { applicationId: ids.application } });
+    expect(document).toMatchObject({ units: [SUMMARY], trimmed: LEFT_OUT });
+    expect(await prisma().documentVersion.count({ where: { documentId: document.id } })).toBe(1);
+    expect(await prisma().chatMessage.findMany({ where: { applicationId: ids.application } })).toMatchObject([{ id: ids.message, undone: false }]);
+    // No AI work was started on the owner's application.
+    expect(await prisma().job.count()).toBe(1);
+  });
+
+  it("can't undo the owner's status change", async () => {
+    const change = await applyStatusChange(scopedDb(OWNER_ID, prisma()), ids.application, "SENT");
+    if (change.outcome !== "changed") throw new Error("expected a change");
+
+    signedIn.userId = other;
+    expect(await undoStatus({ eventId: change.event.id })).toMatchObject({ ok: false });
+    expect(await prisma().application.findUniqueOrThrow({ where: { id: ids.application } })).toMatchObject({ status: "SENT" });
+    expect(await prisma().statusEvent.count({ where: { id: change.event.id } })).toBe(1);
+  });
+
+  it("can't fetch a PDF held for the owner", async () => {
+    const held = holdPdf(new Uint8Array([37, 80, 68, 70]), "Jane Doe.pdf", OWNER_ID);
+    const fetchAs = async (userId: string) => {
+      signedIn.userId = userId;
+      return downloadHeldPdf(new NextRequest(`http://localhost/api/pdf/${held}`), { params: Promise.resolve({ id: held }) });
+    };
+    expect((await fetchAs(other)).status).toBe(404);
+    expect((await fetchAs(OWNER_ID)).status).toBe(200);
   });
 
   it("can't download the owner's documents, and nothing is printed for them", async () => {

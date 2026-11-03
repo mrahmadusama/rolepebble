@@ -21,9 +21,10 @@ const refreshEverything = () => revalidatePath("/", "layout");
  * stays as it was.
  */
 export const setArchived = action(z.object({ id: z.string().min(1), archived: z.boolean() }), async ({ id, archived }) => {
-  const current = await (await userDb()).application.findUnique({ where: { id }, select: { updatedAt: true } });
+  const db = await userDb();
+  const current = await db.application.findUnique({ where: { id }, select: { updatedAt: true } });
   if (!current) throw new ActionError(GONE);
-  await (await userDb()).application.update({
+  await db.application.update({
     where: { id },
     data: { archivedAt: archived ? new Date() : null, updatedAt: current.updatedAt },
   });

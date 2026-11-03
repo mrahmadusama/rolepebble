@@ -100,7 +100,8 @@ export async function createApplicationFromDocuments({ reading, documents, match
     showChanges: settings.showDiff,
   });
 
-  const created = await (await userDb()).$userTransaction(async (tx) => {
+  const db = await userDb();
+  const created = await db.$userTransaction(async (tx) => {
     if (claim.kind === "manual") {
       // Claim the job first: a second click waits here, then finds it taken.
       const { count } = await tx.job.updateMany({ where: { id: claim.writeJobId, key: null }, data: { key: `${CLAIMED}pending` } });
@@ -192,7 +193,7 @@ export async function createApplicationFromDocuments({ reading, documents, match
       const { trimmed, fits } = await fitResumeToPages(created.id, profile, limit);
       if (trimmed.length > 0 && settings.showDiff) {
         const text = summaryText({ ...summary, list: [...summary.list, ...describeTrim(trimmed, profile, fits, limit)] });
-        await (await userDb()).chatMessage.updateMany({ where: { applicationId: created.id, role: "AI", writtenWith: null }, data: { text } });
+        await db.chatMessage.updateMany({ where: { applicationId: created.id, role: "AI", writtenWith: null }, data: { text } });
       }
     } catch (error) {
       logServerError("one-page trimming", error);

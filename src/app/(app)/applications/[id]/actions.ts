@@ -28,11 +28,10 @@ const PART_GONE = "That part of the document no longer exists. Reload the page t
 
 const refresh = (id: string) => revalidatePath(`/applications/${id}`);
 
-/** The Resume tab's layout switch (APP-4): the theme's own layout, or a single column. */
-
 /** The signed-in user's data: every handler here runs inside action(), which names them. */
 const db = () => userDbSync();
 
+/** The Resume tab's layout switch (APP-4): the theme's own layout, or a single column. */
 export const setFollowThemeLayout = action(
   z.object({ id: z.string().min(1), follow: z.boolean() }),
   async ({ id, follow }) => {

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { DocumentKind } from "@/generated/prisma/enums";
-import { userDb } from "@/lib/db";
+import { sessionUserId, userDb } from "@/lib/db";
 import { resolveFileName } from "@/lib/file-name";
 import { holdPdf, pdfDownload } from "@/lib/pdf/downloads";
 import { renderPdf } from "@/lib/pdf/render";
@@ -33,10 +33,10 @@ export const GET = route(async (request) => {
  * with the link to download it from: `{ url }`. The download button uses
  * this, so the browser saves the file from a link of its own.
  */
-export const POST = route(async (request) => {
+export const POST = route(async (request, _context, session) => {
   const rendered = await renderRequested(request);
   if (rendered instanceof Response) return rendered;
-  return NextResponse.json({ url: `/api/pdf/${holdPdf(rendered.pdf, rendered.fileName, (await userDb()).$userId)}` });
+  return NextResponse.json({ url: `/api/pdf/${holdPdf(rendered.pdf, rendered.fileName, sessionUserId(session))}` });
 });
 
 /** The PDF and file name of the document the query asks for, or a 404 response. */

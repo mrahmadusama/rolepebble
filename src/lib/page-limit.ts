@@ -89,6 +89,8 @@ export async function fitResumeToPages(
   let trimmed: Trimmed = [];
   if (await fits()) return { trimmed, fits: true };
 
+  const db = await userDb();
+
   for (let cuts = 0; cuts < MAX_CUTS; cuts++) {
     const cut = await updateDocuments(applicationId, async (documents) => {
       const units = documents[DocumentKind.RESUME];
@@ -99,7 +101,7 @@ export async function fitResumeToPages(
     });
     if (!cut) break;
     trimmed = merge(trimmed, cut);
-    await (await userDb()).document.updateMany({
+    await db.document.updateMany({
       where: { applicationId, kind: DocumentKind.RESUME },
       data: { trimmed: trimmedSchema.parse(trimmed) },
     });
