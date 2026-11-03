@@ -55,11 +55,25 @@ docker compose up -d studio
 docker compose stop studio   # when you're done
 ```
 
-Query the database from server code with the shared client:
+### Whose data
+
+Every row of a user's data has a `userId` (RolePebble's Phase 2). Query it through the user's own client, never the raw one:
 
 ```ts
-import { prisma } from "@/lib/prisma";
+import { userDb } from "@/lib/db";
+
+const db = await userDb(); // the signed-in user's, or the one runAsUser names
+const applications = await db.application.findMany(); // only theirs
 ```
+
+- **What it does** (`src/lib/db/scoped.ts`): every query on a per-user table gets the user added to its filter, and runs in a transaction that first sets `app.user_id`. That's how the database fills in `userId` on new rows, nested ones included, so leave `userId` out of `data`. Built-in themes, which have no owner, are readable by everyone. `User` and `LoginThrottle` aren't a user's data, and the client refuses them.
+- **Where the user comes from:**
+  - Server Actions and `route()` handlers run as the signed-in user: an action also gets the client as `db` in its context.
+  - Pages call `userDb()`.
+  - Work outside a request (the job runner, the schedulers) names the user with `runAsUser(userId, () => …)`. Without a user, `userDb()` throws rather than guess.
+- **Interactive transactions:** use `db.$userTransaction(async (tx) => …)`. Never `$transaction` on a user's client: each of its queries already runs in a transaction, and Postgres can't nest them.
+- **The raw client** (`import { prisma } from "@/lib/prisma"`) sees everyone's data. `src/lib/db-audit.test.ts` keeps it to a short list of files, each with its reason, plus the files not moved over yet.
+- **Tables:** `src/lib/db/owned-models.ts` lists which tables are a user's data, and a test checks the list against the schema. A new table either gets a `userId` or goes on the system list.
 
 JSON columns (document units, the posting's extracted details, the match, chat edits) are validated with the zod schemas in `src/lib/application-data.ts`.
 Change an application's status only through `setStatus` in `src/lib/status-actions.ts` (or `changeStatus()` in client code, which adds the Undo toast), so the funnel figures stay consistent.

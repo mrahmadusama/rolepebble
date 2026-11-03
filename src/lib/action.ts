@@ -4,6 +4,7 @@ import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { getSession, type Session } from "@/lib/auth/session";
+import { runAsUser, sessionUserId, userDbSync, type ScopedDb } from "@/lib/db";
 import { logServerError } from "@/lib/log";
 import { messages } from "@/lib/messages";
 
@@ -27,13 +28,16 @@ export class ActionError extends Error {
 
 export type ActionContext = {
   session: Session;
+  /** The signed-in user's data (src/lib/db); `userDb()` gives the same client. */
+  db: ScopedDb;
   /** Shows a toast after the action succeeds. */
   toast: (message: string) => void;
 };
 
 /**
  * Defines a Server Action. The action checks the session, validates its input
- * with `schema`, runs `handler` and returns an `ActionResult`: unexpected
+ * with `schema`, runs `handler` as the signed-in user (`runAsUser`, so
+ * `userDb()` works anywhere below it) and returns an `ActionResult`: unexpected
  * errors are logged and turned into a generic message, so the client never
  * sees stack traces or data. `redirect()` and `notFound()` still work inside
  * the handler.
@@ -52,7 +56,18 @@ export function action<S extends z.ZodType, T>(
   return async (input) => {
     const session = await getSession();
     if (!session) return { ok: false, error: messages.signedOut };
-    return run(schema, input, (data, toast) => handler(data, { session, toast }));
+    return runAsUser(sessionUserId(session), () =>
+      run(schema, input, (data, toast) =>
+        handler(data, {
+          session,
+          // Made on first use, so handlers that don't touch the database don't need one.
+          get db() {
+            return userDbSync();
+          },
+          toast,
+        }),
+      ),
+    );
   };
 }
 
@@ -62,7 +77,7 @@ export function action<S extends z.ZodType, T>(
  */
 export function publicAction<S extends z.ZodType, T>(
   schema: S,
-  handler: (input: z.output<S>, context: Omit<ActionContext, "session">) => Promise<T>,
+  handler: (input: z.output<S>, context: Omit<ActionContext, "session" | "db">) => Promise<T>,
 ): (input: z.input<S>) => Promise<ActionResult<T>> {
   return async (input) => run(schema, input, (data, toast) => handler(data, { toast }));
 }
