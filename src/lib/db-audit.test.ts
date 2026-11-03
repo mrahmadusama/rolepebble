@@ -10,6 +10,8 @@ import { describe, expect, it } from "vitest";
 /** Files that use the raw client for good, and why. */
 const SYSTEM_CLIENT: Record<string, string> = {
   "src/lib/db/scoped.ts": "builds every user's client on it",
+  "src/lib/db/users.ts": "lists the users, for the timers to go through",
+  "src/lib/jobs/runner.ts": "the queue runs every user's jobs: it marks them running, done or failed by id",
   "src/app/api/health/route.ts": "a SELECT 1 that touches no one's data",
   "src/app/login/actions.ts": "sign-in throttling, before anyone is signed in",
 };
@@ -36,9 +38,6 @@ const NOT_MOVED_YET = new Set([
   "src/lib/google/sync.ts",
   "src/lib/jobs/draft-reply.ts",
   "src/lib/jobs/import-profile.ts",
-  "src/lib/jobs/retention.ts",
-  "src/lib/jobs/runner.ts",
-  "src/lib/jobs/zip-pdfs.ts",
 ]);
 
 const sources = globSync("src/**/*.{ts,tsx}").filter(

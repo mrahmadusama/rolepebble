@@ -2,9 +2,22 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { AiError } from "@/lib/ai/errors";
-import { createTestClient, resetDatabase } from "@/test/db";
+import { runAsUser } from "@/lib/db";
+import { OWNER_ID } from "@/lib/db/owner";
+import { createTestClient, createTestUser, resetDatabase } from "@/test/db";
 
-import { cancelApplicationJobs, cancelJob, defineJob, getJob, recoverInterruptedJobs, retryJob, startJob, subscribeJob } from "./runner";
+import {
+  cancelApplicationJobs,
+  cancelJob,
+  defineJob,
+  findLatestJob,
+  findUnfinishedJobs,
+  getJob,
+  recoverInterruptedJobs,
+  retryJob,
+  startJob,
+  subscribeJob,
+} from "./runner";
 
 const db = vi.hoisted(() => ({ client: undefined as ReturnType<typeof createTestClient> | undefined }));
 vi.mock("@/lib/prisma", async () => {
@@ -12,8 +25,6 @@ vi.mock("@/lib/prisma", async () => {
   db.client = createTestClient();
   return { prisma: db.client };
 });
-const ai = vi.hoisted(() => ({ provider: "LOCAL" }));
-vi.mock("@/lib/ai/config", () => ({ loadAiConfig: async () => ({ provider: ai.provider }) }));
 vi.spyOn(console, "error").mockImplementation(() => {});
 
 const prisma = () => db.client!;
@@ -30,7 +41,8 @@ async function eventually(check: () => Promise<void>, timeout = 3000) {
     }
   }
 }
-const status = async (id: string) => expect((await getJob(id))?.status);
+/** A job's status, whoever's it is. */
+const status = async (id: string) => expect((await prisma().job.findUnique({ where: { id } }))?.status);
 
 // A job whose run waits until the test lets it go.
 const gates = new Map<string, () => void>();
@@ -61,7 +73,6 @@ const release = (name: string) => eventually(async () => {
 
 beforeEach(async () => {
   await resetDatabase(prisma());
-  ai.provider = "LOCAL";
 });
 afterAll(() => prisma().$disconnect());
 
@@ -106,7 +117,7 @@ describe("the job runner", () => {
     expect(await prisma().job.count()).toBe(1);
   });
 
-  it("runs one job at a time for a local model, more for hosted ones", async () => {
+  it("runs one job at a time for each user", async () => {
     const first = await startJob(gated, { name: "First", fail: "no" });
     const second = await startJob(gated, { name: "Second", fail: "no" });
     await eventually(async () => (await status(first)).toBe("RUNNING"));
@@ -116,17 +127,54 @@ describe("the job runner", () => {
     await eventually(async () => (await status(second)).toBe("RUNNING"));
     await release("Second");
     await eventually(async () => (await status(second)).toBe("DONE"));
+  });
 
-    ai.provider = "ANTHROPIC";
-    const a = await startJob(gated, { name: "A", fail: "no" });
-    const b = await startJob(gated, { name: "B", fail: "no" });
+  it("takes turns: other users' jobs go ahead of a busy user's, three at a time in all", async () => {
+    const [bea, cai, dev] = [await createTestUser(prisma(), "bea"), await createTestUser(prisma(), "cai"), await createTestUser(prisma(), "dev")];
+    const mine = await startJob(gated, { name: "Mine", fail: "no" });
+    const mineToo = await startJob(gated, { name: "Mine too", fail: "no" });
+    const beas = await runAsUser(bea, () => startJob(gated, { name: "Bea", fail: "no" }));
+    const cais = await runAsUser(cai, () => startJob(gated, { name: "Cai", fail: "no" }));
+    const devs = await runAsUser(dev, () => startJob(gated, { name: "Dev", fail: "no" }));
     await eventually(async () => {
-      (await status(a)).toBe("RUNNING");
-      (await status(b)).toBe("RUNNING");
+      for (const id of [mine, beas, cais]) (await status(id)).toBe("RUNNING");
     });
-    await release("A");
-    await release("B");
-    await eventually(async () => (await status(b)).toBe("DONE"));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    (await status(mineToo)).toBe("QUEUED");
+    (await status(devs)).toBe("QUEUED");
+
+    // A place frees up: Dev's job, queued later, goes before the owner's second.
+    await release("Bea");
+    await eventually(async () => (await status(devs)).toBe("RUNNING"));
+    (await status(mineToo)).toBe("QUEUED");
+    await release("Mine");
+    await eventually(async () => (await status(mineToo)).toBe("RUNNING"));
+    for (const name of ["Cai", "Dev", "Mine too"]) await release(name);
+    await eventually(async () => (await status(mineToo)).toBe("DONE"));
+    expect(await prisma().job.findUniqueOrThrow({ where: { id: devs } })).toMatchObject({ userId: dev });
+  });
+
+  it("keeps a user's jobs to them: others can't read, retry or cancel them", async () => {
+    const other = await createTestUser(prisma());
+    const failed = await startJob(gated, { name: "Failed", fail: "ai" }, { key: "application:1" });
+    await release("Failed");
+    await eventually(async () => (await status(failed)).toBe("FAILED"));
+    const running = await startJob(gated, { name: "Running", fail: "no" }, { key: "application:2" });
+    await eventually(async () => (await status(running)).toBe("RUNNING"));
+
+    await runAsUser(other, async () => {
+      expect(await getJob(failed)).toBeNull();
+      expect(await findLatestJob("application:1")).toBeNull();
+      expect(await findUnfinishedJobs("application:2")).toEqual([]);
+      expect(await retryJob(failed)).toBe(false);
+      await cancelJob(running);
+    });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    (await status(failed)).toBe("FAILED");
+    (await status(running)).toBe("RUNNING");
+    expect(await runAsUser(OWNER_ID, () => getJob(running))).toMatchObject({ status: "RUNNING" });
+    await release("Running");
+    await eventually(async () => (await status(running)).toBe("DONE"));
   });
 
   it("cancels an application's unfinished jobs, and only those", async () => {
