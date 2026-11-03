@@ -4,6 +4,7 @@ import { unstable_rethrow } from "next/navigation";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { getSession, type Session } from "@/lib/auth/session";
+import { runAsUser, sessionUserId } from "@/lib/db";
 import { logServerError } from "@/lib/log";
 import { messages } from "@/lib/messages";
 
@@ -39,7 +40,8 @@ export function isSameOrigin(request: Request): boolean {
 /**
  * Defines a route handler that changes state or returns private data (PDFs,
  * imports, job progress). It refuses cross-origin requests (403) and requests
- * without a session (401), and turns unexpected errors into a logged, generic
+ * without a session (401), runs `handler` as the signed-in user (`runAsUser`,
+ * so `userDb()` works anywhere below it), and turns unexpected errors into a logged, generic
  * 500. Responses default to `Cache-Control: private, no-store`.
  *
  *     export const GET = route<RouteContext<"/api/pdf/[id]">>(
@@ -64,7 +66,7 @@ export function route<Context = unknown>(
 
     let response: Response;
     try {
-      response = await handler(request, context, session);
+      response = await runAsUser(sessionUserId(session), () => handler(request, context, session));
     } catch (error) {
       unstable_rethrow(error);
       logServerError(`${request.method} ${request.nextUrl.pathname}`, error);

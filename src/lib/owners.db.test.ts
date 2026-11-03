@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
-import { OWNER_ID } from "../../prisma/seed/built-ins";
+import { OWNER_ID } from "@/lib/db/owner";
 import { createTestClient, createTestUser, resetDatabase } from "@/test/db";
 
 // Phase 2, step 1 (migration 20261102120000_owners): every row has an owner,

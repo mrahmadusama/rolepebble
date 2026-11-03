@@ -2,7 +2,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "@/generated/prisma/client";
 
-import { OWNER_ID } from "../../prisma/seed/built-ins";
+import { OWNER_EMAIL, OWNER_ID } from "@/lib/db/owner";
 
 /**
  * The database for `*.db.test.ts` files: TEST_DATABASE_URL, or DATABASE_URL
@@ -38,7 +38,7 @@ export async function resetDatabase(db: PrismaClient): Promise<void> {
   if (tables.length === 0) return;
   const names = tables.map(({ tablename }) => `"${tablename}"`).join(", ");
   await db.$executeRawUnsafe(`TRUNCATE TABLE ${names} RESTART IDENTITY CASCADE`);
-  await db.user.create({ data: { id: OWNER_ID, email: "owner@rolepebble.invalid" } });
+  await db.user.create({ data: { id: OWNER_ID, email: OWNER_EMAIL } });
 }
 
 /** Another account, for checking that one user's data stays out of another's. */
